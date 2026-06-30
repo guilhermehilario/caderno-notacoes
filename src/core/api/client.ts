@@ -23,6 +23,10 @@ api.interceptors.request.use(
 
 // Controle de Fila para Renovação Concorrente do Token
 let isRefreshing = false;
+let lastRefreshAttempt = 0;
+let refreshFailCount = 0;
+const MAX_REFRESH_FAILURES = 3;
+const REFRESH_COOLDOWN_MS = 60_000; // 1 min de cooldown entre tentativas de refresh
 let failedQueue: Array<{
   resolve: (value: string | null) => void;
   reject: (reason: any) => void;
@@ -46,7 +50,16 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     // Se for erro 401 Unauthorized e ainda não tentamos repetir
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+      // 🔴 Se já estourou o limite de falhas consecutivas de refresh,
+      //    não tenta mais — só rejeita. Evita loop infinito.
+      if (refreshFailCount >= MAX_REFRESH_FAILURES) {
+        return Promise.reject(error);
+      }
+      // Se já tentamos refresh recentemente, pula para evitar loop
+      if (Date.now() - lastRefreshAttempt < REFRESH_COOLDOWN_MS) {
+        return Promise.reject(error);
+      }
       if (isRefreshing) {
         return new Promise<string | null>((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -71,14 +84,22 @@ api.interceptors.response.use(
 
         const { accessToken } = response.data;
         useAuthStore.getState().setAccessToken(accessToken);
+        refreshFailCount = 0; // ✅ Reseta contador no refresh bem-sucedido
 
         processQueue(null, accessToken);
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         
         return api(originalRequest);
       } catch (refreshError) {
+        lastRefreshAttempt = Date.now();
+        refreshFailCount++;
         processQueue(refreshError, null);
-        useAuthStore.getState().logout(); // Desloga o usuário se o refresh token expirou
+        // 🛑 NÃO chamamos logout() aqui para evitar que o PrivateRoute
+        //    redirecione para /login e derrube toda a árvore React durante
+        //    uma sessão de estudo ativa. A requisição original apenas falha
+        //    silenciosamente e o usuário continua estudando.
+        //    No fluxo normal (logout explícito), o handleLogout() no AppLayout
+        //    cuida da limpeza do auth state e do cache.
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

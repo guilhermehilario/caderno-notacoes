@@ -60,7 +60,8 @@ export const StudyView: React.FC = () => {
     ? (currentIndex / flashcards.length) * 100
     : 0;
 
-  const handleScoreSelect = async (score: StudyScore) => {
+  const handleScoreSelect = async (score: StudyScore, e?: React.MouseEvent<HTMLButtonElement>) => {
+    e?.preventDefault();
     if (!currentCard) return;
 
     const isLastCard = currentIndex >= flashcards.length - 1;
@@ -228,7 +229,8 @@ export const StudyView: React.FC = () => {
             ] as const).map((btn) => (
               <button
                 key={btn.score}
-                onClick={() => handleScoreSelect(btn.score)}
+                type="button"
+                onClick={(e) => handleScoreSelect(btn.score, e)}
                 className={`flex flex-col items-center justify-center py-2.5 px-2 rounded-xl border font-bold text-center text-sm transition-all duration-200 hover:scale-[1.04] cursor-pointer ${btn.color}`}
                 title={btn.title}
               >

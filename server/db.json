@@ -207,10 +207,10 @@
       "id": "ec1015eb-0c91-4690-b65c-f01a08572889",
       "notebookId": "28cbea1c-8d0c-4694-b4a8-0e1cac4b3e69",
       "title": "aula 1",
-      "content": "<p>dasj dajlks d ajda kljda dsa jdalj lsalkd j adklj dsalkj dsa dasd ca das d adjda </p>",
-      "rawText": "dasj dajlks d ajda kljda dsa jdalj lsalkd j adklj dsalkj dsa dasd ca das d adjda ",
+      "content": "<p>dasj dajlks d ajda kljda dsa jdalj lsalkd j adklj dsalkj dsa dasd ca das d adjda</p>",
+      "rawText": "dasj dajlks d ajda kljda dsa jdalj lsalkd j adklj dsalkj dsa dasd ca das d adjda",
       "createdAt": "2026-06-30T03:40:03.378Z",
-      "updatedAt": "2026-06-30T12:25:39.417Z"
+      "updatedAt": "2026-06-30T13:07:46.922Z"
     }
   ],
   "flashcards": [
@@ -337,12 +337,12 @@
       "notebookId": "5c22b198-7a62-4025-8465-167896a35ac5",
       "front": "Qual é o tema principal abordado na folha \"etsret\"?",
       "back": "O tema principal é \"etsret\", focado em aprofundar e consolidar este conteúdo de forma sistemática.",
-      "repetitions": 4,
-      "interval": 33,
-      "easeFactor": 2.4800000000000004,
-      "nextReviewDate": "2026-08-02T03:39:41.322Z",
+      "repetitions": 6,
+      "interval": 212,
+      "easeFactor": 2.6800000000000006,
+      "nextReviewDate": "2027-01-28T13:06:21.926Z",
       "createdAt": "2026-06-30T03:19:27.572Z",
-      "updatedAt": "2026-06-30T03:39:41.322Z"
+      "updatedAt": "2026-06-30T13:06:21.926Z"
     },
     {
       "id": "5b64e195-3aa9-4d60-8093-942d678b371b",
@@ -415,12 +415,12 @@
       "notebookId": "28cbea1c-8d0c-4694-b4a8-0e1cac4b3e69",
       "front": "Qual é o tema principal abordado na folha \"aula 1\"?",
       "back": "O tema principal é \"aula 1\", focado em aprofundar e consolidar este conteúdo de forma sistemática.",
-      "repetitions": 4,
-      "interval": 38,
-      "easeFactor": 2.5,
-      "nextReviewDate": "2026-08-07T12:30:24.803Z",
+      "repetitions": 5,
+      "interval": 95,
+      "easeFactor": 2.6,
+      "nextReviewDate": "2026-10-03T13:07:57.450Z",
       "createdAt": "2026-06-30T04:16:25.120Z",
-      "updatedAt": "2026-06-30T12:30:24.803Z"
+      "updatedAt": "2026-06-30T13:07:57.450Z"
     },
     {
       "id": "6d50d4b6-3caf-4482-a97c-3b6f667f3889",
