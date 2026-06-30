@@ -7,6 +7,7 @@ export function useLeafFlashcards(leafId: string) {
     queryKey: ['leaves', leafId, 'flashcards'],
     queryFn: () => studyService.getLeafFlashcards(leafId),
     enabled: !!leafId,
+    staleTime: 30_000, // Evita refetch ao navegar entre abas ou voltar para o editor
   });
 }
 
@@ -15,6 +16,7 @@ export function useNotebookFlashcards(notebookId: string) {
     queryKey: ['notebooks', notebookId, 'flashcards'],
     queryFn: () => studyService.getNotebookFlashcards(notebookId),
     enabled: !!notebookId,
+    staleTime: 30_000,
   });
 }
 

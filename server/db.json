@@ -100,6 +100,15 @@
       "color": "#ef4444",
       "createdAt": "2026-06-30T02:23:49.494Z",
       "updatedAt": "2026-06-30T02:23:49.494Z"
+    },
+    {
+      "id": "28cbea1c-8d0c-4694-b4a8-0e1cac4b3e69",
+      "userId": "8153bdd8-ebfd-46e5-9374-2188985d8b72",
+      "title": "Teste 01",
+      "description": "dasda sda daw d",
+      "color": "#aa3bff",
+      "createdAt": "2026-06-30T02:44:59.287Z",
+      "updatedAt": "2026-06-30T02:44:59.287Z"
     }
   ],
   "leaves": [
@@ -166,6 +175,33 @@
       "rawText": "kjdaslkjdlaksjd aa dasdjp ajdopasdmada da dsdajl ;da das;'dkasdd a",
       "createdAt": "2026-06-30T02:24:15.090Z",
       "updatedAt": "2026-06-30T02:25:01.356Z"
+    },
+    {
+      "id": "84f8bb6d-d90a-4e2a-a28a-9a21b9404d70",
+      "notebookId": "e2c8160b-3f68-4c0f-a0fb-e77416f2f64f",
+      "title": "aula 2",
+      "content": "<p>O módulo HTTP é a fundação da comunicação na <span data-annotation=\"internet\" class=\"annotation-anchor\">internet</span>. Ele atua como um carteiro digital em um modelo <strong>cliente-servidor</strong>. O cliente (como o seu navegador) envia uma <em>requisição</em>, e o servidor processa essa solicitação e retorna uma <em>resposta</em>. [<a target=\"_blank\" rel=\"noopener noreferrer nofollow\" class=\"text-brand-500 hover:text-brand-600 underline underline-offset-2 cursor-pointer\" href=\"https://www.youtube.com/watch?v=CXzbUwK6lc8&amp;t=269\">1</a>, <a target=\"_blank\" rel=\"noopener noreferrer nofollow\" class=\"text-brand-500 hover:text-brand-600 underline underline-offset-2 cursor-pointer\" href=\"https://gitbook.ganeshicmc.com/web/semana-1/protocolo_http\">2</a>, <a target=\"_blank\" rel=\"noopener noreferrer nofollow\" class=\"text-brand-500 hover:text-brand-600 underline underline-offset-2 cursor-pointer\" href=\"https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Guides/Overview\">3</a>, <a target=\"_blank\" rel=\"noopener noreferrer nofollow\" class=\"text-brand-500 hover:text-brand-600 underline underline-offset-2 cursor-pointer\" href=\"https://www.youtube.com/watch?v=imKsbmheRmY\">4</a>]</p><p>Abaixo, veja como essa troca de mensagens funciona e como ela é vital para o desenvolvimento web: [<a target=\"_blank\" rel=\"noopener noreferrer nofollow\" class=\"text-brand-500 hover:text-brand-600 underline underline-offset-2 cursor-pointer\" href=\"https://www.webdevdrops.com/http-desenvolvedores-frontend\">1</a>, <a target=\"_blank\" rel=\"noopener noreferrer nofollow\" class=\"text-brand-500 hover:text-brand-600 underline underline-offset-2 cursor-pointer\" href=\"https://influencermarketing.samy.com/glossario/http/\">2</a>]</p><p><strong>O Modelo Cliente-Servidor</strong></p><p>A internet funciona graças a esse padrão de troca de mensagens. Quando você digita um site ou usa um aplicativo, seu dispositivo assume o papel de cliente e inicia a conversa. O servidor, que fica hospedando a aplicação, recebe o pedido, processa as informações e devolve os dados (como páginas HTML, imagens ou dados em JSON). [<a target=\"_blank\" rel=\"noopener noreferrer nofollow\" class=\"text-brand-500 hover:text-brand-600 underline underline-offset-2 cursor-pointer\" href=\"https://medium.com/@carloscastrogames/m%C3%A9todos-http-quais-s%C3%A3o-e-qual-a-funcionalidade-deles-cfcc8c1e5bce\">1</a>, <a target=\"_blank\" rel=\"noopener noreferrer nofollow\" class=\"text-brand-500 hover:text-brand-600 underline underline-offset-2 cursor-pointer\" href=\"https://www.youtube.com/watch?v=CXzbUwK6lc8&amp;t=269\">2</a>, <a target=\"_blank\" rel=\"noopener noreferrer nofollow\" class=\"text-brand-500 hover:text-brand-600 underline underline-offset-2 cursor-pointer\" href=\"https://www.youtube.com/watch?v=imKsbmheRmY\">3</a>]</p><p><strong>Requisições e Respostas</strong></p><p>Para que a comunicação seja compreendida por ambas as partes, ela é estruturada em duas vias:</p><ul><li><p><strong>Requisições (Requests):</strong> Enviadas pelo cliente para o servidor. Elas contêm o método (ou verbo) que define a ação desejada (ex: <code>GET</code> para buscar dados, <code>POST</code> para enviar formulários), além de cabeçalhos (<em>headers</em>) com metadados e o caminho da URL. [<a target=\"_blank\" rel=\"noopener noreferrer nofollow\" class=\"text-brand-500 hover:text-brand-600 underline underline-offset-2 cursor-pointer\" href=\"https://www.youtube.com/watch?v=imKsbmheRmY\">1</a>]</p></li><li><p><strong>Respostas (Responses):</strong> Enviadas pelo servidor de volta ao cliente. Elas incluem um <strong>código de status</strong> (ex: <code>200</code> para sucesso, <code>404</code> para página não encontrada), cabeçalhos e o corpo da mensagem, que carrega o conteúdo real (um arquivo de texto, HTML, etc.). [<a target=\"_blank\" rel=\"noopener noreferrer nofollow\" class=\"text-brand-500 hover:text-brand-600 underline underline-offset-2 cursor-pointer\" href=\"https://www.youtube.com/watch?v=CXzbUwK6lc8&amp;t=269\">1</a>, <a target=\"_blank\" rel=\"noopener noreferrer nofollow\" class=\"text-brand-500 hover:text-brand-600 underline underline-offset-2 cursor-pointer\" href=\"https://www.youtube.com/watch?v=imKsbmheRmY\">2</a>]</p></li></ul><p><strong>O Conceito Stateless</strong></p><p>Uma das características mais importantes do HTTP é que ele é um protocolo <strong>stateless</strong> (sem estado). Isso significa que o servidor não guarda a memória de requisições anteriores. Cada solicitação é tratada de forma totalmente independente pelas máquinas. Para manter o usuário conectado ou lembrar itens em um carrinho de compras, por exemplo, o desenvolvimento da sua aplicação precisa gerenciar sessões ou tokens de autenticação. [<a target=\"_blank\" rel=\"noopener noreferrer nofollow\" class=\"text-brand-500 hover:text-brand-600 underline underline-offset-2 cursor-pointer\" href=\"https://www.youtube.com/watch?v=zURSjS-RT_A&amp;t=561\">1</a>, <a target=\"_blank\" rel=\"noopener noreferrer nofollow\" class=\"text-brand-500 hover:text-brand-600 underline underline-offset-2 cursor-pointer\" href=\"https://gitbook.ganeshicmc.com/web/semana-1/protocolo_http\">2</a>, <a target=\"_blank\" rel=\"noopener noreferrer nofollow\" class=\"text-brand-500 hover:text-brand-600 underline underline-offset-2 cursor-pointer\" href=\"https://www.youtube.com/watch?v=imKsbmheRmY\">3</a>]</p>",
+      "rawText": "O módulo HTTP é a fundação da comunicação na internet. Ele atua como um carteiro digital em um modelo cliente-servidor. O cliente (como o seu navegador) envia uma requisição, e o servidor processa essa solicitação e retorna uma resposta. [1, 2, 3, 4]\n\nAbaixo, veja como essa troca de mensagens funciona e como ela é vital para o desenvolvimento web: [1, 2]\n\nO Modelo Cliente-Servidor\n\nA internet funciona graças a esse padrão de troca de mensagens. Quando você digita um site ou usa um aplicativo, seu dispositivo assume o papel de cliente e inicia a conversa. O servidor, que fica hospedando a aplicação, recebe o pedido, processa as informações e devolve os dados (como páginas HTML, imagens ou dados em JSON). [1, 2, 3]\n\nRequisições e Respostas\n\nPara que a comunicação seja compreendida por ambas as partes, ela é estruturada em duas vias:\n\n\n\n\n\nRequisições (Requests): Enviadas pelo cliente para o servidor. Elas contêm o método (ou verbo) que define a ação desejada (ex: GET para buscar dados, POST para enviar formulários), além de cabeçalhos (headers) com metadados e o caminho da URL. [1]\n\n\n\nRespostas (Responses): Enviadas pelo servidor de volta ao cliente. Elas incluem um código de status (ex: 200 para sucesso, 404 para página não encontrada), cabeçalhos e o corpo da mensagem, que carrega o conteúdo real (um arquivo de texto, HTML, etc.). [1, 2]\n\nO Conceito Stateless\n\nUma das características mais importantes do HTTP é que ele é um protocolo stateless (sem estado). Isso significa que o servidor não guarda a memória de requisições anteriores. Cada solicitação é tratada de forma totalmente independente pelas máquinas. Para manter o usuário conectado ou lembrar itens em um carrinho de compras, por exemplo, o desenvolvimento da sua aplicação precisa gerenciar sessões ou tokens de autenticação. [1, 2, 3]",
+      "createdAt": "2026-06-30T02:31:26.316Z",
+      "updatedAt": "2026-06-30T02:47:41.220Z"
+    },
+    {
+      "id": "93318e72-4754-4b42-8793-74a6ede6aeb0",
+      "notebookId": "e2c8160b-3f68-4c0f-a0fb-e77416f2f64f",
+      "title": "aula 3",
+      "content": "<p>da da</p>",
+      "rawText": "da da",
+      "createdAt": "2026-06-30T02:40:40.576Z",
+      "updatedAt": "2026-06-30T02:40:46.793Z"
+    },
+    {
+      "id": "256a3fbb-6024-4612-8b7e-f1d1bee8414d",
+      "notebookId": "5c22b198-7a62-4025-8465-167896a35ac5",
+      "title": "aula 4",
+      "content": "<p>tea da sd ad adsa da dasdakl  dajls; d;lada; ;l dla;ka ;dalk dal;kdhad kadkja dkash ksddlka hd aslsdlkja</p><p>dad</p><p>sdd</p><p>ad </p><p>d alkj sdbhjkahd;akdahdkjahda</p><p>da das dj;dal ds a </p><p> a</p><p>da</p>",
+      "rawText": "tea da sd ad adsa da dasdakl  dajls; d;lada; ;l dla;ka ;dalk dal;kdhad kadkja dkash ksddlka hd aslsdlkja\n\ndad\n\nsdd\n\nad \n\nd alkj sdbhjkahd;akdahdkjahda\n\nda das dj;dal ds a \n\n a\n\nda",
+      "createdAt": "2026-06-30T02:59:13.145Z",
+      "updatedAt": "2026-06-30T02:59:33.162Z"
     }
   ],
   "flashcards": [

@@ -54,7 +54,7 @@ interface EditorBubbleMenuProps {
   editor: Editor | null;
 }
 
-export const EditorBubbleMenu: React.FC<EditorBubbleMenuProps> = ({ editor }) => {
+const EditorBubbleMenuComponent: React.FC<EditorBubbleMenuProps> = ({ editor }) => {
   if (!editor) return null;
 
   return (
@@ -163,3 +163,5 @@ export const EditorBubbleMenu: React.FC<EditorBubbleMenuProps> = ({ editor }) =>
     </BubbleMenu>
   );
 };
+
+export const EditorBubbleMenu = React.memo(EditorBubbleMenuComponent);

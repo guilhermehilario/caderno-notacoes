@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import type { Editor } from '@tiptap/react';
 import { MessageSquareText } from 'lucide-react';
 
@@ -12,7 +12,7 @@ interface AnnotationSidebarProps {
   editor: Editor | null;
 }
 
-export const AnnotationSidebar: React.FC<AnnotationSidebarProps> = ({ editor }) => {
+const AnnotationSidebarComponent: React.FC<AnnotationSidebarProps> = ({ editor }) => {
   const [annotations, setAnnotations] = useState<AnnotationEntry[]>([]);
 
   // Re-scan annotations whenever the editor content updates
@@ -23,7 +23,7 @@ export const AnnotationSidebar: React.FC<AnnotationSidebarProps> = ({ editor }) 
       const html = editor.getHTML();
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, 'text/html');
-      const marks = doc.querySelectorAll('mark.annotation-anchor[data-annotation]');
+      const marks = doc.querySelectorAll('span.annotation-anchor[data-annotation]');
       const entries: AnnotationEntry[] = [];
       marks.forEach((mark, index) => {
         const text = mark.textContent?.trim() || '';
@@ -101,3 +101,5 @@ export const AnnotationSidebar: React.FC<AnnotationSidebarProps> = ({ editor }) 
     </div>
   );
 };
+
+export const AnnotationSidebar = memo(AnnotationSidebarComponent);

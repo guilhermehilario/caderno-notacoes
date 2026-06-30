@@ -95,6 +95,44 @@ revisa-aula/
    - Chaveamento rápido de temas via Zustand (`studynotes-ui` no LocalStorage).
    - Estilização premium e harmoniosa nos modos claro e escuro, controlada na raiz pela classe `.dark` do Tailwind CSS.
 
+6. **Otimização de Renderização e Performance do Editor**:
+   - **Memoização estratégica**: Componentes do editor (`EditorToolbar`, `EditorBubbleMenu`, `AnnotationSidebar`) envolvidos em `React.memo` para evitar re-renders desnecessários.
+   - **Estabilização de dependências**: Extensões do TipTap estabilizadas via `useMemo` e callback `onUpdate` via `useCallback`.
+   - **Prevenção de loops de renderização**: Removido `setQueryData` do `onSuccess` da mutação de atualização para evitar que o cache do React Query dispare re-renders no editor durante o autosave.
+   - **Flag `isApplyingRemote`**: Mecanismo robusto com fallback explícito para evitar race conditions entre conteúdo remoto e edição do usuário.
+   - **Gerenciamento de estado de anotações**: Estado de popover de anotação alterado de objeto para string (`string | null`) com `useMemo` para estabilizar a referência e evitar disparar re-renders no `EditorToolbar`.
+   - **Cleanup de event listeners**: Tratamento adequado de `requestAnimationFrame` pendente com cancelamento no unmount, e verificação de `editor.isDestroyed` antes de acessar o editor.
+   - **Autosave otimizado**: Debounce de 1.5s, rastreamento do último estado salvo via ref para evitar saves duplicados.
+
+7. **Anotações de Texto (Annotation System)**:
+   - _Mark_ personalizado do TipTap para anotações, com suporte a `<span>` (atual) e `<mark>` (compatibilidade reversa).
+   - **AnnotationSidebar**: Painel lateral que lista todas as anotações do texto com navegação por clique.
+   - **HighlightPopover**: Seletor de cores de destaque (amarelo, dourado, turquesa, roxo).
+   - **AnnotationPopover**: Popover para criação e edição de anotações com suporte a atalho de teclado (⌘Enter).
+
+---
+
+## 🎯 Melhorias Planejadas & Próximos Passos
+
+### 🔴 Críticas
+- [ ] **Testes automatizados**: Ausência de testes unitários e de integração para o editor, hooks e serviços.
+- [ ] **Validação de dados**: O `summaryMutation` usa `setQueryData` com tipagem `any` — substituir por tipo correto.
+- [ ] **`staleTime` no `useLeafFlashcards`**: Adicionar `staleTime` para evitar refetch desnecessário a cada montagem do componente.
+
+### 🟡 Melhorias
+- [ ] **Estado de carregamento do editor**: Criar um Skeleton loader para o editor enquanto o conteúdo da folha é carregado.
+- [ ] **Persistência de cursor**: Salvar e restaurar a posição do cursor após autosave.
+- [ ] **Offline-first**: Implementar suporte a edição offline com sincronização ao reconectar.
+- [ ] **Atalhos de teclado**: Adicionar tooltips com atalhos no bubble menu (já existe na toolbar).
+- [ ] **Performance de listas de flashcards**: Virtualizar a lista de flashcards com `react-window` para coleções grandes.
+
+### 🟢 Desejáveis
+- [ ] **Exportar conteúdo**: Opções para exportar folhas em Markdown, PDF ou TXT.
+- [ ] **Múltiplos temas**: Além do claro/escuro, oferecer temas de cores alternativos.
+- [ ] **Histórico de versões**: Versionamento do conteúdo das folhas para permitir desfazer alterações salvas.
+- [ ] **Compartilhamento**: Compartilhar folhas ou cadernos com outros usuários.
+- [ ] **Suporte a imagens**: Upload e incorporação de imagens no editor.
+
 ---
 
 ## 🚀 Como Executar o Projeto

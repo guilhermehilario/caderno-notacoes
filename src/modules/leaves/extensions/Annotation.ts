@@ -38,6 +38,15 @@ export const Annotation = Mark.create<AnnotationOptions>({
   parseHTML() {
     return [
       {
+        tag: 'span[data-annotation]',
+        getAttrs: (el) => {
+          const text = (el as HTMLElement).getAttribute('data-annotation');
+          if (!text) return false;
+          return { text };
+        },
+      },
+      // Compatibilidade reversa: anotações salvas anteriormente usavam <mark>
+      {
         tag: 'mark[data-annotation]',
         getAttrs: (el) => {
           const text = (el as HTMLElement).getAttribute('data-annotation');
@@ -50,7 +59,7 @@ export const Annotation = Mark.create<AnnotationOptions>({
 
   renderHTML({ HTMLAttributes }) {
     return [
-      'mark',
+      'span',
       mergeAttributes(
         this.options.HTMLAttributes,
         HTMLAttributes,

@@ -25,5 +25,6 @@ dist-ssr
 
 .antigravityignore
 TarefasAfazer
+CHANGELOG.md
 context.md
 task.md

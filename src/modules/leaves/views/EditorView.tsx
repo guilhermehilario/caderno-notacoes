@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, startTransition } from 'react';
+import type { Editor } from '@tiptap/react';
 import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -24,6 +25,7 @@ import { Button } from '../../../components/ui/Button';
 import { EditorToolbar } from '../components/EditorToolbar';
 import { EditorBubbleMenu } from '../components/EditorBubbleMenu';
 import { AnnotationSidebar } from '../components/AnnotationSidebar';
+import { EditorSkeleton } from '../components/EditorSkeleton';
 
 export const EditorView: React.FC = () => {
   const { notebookId, leafId } = useParams<{ notebookId: string; leafId: string }>();
@@ -62,43 +64,62 @@ export const EditorView: React.FC = () => {
   // Rastreia o último estado salvo no servidor para evitar saves duplicados
   const lastSavedRef = useRef({ title: '', content: '' });
 
+  // Controla se o conteúdo já foi sincronizado com o editor
+  // Impede flash de editor vazio entre o fim do loading e o sync effect
+  const [contentReady, setContentReady] = useState(false);
+
   // Dispara abertura do AnnotationPopover para editar anotação existente
-  const [annotationToEdit, setAnnotationToEdit] = useState<{ text: string } | null>(null);
+  // Usamos string | null em vez de objeto para evitar nova referência a cada clique
+  const [annotationText, setAnnotationText] = useState<string | null>(null);
+  // Objeto memoizado para passar ao EditorToolbar sem criar nova referência
+  const annotationTrigger = useMemo(
+    () => (annotationText ? { text: annotationText } : null),
+    [annotationText],
+  );
+  const pendingRAF = useRef<number | null>(null);
+
+  // Estabiliza a lista de extensões para evitar recriação do objeto a cada render
+  const extensions = useMemo(() => [
+    StarterKit.configure({
+      heading: {
+        levels: [1, 2, 3],
+      },
+    }),
+    Underline,
+    ExtensionLink.configure({
+      openOnClick: false,
+      HTMLAttributes: {
+        class: 'text-brand-500 hover:text-brand-600 underline underline-offset-2 cursor-pointer',
+      },
+    }),
+    Highlight.configure({
+      multicolor: true,
+    }),
+    Annotation,
+    Placeholder.configure({
+      placeholder: 'Comece a digitar o conteúdo da sua aula aqui...',
+    }),
+  ], []);
+
+  // Estabiliza o callback onUpdate para evitar recriação a cada render
+  const handleEditorUpdate = useCallback(({ editor: ed }: { editor: Editor }) => {
+    // Se estamos aplicando conteúdo remoto, ignora esta atualização
+    // A flag é resetada no sync effect após setContent(), então mesmo
+    // que onUpdate não dispare (conteúdo idêntico), não há leak.
+    if (isApplyingRemote.current) {
+      isApplyingRemote.current = false;
+      return;
+    }
+    setLocalContent(ed.getHTML());
+    setLocalRawText(ed.getText());
+    setSaveStatus('saving');
+  }, []);
 
   // Editor TipTap
   const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        heading: {
-          levels: [1, 2, 3],
-        },
-      }),
-      Underline,
-      ExtensionLink.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: 'text-brand-500 hover:text-brand-600 underline underline-offset-2 cursor-pointer',
-        },
-      }),
-      Highlight.configure({
-        multicolor: true,
-      }),
-      Annotation,
-      Placeholder.configure({
-        placeholder: 'Comece a digitar o conteúdo da sua aula aqui...',
-      }),
-    ],
+    extensions,
     content: '',
-    onUpdate: ({ editor: ed }) => {
-      // Se estamos aplicando conteúdo remoto, ignora esta atualização
-      if (isApplyingRemote.current) {
-        isApplyingRemote.current = false;
-        return;
-      }
-      setLocalContent(ed.getHTML());
-      setLocalRawText(ed.getText());
-      setSaveStatus('saving');
-    },
+    onUpdate: handleEditorUpdate,
     immediatelyRender: false,
   });
 
@@ -111,21 +132,37 @@ export const EditorView: React.FC = () => {
 
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
-      const markEl = target?.closest?.('mark.annotation-anchor[data-annotation]');
-      if (!markEl) return;
+      const spanEl = target?.closest?.('span.annotation-anchor[data-annotation]');
+      if (!spanEl) return;
 
-      const text = markEl.getAttribute('data-annotation') || '';
+      const text = spanEl.getAttribute('data-annotation') || '';
       if (!text) return;
 
+      // Cancela qualquer rAF pendente para evitar race condition
+      if (pendingRAF.current !== null) {
+        cancelAnimationFrame(pendingRAF.current);
+      }
+
       // Seleciona o range da anotação e abre o popover
-      requestAnimationFrame(() => {
-        editor.chain().focus().extendMarkRange('annotation').run();
-        setAnnotationToEdit({ text });
+      pendingRAF.current = requestAnimationFrame(() => {
+        pendingRAF.current = null;
+        // Verifica se o editor ainda está acessível
+        if (!editor.isDestroyed) {
+          editor.chain().focus().extendMarkRange('annotation').run();
+          setAnnotationText(text);
+        }
       });
     };
 
     editorDom.addEventListener('click', handleClick);
-    return () => editorDom.removeEventListener('click', handleClick);
+    return () => {
+      editorDom.removeEventListener('click', handleClick);
+      // Limpa rAF pendente no unmount
+      if (pendingRAF.current !== null) {
+        cancelAnimationFrame(pendingRAF.current);
+        pendingRAF.current = null;
+      }
+    };
   }, [editor]);
 
   // Sincroniza conteúdo do servidor → editor quando leaf carrega/atualiza
@@ -138,16 +175,32 @@ export const EditorView: React.FC = () => {
     if (currentHtml !== serverContent) {
       isApplyingRemote.current = true;
       editor.commands.setContent(serverContent);
-      // Normaliza para o formato HTML do TipTap
-      setLocalContent(editor.getHTML());
-      setLocalRawText(editor.getText());
+      // Normaliza para o formato HTML do TipTap dentro de startTransition
+      // para evitar cascading renders (best practice React 19)
+      startTransition(() => {
+        setLocalContent(editor.getHTML());
+        setLocalRawText(editor.getText());
+      });
+      // Garante que a flag seja resetada mesmo se onUpdate não disparar
+      // (ex: conteúdo idêntico ao que já estava no editor)
+      isApplyingRemote.current = false;
+      startTransition(() => {
+        setContentReady(true);
+      });
+    } else if (!contentReady) {
+      // Se o conteúdo já é igual (leaf recarregou), ainda marca como pronto
+      startTransition(() => {
+        setContentReady(true);
+      });
     }
 
-    setLocalTitle(leaf.title);
+    startTransition(() => {
+      setLocalTitle(leaf.title);
+    });
     lastSavedRef.current = { title: leaf.title, content: leaf.content || '' };
     isFirstRender.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [leaf?.id]);
+  }, [leaf?.id, leaf?.content]);
 
   // Efeito de auto-salvamento para o título e conteúdo
   useEffect(() => {
@@ -197,12 +250,10 @@ export const EditorView: React.FC = () => {
     }
   };
 
-  if (isLoadingLeaf) {
-    return (
-      <div className="h-[70vh] flex items-center justify-center">
-        <RefreshCw className="h-10 w-10 animate-spin text-brand-500" />
-      </div>
-    );
+  // Exibe o skeleton enquanto carrega OU até o conteúdo estar sincronizado no editor
+  // `leaf && !contentReady`: só espera o sync se a leaf existe (se for 404, cai no "not found")
+  if (isLoadingLeaf || (leaf && !contentReady)) {
+    return <EditorSkeleton />;
   }
 
   if (!leaf) {
@@ -262,7 +313,7 @@ export const EditorView: React.FC = () => {
             className="w-full text-2xl font-heading font-extrabold tracking-tight bg-transparent text-slate-900 dark:text-dark-50 placeholder-slate-350 focus:outline-none mb-6 border-b border-transparent focus:border-slate-100 dark:focus:border-dark-800 pb-2 transition-all"
           />
 
-          <EditorToolbar editor={editor} annotationTrigger={annotationToEdit} />
+          <EditorToolbar editor={editor} annotationTrigger={annotationTrigger} />
 
           <div className="tiptap-editor flex-grow overflow-y-auto text-slate-750 dark:text-dark-100 relative">
             <EditorBubbleMenu editor={editor} />

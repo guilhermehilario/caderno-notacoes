@@ -62,7 +62,7 @@ const shift = isMac ? '⇧' : 'Shift+';
 const kbd = (keys: string) => `${mod}${keys}`;
 const kbdShift = (keys: string) => `${mod}${shift}${keys}`;
 
-export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor, annotationTrigger }) => {
+const EditorToolbarComponent: React.FC<EditorToolbarProps> = ({ editor, annotationTrigger }) => {
   if (!editor) return null;
 
   const canUndo = editor.can().undo();
@@ -177,3 +177,5 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor, annotation
     </div>
   );
 };
+
+export const EditorToolbar = React.memo(EditorToolbarComponent);
