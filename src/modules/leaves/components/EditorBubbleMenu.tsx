@@ -11,10 +11,10 @@ import {
   List,
   ListOrdered,
   Link2,
-  MessageSquarePlus,
 } from 'lucide-react';
 import { HeadingSelector } from './HeadingSelector';
 import { HighlightPopover } from './HighlightPopover';
+import { AnnotationPopover } from './AnnotationPopover';
 
 interface BubbleMenuItemProps {
   onClick: () => void;
@@ -141,22 +141,7 @@ export const EditorBubbleMenu: React.FC<EditorBubbleMenuProps> = ({ editor }) =>
 
       <HighlightPopover editor={editor} variant="bubble" />
 
-      <BubbleMenuItem
-        onClick={() => {
-          const { from, to } = editor.state.selection;
-          const selectedText = editor.state.doc.textBetween(from, to);
-          if (selectedText) {
-            const annotation = window.prompt('Digite sua anotação:');
-            if (annotation) {
-              editor.chain().focus().setAnnotation({ text: annotation }).run();
-            }
-          }
-        }}
-        isActive={editor.isActive('annotation')}
-        title="Anotação"
-      >
-        <MessageSquarePlus className="h-3.5 w-3.5" />
-      </BubbleMenuItem>
+      <AnnotationPopover editor={editor} variant="bubble" />
 
       <div className="w-px h-4 bg-slate-600 dark:bg-dark-600 mx-1" />
 
