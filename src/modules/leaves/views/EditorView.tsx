@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -9,11 +9,17 @@ import {
   RefreshCw,
   AlertTriangle,
 } from 'lucide-react';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Underline from '@tiptap/extension-underline';
+import Placeholder from '@tiptap/extension-placeholder';
 import { useLeaf } from '../hooks/useLeaves';
 import { useLeafFlashcards } from '../../study/hooks/useFlashcards';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
+import { EditorToolbar } from '../components/EditorToolbar';
+import { EditorBubbleMenu } from '../components/EditorBubbleMenu';
 
 export const EditorView: React.FC = () => {
   const { notebookId, leafId } = useParams<{ notebookId: string; leafId: string }>();
@@ -34,24 +40,67 @@ export const EditorView: React.FC = () => {
   // Estados locais para inputs editáveis do usuário
   const [localTitle, setLocalTitle] = useState('');
   const [localContent, setLocalContent] = useState('');
+  const [localRawText, setLocalRawText] = useState('');
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const [activeTab, setActiveTab] = useState<'summary' | 'flashcards'>('summary');
+
+  // Impede loop: quando estamos aplicando conteúdo remoto (do servidor) para o editor
+  const isApplyingRemote = useRef(false);
 
   // Debounce dos valores para salvamento automático
   const debouncedTitle = useDebounce(localTitle, 1500);
   const debouncedContent = useDebounce(localContent, 1500);
+  const debouncedRawText = useDebounce(localRawText, 1500);
 
   // Evita salvar no primeiro render
   const isFirstRender = useRef(true);
 
-  // Carrega dados da folha ao inicializar
+  // Editor TipTap
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        heading: {
+          levels: [1, 2],
+        },
+      }),
+      Underline,
+      Placeholder.configure({
+        placeholder: 'Comece a digitar o conteúdo da sua aula aqui...',
+      }),
+    ],
+    content: '',
+    onUpdate: ({ editor: ed }) => {
+      // Se estamos aplicando conteúdo remoto, ignora esta atualização
+      if (isApplyingRemote.current) {
+        isApplyingRemote.current = false;
+        return;
+      }
+      setLocalContent(ed.getHTML());
+      setLocalRawText(ed.getText());
+      setSaveStatus('saving');
+    },
+    immediatelyRender: false,
+  });
+
+  // Sincroniza conteúdo do servidor → editor quando leaf carrega/atualiza
   useEffect(() => {
-    if (leaf) {
-      setLocalTitle(leaf.title);
-      setLocalContent(leaf.content);
-      isFirstRender.current = true;
+    if (!leaf || !editor) return;
+
+    const serverContent = leaf.content || '';
+    const currentHtml = localContent;
+
+    if (currentHtml !== serverContent) {
+      isApplyingRemote.current = true;
+      editor.commands.setContent(serverContent);
+      // Normaliza para o formato HTML do TipTap
+      setLocalContent(editor.getHTML());
+      setLocalRawText(editor.getText());
     }
-  }, [leaf]);
+
+    setLocalTitle(leaf.title);
+    isFirstRender.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leaf?.id]);
 
   // Efeito de auto-salvamento para o título e conteúdo
   useEffect(() => {
@@ -66,7 +115,7 @@ export const EditorView: React.FC = () => {
         await updateLeaf({
           title: debouncedTitle,
           content: debouncedContent,
-          rawText: debouncedContent, // Simplificado: usa o conteúdo plano no rascunho
+          rawText: debouncedRawText,
         });
         setSaveStatus('saved');
       } catch (error) {
@@ -79,7 +128,7 @@ export const EditorView: React.FC = () => {
     if (leaf && (debouncedTitle !== leaf.title || debouncedContent !== leaf.content)) {
       performAutoSave();
     }
-  }, [debouncedTitle, debouncedContent, leaf, updateLeaf]);
+  }, [debouncedTitle, debouncedContent, debouncedRawText, leaf, updateLeaf]);
 
   const handleGenerateSummary = async () => {
     if (!leafId) return;
@@ -164,15 +213,15 @@ export const EditorView: React.FC = () => {
             className="w-full text-2xl font-heading font-extrabold tracking-tight bg-transparent text-slate-900 dark:text-dark-50 placeholder-slate-350 focus:outline-none mb-6 border-b border-transparent focus:border-slate-100 dark:focus:border-dark-800 pb-2 transition-all"
           />
 
-          <textarea
-            value={localContent}
-            onChange={(e) => {
-              setLocalContent(e.target.value);
-              setSaveStatus('saving');
-            }}
-            placeholder="Comece a digitar o conteúdo da sua aula aqui..."
-            className="w-full flex-grow bg-transparent text-slate-750 dark:text-dark-100 placeholder-slate-400 focus:outline-none resize-none overflow-y-auto leading-relaxed text-base"
-          />
+          <EditorToolbar editor={editor} />
+
+          <div className="tiptap-editor flex-grow overflow-y-auto text-slate-750 dark:text-dark-100 relative">
+            <EditorBubbleMenu editor={editor} />
+            <EditorContent
+              editor={editor}
+              className="w-full h-full [&_.ProseMirror]:outline-none [&_.ProseMirror]:min-h-[200px] [&_.ProseMirror]:leading-relaxed [&_.ProseMirror]:text-base [&_.ProseMirror]:caret-slate-800 [&_.dark_.ProseMirror]:caret-dark-100 [&_.ProseMirror_p]:my-2 [&_.ProseMirror_p:first-child]:mt-0 [&_.ProseMirror_h1]:text-3xl [&_.ProseMirror_h1]:font-heading [&_.ProseMirror_h1]:font-extrabold [&_.ProseMirror_h1]:tracking-tight [&_.ProseMirror_h1]:mb-3 [&_.ProseMirror_h1]:mt-6 [&_.ProseMirror_h1]:text-slate-900 [&_.dark_.ProseMirror_h1]:text-dark-50 [&_.ProseMirror_h2]:text-2xl [&_.ProseMirror_h2]:font-heading [&_.ProseMirror_h2]:font-bold [&_.ProseMirror_h2]:tracking-tight [&_.ProseMirror_h2]:mb-2 [&_.ProseMirror_h2]:mt-4 [&_.ProseMirror_h2]:text-slate-800 [&_.dark_.ProseMirror_h2]:text-dark-100 [&_.ProseMirror_ul]:pl-6 [&_.ProseMirror_ol]:pl-6 [&_.ProseMirror_li]:my-1.5 [&_.ProseMirror_li_p]:my-0"
+            />
+          </div>
         </div>
 
         {/* Lado Direito - Painel de IA */}
@@ -237,7 +286,7 @@ export const EditorView: React.FC = () => {
                       onClick={handleGenerateSummary}
                       isLoading={isGeneratingSummary}
                       leftIcon={<Sparkles className="h-4.5 w-4.5" />}
-                      disabled={!localContent.trim()}
+                      disabled={!localRawText.trim()}
                     >
                       Gerar Resumo por IA
                     </Button>
@@ -265,7 +314,7 @@ export const EditorView: React.FC = () => {
                       onClick={handleGenerateFlashcards}
                       isLoading={isGeneratingFlashcards}
                       leftIcon={<Sparkles className="h-4.5 w-4.5" />}
-                      disabled={!localContent.trim()}
+                      disabled={!localRawText.trim()}
                     >
                       Gerar Flashcards por IA
                     </Button>

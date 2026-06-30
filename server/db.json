@@ -82,6 +82,15 @@
       "color": "#10b981",
       "createdAt": "2026-06-30T00:34:22.668Z",
       "updatedAt": "2026-06-30T00:34:22.668Z"
+    },
+    {
+      "id": "5c22b198-7a62-4025-8465-167896a35ac5",
+      "userId": "8153bdd8-ebfd-46e5-9374-2188985d8b72",
+      "title": "Engenharia de Software",
+      "description": null,
+      "color": "#f59e0b",
+      "createdAt": "2026-06-30T00:52:20.482Z",
+      "updatedAt": "2026-06-30T00:52:20.482Z"
     }
   ],
   "leaves": [
@@ -112,6 +121,34 @@
       "content": "Conteudo editado",
       "createdAt": "2026-06-30T00:34:22.722Z",
       "updatedAt": "2026-06-30T00:34:22.950Z"
+    },
+    {
+      "id": "bd9c5dfb-eef8-4482-866b-2b8050819e7e",
+      "notebookId": "5c22b198-7a62-4025-8465-167896a35ac5",
+      "title": "Introdućao ao protocolo HTTP",
+      "content": "O módulo HTTP é a fundação da comunicação na internet. Ele atua como um carteiro digital em um modelo cliente-servidor. O cliente (como o seu navegador) envia uma requisição, e o servidor processa essa solicitação e retorna uma resposta.Abaixo, veja como essa troca de mensagens funciona e como ela é vital para o desenvolvimento web:O Modelo Cliente-ServidorA internet funciona graças a esse padrão de troca de mensagens. Quando você digita um site ou usa um aplicativo, seu dispositivo assume o papel de cliente e inicia a conversa. O servidor, que fica hospedando a aplicação, recebe o pedido, processa as informações e devolve os dados (como páginas HTML, imagens ou dados em JSON).Requisições e RespostasPara que a comunicação seja compreendida por ambas as partes, ela é estruturada em duas vias:Requisições (Requests): Enviadas pelo cliente para o servidor. Elas contêm o método (ou verbo) que define a ação desejada (ex: GET para buscar dados, POST para enviar formulários), além de cabeçalhos (headers) com metadados e o caminho da URL.Respostas (Responses): Enviadas pelo servidor de volta ao cliente. Elas incluem um código de status (ex: 200 para sucesso, 404 para página não encontrada), cabeçalhos e o corpo da mensagem, que carrega o conteúdo real (um arquivo de texto, HTML, etc.).O Conceito StatelessUma das características mais importantes do HTTP é que ele é um protocolo stateless (sem estado). Isso significa que o servidor não guarda a memória de requisições anteriores. Cada solicitação é tratada de forma totalmente independente pelas máquinas. Para manter o usuário conectado ou lembrar itens em um carrinho de compras, por exemplo, o desenvolvimento da sua aplicação precisa gerenciar sessões ou tokens de autenticação.",
+      "rawText": "O módulo HTTP é a fundação da comunicação na internet. Ele atua como um carteiro digital em um modelo cliente-servidor. O cliente (como o seu navegador) envia uma requisição, e o servidor processa essa solicitação e retorna uma resposta.Abaixo, veja como essa troca de mensagens funciona e como ela é vital para o desenvolvimento web:O Modelo Cliente-ServidorA internet funciona graças a esse padrão de troca de mensagens. Quando você digita um site ou usa um aplicativo, seu dispositivo assume o papel de cliente e inicia a conversa. O servidor, que fica hospedando a aplicação, recebe o pedido, processa as informações e devolve os dados (como páginas HTML, imagens ou dados em JSON).Requisições e RespostasPara que a comunicação seja compreendida por ambas as partes, ela é estruturada em duas vias:Requisições (Requests): Enviadas pelo cliente para o servidor. Elas contêm o método (ou verbo) que define a ação desejada (ex: GET para buscar dados, POST para enviar formulários), além de cabeçalhos (headers) com metadados e o caminho da URL.Respostas (Responses): Enviadas pelo servidor de volta ao cliente. Elas incluem um código de status (ex: 200 para sucesso, 404 para página não encontrada), cabeçalhos e o corpo da mensagem, que carrega o conteúdo real (um arquivo de texto, HTML, etc.).O Conceito StatelessUma das características mais importantes do HTTP é que ele é um protocolo stateless (sem estado). Isso significa que o servidor não guarda a memória de requisições anteriores. Cada solicitação é tratada de forma totalmente independente pelas máquinas. Para manter o usuário conectado ou lembrar itens em um carrinho de compras, por exemplo, o desenvolvimento da sua aplicação precisa gerenciar sessões ou tokens de autenticação.",
+      "summary": "### Resumo da Aula: Introdućao ao protocolo HTTP\n\nEste resumo foi gerado dinamicamente pela inteligência artificial com base nas notas fornecidas.\n\n- **Conceito Principal**: Foco em Introdućao ao protocolo HTTP.\n- **Ideias Chave**:\n  1. A importância de reter os conceitos práticos e relacioná-los a exemplos do cotidiano.\n  2. Uso de revisões sistemáticas para evitar a curva do esquecimento de Ebbinghaus.\n- **Conteúdo Analisado**: \n  > \"O módulo HTTP é a fundação da comunicação na internet. Ele atua como um carteiro digital em um modelo cliente-servidor. O cliente (como o seu navegado...\"\n\n*Utilize os flashcards associados para testar sua memória ativa!*",
+      "createdAt": "2026-06-30T00:52:42.891Z",
+      "updatedAt": "2026-06-30T00:53:38.541Z"
+    },
+    {
+      "id": "13dca7bb-5436-47b5-bb36-ecda51bbad78",
+      "notebookId": "5c22b198-7a62-4025-8465-167896a35ac5",
+      "title": "etsret",
+      "content": "dsalaskljdask jdaskdpasjd ikapdskaskd acmssak cakskaospdlasmlsa kd\\ac;lasmlcsakdpo jadas,clpkas ;casa sc asko ascas clsmcla cmsamopc cpa caso mcal;kl;cmskl ckc[pask poc cpo kcopaj c skmlcmojapojsm c;macspkos ck opcopakscpjacmpcpamlm oca scicnknjccajakckpoajicajioacmlac pocajopcjocpackopajiojcplacsopkj c aopc ajc opaclascmsioafoij scas;lcm si jcuivnaock xcajaop jviosn spak ciocaijs jo caoijcaij s kanfkajfaojfqojqhjfna la jopjifojfna snf ajiafj ajf paj fjfvi fjisjwfopqmf kan fqjf al;apoj fowj qifmas jfopijwopfej oaj skan fa jopfj wj fanf nuwqhuf oiahfiofk mw jsubfnaj fiaj lkfndknscioajf ijkfnoia fhfiaojf nfkdjoapfj fiosjfiohjiwqoj f,fnoajqi jfs nkdmfaj pfajifqjp lfa opf jiojdioq jfkalnfaln fla jfoiasfji jqfjio fanfakbfjauhfiof oiksio fjij fa kbnfkan oisj of aoiaf afsfa",
+      "rawText": "dsalaskljdask jdaskdpasjd ikapdskaskd acmssak cakskaospdlasmlsa kd\\ac;lasmlcsakdpo jadas,clpkas ;casa sc asko ascas clsmcla cmsamopc cpa caso mcal;kl;cmskl ckc[pask poc cpo kcopaj c skmlcmojapojsm c;macspkos ck opcopakscpjacmpcpamlm oca scicnknjccajakckpoajicajioacmlac pocajopcjocpackopajiojcplacsopkj c aopc ajc opaclascmsioafoij scas;lcm si jcuivnaock xcajaop jviosn spak ciocaijs jo caoijcaij s kanfkajfaojfqojqhjfna la jopjifojfna snf ajiafj ajf paj fjfvi fjisjwfopqmf kan fqjf al;apoj fowj qifmas jfopijwopfej oaj skan fa jopfj wj fanf nuwqhuf oiahfiofk mw jsubfnaj fiaj lkfndknscioajf ijkfnoia fhfiaojf nfkdjoapfj fiosjfiohjiwqoj f,fnoajqi jfs nkdmfaj pfajifqjp lfa opf jiojdioq jfkalnfaln fla jfoiasfji jqfjio fanfakbfjauhfiof oiksio fjij fa kbnfkan oisj of aoiaf afsfa",
+      "createdAt": "2026-06-30T01:03:30.925Z",
+      "updatedAt": "2026-06-30T01:04:34.321Z"
+    },
+    {
+      "id": "47e69fc8-ec30-48ae-8e49-23e9a1709f16",
+      "notebookId": "5c22b198-7a62-4025-8465-167896a35ac5",
+      "title": "aula 3",
+      "content": "<p></p>",
+      "rawText": "",
+      "createdAt": "2026-06-30T01:27:14.176Z",
+      "updatedAt": "2026-06-30T01:27:24.251Z"
     }
   ],
   "flashcards": [
