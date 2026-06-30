@@ -62,6 +62,9 @@ export const EditorView: React.FC = () => {
   // Rastreia o último estado salvo no servidor para evitar saves duplicados
   const lastSavedRef = useRef({ title: '', content: '' });
 
+  // Dispara abertura do AnnotationPopover para editar anotação existente
+  const [annotationToEdit, setAnnotationToEdit] = useState<{ text: string } | null>(null);
+
   // Editor TipTap
   const editor = useEditor({
     extensions: [
@@ -98,6 +101,32 @@ export const EditorView: React.FC = () => {
     },
     immediatelyRender: false,
   });
+
+  // Detecta clique em texto anotado e abre o popover para edição
+  useEffect(() => {
+    if (!editor) return;
+
+    const editorDom = editor.view?.dom as HTMLElement | undefined;
+    if (!editorDom) return;
+
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      const markEl = target?.closest?.('mark.annotation-anchor[data-annotation]');
+      if (!markEl) return;
+
+      const text = markEl.getAttribute('data-annotation') || '';
+      if (!text) return;
+
+      // Seleciona o range da anotação e abre o popover
+      requestAnimationFrame(() => {
+        editor.chain().focus().extendMarkRange('annotation').run();
+        setAnnotationToEdit({ text });
+      });
+    };
+
+    editorDom.addEventListener('click', handleClick);
+    return () => editorDom.removeEventListener('click', handleClick);
+  }, [editor]);
 
   // Sincroniza conteúdo do servidor → editor quando leaf carrega/atualiza
   useEffect(() => {
@@ -233,7 +262,7 @@ export const EditorView: React.FC = () => {
             className="w-full text-2xl font-heading font-extrabold tracking-tight bg-transparent text-slate-900 dark:text-dark-50 placeholder-slate-350 focus:outline-none mb-6 border-b border-transparent focus:border-slate-100 dark:focus:border-dark-800 pb-2 transition-all"
           />
 
-          <EditorToolbar editor={editor} />
+          <EditorToolbar editor={editor} annotationTrigger={annotationToEdit} />
 
           <div className="tiptap-editor flex-grow overflow-y-auto text-slate-750 dark:text-dark-100 relative">
             <EditorBubbleMenu editor={editor} />

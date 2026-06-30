@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Editor } from '@tiptap/react';
 import { Link2, Link2Off, Save } from 'lucide-react';
+import { useDropdown } from '../hooks/useDropdown';
 
 interface LinkPopoverProps {
   editor: Editor | null;
@@ -9,22 +10,9 @@ interface LinkPopoverProps {
 const isMac = typeof navigator !== 'undefined' && navigator.platform.toLowerCase().includes('mac');
 
 export const LinkPopover: React.FC<LinkPopoverProps> = ({ editor }) => {
-  const [open, setOpen] = useState(false);
+  const { open, setOpen, containerRef, buttonRef, dropdownStyle, recalcPosition } = useDropdown({ scrollClose: false });
   const [url, setUrl] = useState('');
-  const popoverRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Close on click outside
-  useEffect(() => {
-    if (!open) return;
-    const handleClick = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [open]);
 
   // Focus input when opened
   useEffect(() => {
@@ -35,8 +23,9 @@ export const LinkPopover: React.FC<LinkPopoverProps> = ({ editor }) => {
     if (!editor) return;
     const previousUrl = editor.getAttributes('link').href || '';
     setUrl(previousUrl);
+    recalcPosition();
     setOpen(true);
-  }, [editor]);
+  }, [editor, recalcPosition, setOpen]);
 
   const saveLink = () => {
     if (!editor) return;
@@ -65,8 +54,9 @@ export const LinkPopover: React.FC<LinkPopoverProps> = ({ editor }) => {
   const hasLink = editor?.isActive('link') ?? false;
 
   return (
-    <div className="relative" ref={popoverRef}>
+    <div className="relative" ref={containerRef}>
       <button
+        ref={buttonRef}
         type="button"
         onClick={openPopover}
         title={`Link (${isMac ? '⌘K' : 'Ctrl+K'})`}
@@ -81,11 +71,8 @@ export const LinkPopover: React.FC<LinkPopoverProps> = ({ editor }) => {
 
       {open && (
         <div
+          style={dropdownStyle}
           className="fixed z-[9999] mt-0 min-w-[280px] bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-xl shadow-xl p-3"
-          style={{
-            top: (popoverRef.current?.getBoundingClientRect().bottom ?? 0) + 4,
-            left: Math.max(8, (popoverRef.current?.getBoundingClientRect().left ?? 0)),
-          }}
         >
           <div className="flex items-center gap-2">
             <input

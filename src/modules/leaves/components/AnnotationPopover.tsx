@@ -1,44 +1,44 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Editor } from '@tiptap/react';
 import { MessageSquarePlus, MessageSquareText, X, Save } from 'lucide-react';
+import { useDropdown } from '../hooks/useDropdown';
 
 interface AnnotationPopoverProps {
   editor: Editor | null;
   variant?: 'toolbar' | 'bubble';
+  /**
+   * Dispara a abertura do popover com o texto pré-preenchido.
+   * Mude a referência do objeto para reabrir com um novo texto.
+   */
+  editTrigger?: { text: string } | null;
 }
 
 export const AnnotationPopover: React.FC<AnnotationPopoverProps> = ({
   editor,
   variant = 'toolbar',
+  editTrigger,
 }) => {
-  const [open, setOpen] = useState(false);
+  const { open, setOpen, close, containerRef, buttonRef, dropdownStyle, recalcPosition } = useDropdown();
   const [annotationText, setAnnotationText] = useState('');
-  const containerRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
-
-  // Close on click outside and scroll
-  useEffect(() => {
-    if (!open) return;
-    const close = () => setOpen(false);
-    const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        close();
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('scroll', close, true);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('scroll', close, true);
-    };
-  }, [open]);
+  const lastTriggerRef = useRef<string | null>(null);
 
   // Focus textarea when opened
   useEffect(() => {
     if (open) textareaRef.current?.focus();
   }, [open]);
+
+  // External trigger: abre o popover pré-preenchido ao clicar em anotação no editor
+  useEffect(() => {
+    if (!editTrigger || !editor) return;
+    const text = editTrigger.text;
+    if (text === lastTriggerRef.current) return;
+    lastTriggerRef.current = text;
+
+    setAnnotationText(text);
+    recalcPosition();
+    setOpen(true);
+  }, [editTrigger, editor, recalcPosition, setOpen]);
 
   if (!editor) return null;
 
@@ -46,7 +46,7 @@ export const AnnotationPopover: React.FC<AnnotationPopoverProps> = ({
 
   const togglePopover = () => {
     if (open) {
-      setOpen(false);
+      close();
       return;
     }
 
@@ -54,35 +54,33 @@ export const AnnotationPopover: React.FC<AnnotationPopoverProps> = ({
     const { from, to } = editor.state.selection;
     if (from === to) return;
 
-    setAnnotationText('');
-    if (buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      setDropdownStyle({
-        top: rect.bottom + 4,
-        left: Math.max(8, rect.left),
-      });
-    }
+    // Pre-fill with existing annotation text when cursor is on an annotation
+    const existingText = editor.getAttributes('annotation').text as string | undefined;
+    setAnnotationText(existingText || '');
+    recalcPosition();
     setOpen(true);
   };
 
   const saveAnnotation = () => {
     const text = annotationText.trim();
     if (!text) {
-      setOpen(false);
+      close();
       return;
     }
     editor.chain().focus().setAnnotation({ text }).run();
-    setOpen(false);
+    lastTriggerRef.current = null;
+    close();
   };
 
   const removeAnnotation = () => {
     editor.chain().focus().unsetAnnotation().run();
-    setOpen(false);
+    lastTriggerRef.current = null;
+    close();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) saveAnnotation();
-    if (e.key === 'Escape') setOpen(false);
+    if (e.key === 'Escape') close();
   };
 
   const hasSelection = !editor.state.selection.empty;
@@ -125,7 +123,7 @@ export const AnnotationPopover: React.FC<AnnotationPopoverProps> = ({
             </span>
             <button
               type="button"
-              onClick={() => setOpen(false)}
+              onClick={close}
               className="p-0.5 rounded text-slate-400 hover:text-slate-600 dark:hover:text-dark-200 transition-colors cursor-pointer"
             >
               <X className="h-3.5 w-3.5" />

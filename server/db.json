@@ -91,6 +91,15 @@
       "color": "#f59e0b",
       "createdAt": "2026-06-30T00:52:20.482Z",
       "updatedAt": "2026-06-30T00:52:20.482Z"
+    },
+    {
+      "id": "e2c8160b-3f68-4c0f-a0fb-e77416f2f64f",
+      "userId": "8153bdd8-ebfd-46e5-9374-2188985d8b72",
+      "title": "Calculo",
+      "description": null,
+      "color": "#ef4444",
+      "createdAt": "2026-06-30T02:23:49.494Z",
+      "updatedAt": "2026-06-30T02:23:49.494Z"
     }
   ],
   "leaves": [
@@ -148,6 +157,15 @@
       "rawText": "ggg\\\n\njjjj hhgggcddv",
       "createdAt": "2026-06-30T01:27:14.176Z",
       "updatedAt": "2026-06-30T01:35:04.521Z"
+    },
+    {
+      "id": "b3badac6-43ab-4571-8622-b579665efab9",
+      "notebookId": "e2c8160b-3f68-4c0f-a0fb-e77416f2f64f",
+      "title": "",
+      "content": "<p>kjdaslkjdlaksjd aa dasdjp ajdopas<mark data-annotation=\"teste de anotacao\" class=\"annotation-anchor\">dmada</mark> da dsdajl ;da das;'dkasdd a</p>",
+      "rawText": "kjdaslkjdlaksjd aa dasdjp ajdopasdmada da dsdajl ;da das;'dkasdd a",
+      "createdAt": "2026-06-30T02:24:15.090Z",
+      "updatedAt": "2026-06-30T02:25:01.356Z"
     }
   ],
   "flashcards": [

@@ -1,6 +1,8 @@
 import React from 'react';
 import type { Editor } from '@tiptap/react';
 import {
+  Undo2,
+  Redo2,
   Bold,
   Italic,
   Underline,
@@ -19,6 +21,7 @@ import { AnnotationPopover } from './AnnotationPopover';
 interface ToolbarButtonProps {
   onClick: () => void;
   isActive?: boolean;
+  disabled?: boolean;
   title: string;
   children: React.ReactNode;
 }
@@ -26,17 +29,21 @@ interface ToolbarButtonProps {
 const ToolbarButton: React.FC<ToolbarButtonProps> = ({
   onClick,
   isActive,
+  disabled,
   title,
   children,
 }) => (
   <button
     type="button"
     onClick={onClick}
+    disabled={disabled}
     title={title}
     className={`p-2 rounded-lg transition-all duration-150 cursor-pointer ${
-      isActive
-        ? 'bg-brand-100 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400 shadow-sm'
-        : 'text-slate-500 hover:bg-slate-100 dark:text-dark-400 dark:hover:bg-dark-800'
+      disabled
+        ? 'text-slate-300 dark:text-dark-600 cursor-not-allowed'
+        : isActive
+          ? 'bg-brand-100 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400 shadow-sm'
+          : 'text-slate-500 hover:bg-slate-100 dark:text-dark-400 dark:hover:bg-dark-800'
     }`}
   >
     {children}
@@ -45,6 +52,7 @@ const ToolbarButton: React.FC<ToolbarButtonProps> = ({
 
 interface EditorToolbarProps {
   editor: Editor | null;
+  annotationTrigger?: { text: string } | null;
 }
 
 const isMac = typeof navigator !== 'undefined' && navigator.platform.toLowerCase().includes('mac');
@@ -54,11 +62,32 @@ const shift = isMac ? '⇧' : 'Shift+';
 const kbd = (keys: string) => `${mod}${keys}`;
 const kbdShift = (keys: string) => `${mod}${shift}${keys}`;
 
-export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor }) => {
+export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor, annotationTrigger }) => {
   if (!editor) return null;
+
+  const canUndo = editor.can().undo();
+  const canRedo = editor.can().redo();
 
   return (
     <div className="flex items-center gap-1 pb-3 mb-4 border-b border-slate-100 dark:border-dark-800/80 flex-shrink-0 overflow-x-auto">
+      <ToolbarButton
+        onClick={() => editor.chain().focus().undo().run()}
+        disabled={!canUndo}
+        title={`Desfazer (${kbd('Z')})`}
+      >
+        <Undo2 className="h-4 w-4" />
+      </ToolbarButton>
+
+      <ToolbarButton
+        onClick={() => editor.chain().focus().redo().run()}
+        disabled={!canRedo}
+        title={`Refazer (${kbdShift('Z')})`}
+      >
+        <Redo2 className="h-4 w-4" />
+      </ToolbarButton>
+
+      <div className="w-px h-5 bg-slate-200 dark:bg-dark-700 mx-1" />
+
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
         isActive={editor.isActive('bold')}
@@ -126,7 +155,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor }) => {
 
       <HighlightPopover editor={editor} variant="toolbar" />
 
-      <AnnotationPopover editor={editor} variant="toolbar" />
+      <AnnotationPopover editor={editor} variant="toolbar" editTrigger={annotationTrigger} />
 
       <div className="w-px h-5 bg-slate-200 dark:bg-dark-700 mx-1" />
 

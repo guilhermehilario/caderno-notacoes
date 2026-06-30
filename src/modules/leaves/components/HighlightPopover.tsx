@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
 import type { Editor } from '@tiptap/react';
 import { Highlighter } from 'lucide-react';
+import { useDropdown } from '../hooks/useDropdown';
 
 interface HighlightColor {
   name: string;
@@ -24,40 +24,13 @@ export const HighlightPopover: React.FC<HighlightPopoverProps> = ({
   editor,
   variant = 'toolbar',
 }) => {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
-
-  // Close on click outside and scroll
-  useEffect(() => {
-    if (!open) return;
-    const close = () => setOpen(false);
-    const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        close();
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('scroll', close, true);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('scroll', close, true);
-    };
-  }, [open]);
+  const { open, setOpen, close, containerRef, buttonRef, dropdownStyle, recalcPosition } = useDropdown();
+  const isToolbar = variant === 'toolbar';
 
   if (!editor) return null;
 
   const toggleOpen = () => {
-    if (!open) {
-      if (buttonRef.current) {
-        const rect = buttonRef.current.getBoundingClientRect();
-        setDropdownStyle({
-          top: rect.bottom + 4,
-          left: Math.max(8, rect.left),
-        });
-      }
-    }
+    if (!open) recalcPosition();
     setOpen(!open);
   };
 
@@ -68,10 +41,9 @@ export const HighlightPopover: React.FC<HighlightPopoverProps> = ({
     } else {
       editor.chain().focus().toggleHighlight({ color }).run();
     }
-    setOpen(false);
+    close();
   };
 
-  const isToolbar = variant === 'toolbar';
   const activeColor = HIGHLIGHT_COLORS.find(
     (c) => editor.isActive('highlight', { color: c.color })
   );
@@ -160,7 +132,7 @@ export const HighlightPopover: React.FC<HighlightPopoverProps> = ({
                 type="button"
                 onClick={() => {
                   editor.chain().focus().unsetHighlight().run();
-                  setOpen(false);
+                  close();
                 }}
                 className="w-full text-left px-2 py-2 rounded-lg text-sm text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors cursor-pointer"
               >

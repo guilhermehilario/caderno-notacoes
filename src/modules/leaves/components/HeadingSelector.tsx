@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
 import type { Editor } from '@tiptap/react';
 import { Type } from 'lucide-react';
+import { useDropdown } from '../hooks/useDropdown';
 
 const isMac = typeof navigator !== 'undefined' && navigator.platform.toLowerCase().includes('mac');
 const modStr = isMac ? '⌘' : 'Ctrl+';
@@ -41,28 +41,8 @@ export const HeadingSelector: React.FC<HeadingSelectorProps> = ({
   editor,
   variant = 'toolbar',
 }) => {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
-
-  // Fecha ao clicar fora ou scrollar
-  useEffect(() => {
-    if (!open) return;
-
-    const close = () => setOpen(false);
-    const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        close();
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('scroll', close, true);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('scroll', close, true);
-    };
-  }, [open]);
+  const { open, setOpen, close, containerRef, buttonRef, dropdownStyle, recalcPosition } = useDropdown();
+  const isToolbar = variant === 'toolbar';
 
   if (!editor) return null;
 
@@ -75,31 +55,20 @@ export const HeadingSelector: React.FC<HeadingSelectorProps> = ({
     } else {
       editor.chain().focus().toggleHeading({ level: level as 1 | 2 | 3 }).run();
     }
-    setOpen(false);
+    close();
   };
 
-  const toggleOpen = () => {
-    if (!open) {
-      // Calcula posição relativa à viewport (fixed) para evitar clipping dos pais
-      if (buttonRef.current) {
-        const rect = buttonRef.current.getBoundingClientRect();
-        setDropdownStyle({
-          top: rect.bottom + 4,
-          left: Math.max(8, rect.left), // Evita que saia da tela à esquerda
-        });
-      }
-    }
+  const handleToggle = () => {
+    if (!open) recalcPosition();
     setOpen(!open);
   };
-
-  const isToolbar = variant === 'toolbar';
 
   return (
     <div className="relative" ref={containerRef}>
       <button
         ref={buttonRef}
         type="button"
-        onClick={toggleOpen}
+        onClick={handleToggle}
         title={`Estilo de texto (${activeLabel})`}
         className={`inline-flex items-center gap-1.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer ${
           isToolbar
