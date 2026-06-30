@@ -7,12 +7,11 @@ import {
   Underline,
   Strikethrough,
   Code,
-  Heading1,
-  Heading2,
   TextQuote,
   List,
   ListOrdered,
 } from 'lucide-react';
+import { HeadingSelector } from './HeadingSelector';
 
 interface BubbleMenuItemProps {
   onClick: () => void;
@@ -41,6 +40,13 @@ const BubbleMenuItem: React.FC<BubbleMenuItemProps> = ({
   </button>
 );
 
+const isMac = typeof navigator !== 'undefined' && navigator.platform.toLowerCase().includes('mac');
+const mod = isMac ? '⌘' : 'Ctrl+';
+const shift = isMac ? '⇧' : 'Shift+';
+
+const kbd = (keys: string) => `${mod}${keys}`;
+const kbdShift = (keys: string) => `${mod}${shift}${keys}`;
+
 interface EditorBubbleMenuProps {
   editor: Editor | null;
 }
@@ -59,7 +65,7 @@ export const EditorBubbleMenu: React.FC<EditorBubbleMenuProps> = ({ editor }) =>
       <BubbleMenuItem
         onClick={() => editor.chain().focus().toggleBold().run()}
         isActive={editor.isActive('bold')}
-        title="Negrito"
+        title={`Negrito (${kbd('B')})`}
       >
         <Bold className="h-3.5 w-3.5" />
       </BubbleMenuItem>
@@ -67,7 +73,7 @@ export const EditorBubbleMenu: React.FC<EditorBubbleMenuProps> = ({ editor }) =>
       <BubbleMenuItem
         onClick={() => editor.chain().focus().toggleItalic().run()}
         isActive={editor.isActive('italic')}
-        title="Itálico"
+        title={`Itálico (${kbd('I')})`}
       >
         <Italic className="h-3.5 w-3.5" />
       </BubbleMenuItem>
@@ -75,7 +81,7 @@ export const EditorBubbleMenu: React.FC<EditorBubbleMenuProps> = ({ editor }) =>
       <BubbleMenuItem
         onClick={() => editor.chain().focus().toggleUnderline().run()}
         isActive={editor.isActive('underline')}
-        title="Sublinhado"
+        title={`Sublinhado (${kbdShift('U')})`}
       >
         <Underline className="h-3.5 w-3.5" />
       </BubbleMenuItem>
@@ -83,7 +89,7 @@ export const EditorBubbleMenu: React.FC<EditorBubbleMenuProps> = ({ editor }) =>
       <BubbleMenuItem
         onClick={() => editor.chain().focus().toggleStrike().run()}
         isActive={editor.isActive('strike')}
-        title="Tachado"
+        title={`Tachado (${kbdShift('S')})`}
       >
         <Strikethrough className="h-3.5 w-3.5" />
       </BubbleMenuItem>
@@ -91,35 +97,21 @@ export const EditorBubbleMenu: React.FC<EditorBubbleMenuProps> = ({ editor }) =>
       <BubbleMenuItem
         onClick={() => editor.chain().focus().toggleCode().run()}
         isActive={editor.isActive('code')}
-        title="Código"
+        title={`Código (${kbd('E')})`}
       >
         <Code className="h-3.5 w-3.5" />
       </BubbleMenuItem>
 
       <div className="w-px h-4 bg-slate-600 dark:bg-dark-600 mx-1" />
 
-      <BubbleMenuItem
-        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-        isActive={editor.isActive('heading', { level: 1 })}
-        title="Título 1"
-      >
-        <Heading1 className="h-3.5 w-3.5" />
-      </BubbleMenuItem>
-
-      <BubbleMenuItem
-        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        isActive={editor.isActive('heading', { level: 2 })}
-        title="Título 2"
-      >
-        <Heading2 className="h-3.5 w-3.5" />
-      </BubbleMenuItem>
+      <HeadingSelector editor={editor} variant="bubble" />
 
       <div className="w-px h-4 bg-slate-600 dark:bg-dark-600 mx-1" />
 
       <BubbleMenuItem
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
         isActive={editor.isActive('blockquote')}
-        title="Citação"
+        title={`Citação (${kbdShift('B')})`}
       >
         <TextQuote className="h-3.5 w-3.5" />
       </BubbleMenuItem>
@@ -129,7 +121,7 @@ export const EditorBubbleMenu: React.FC<EditorBubbleMenuProps> = ({ editor }) =>
       <BubbleMenuItem
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         isActive={editor.isActive('bulletList')}
-        title="Lista com marcadores"
+        title={`Lista com marcadores (${kbdShift('8')})`}
       >
         <List className="h-3.5 w-3.5" />
       </BubbleMenuItem>
@@ -137,7 +129,7 @@ export const EditorBubbleMenu: React.FC<EditorBubbleMenuProps> = ({ editor }) =>
       <BubbleMenuItem
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
         isActive={editor.isActive('orderedList')}
-        title="Lista numerada"
+        title={`Lista numerada (${kbdShift('9')})`}
       >
         <ListOrdered className="h-3.5 w-3.5" />
       </BubbleMenuItem>

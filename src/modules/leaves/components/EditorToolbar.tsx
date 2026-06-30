@@ -6,13 +6,12 @@ import {
   Underline,
   Strikethrough,
   Code,
-  Heading1,
-  Heading2,
   TextQuote,
   SeparatorHorizontal,
   List,
   ListOrdered,
 } from 'lucide-react';
+import { HeadingSelector } from './HeadingSelector';
 
 interface ToolbarButtonProps {
   onClick: () => void;
@@ -45,6 +44,13 @@ interface EditorToolbarProps {
   editor: Editor | null;
 }
 
+const isMac = typeof navigator !== 'undefined' && navigator.platform.toLowerCase().includes('mac');
+const mod = isMac ? '⌘' : 'Ctrl+';
+const shift = isMac ? '⇧' : 'Shift+';
+
+const kbd = (keys: string) => `${mod}${keys}`;
+const kbdShift = (keys: string) => `${mod}${shift}${keys}`;
+
 export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor }) => {
   if (!editor) return null;
 
@@ -53,7 +59,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor }) => {
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
         isActive={editor.isActive('bold')}
-        title="Negrito"
+        title={`Negrito (${kbd('B')})`}
       >
         <Bold className="h-4 w-4" />
       </ToolbarButton>
@@ -61,7 +67,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor }) => {
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleItalic().run()}
         isActive={editor.isActive('italic')}
-        title="Itálico"
+        title={`Itálico (${kbd('I')})`}
       >
         <Italic className="h-4 w-4" />
       </ToolbarButton>
@@ -69,7 +75,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor }) => {
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleUnderline().run()}
         isActive={editor.isActive('underline')}
-        title="Sublinhado"
+        title={`Sublinhado (${kbdShift('U')})`}
       >
         <Underline className="h-4 w-4" />
       </ToolbarButton>
@@ -77,7 +83,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor }) => {
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleStrike().run()}
         isActive={editor.isActive('strike')}
-        title="Tachado"
+        title={`Tachado (${kbdShift('S')})`}
       >
         <Strikethrough className="h-4 w-4" />
       </ToolbarButton>
@@ -85,42 +91,28 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor }) => {
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleCode().run()}
         isActive={editor.isActive('code')}
-        title="Código"
+        title={`Código (${kbd('E')})`}
       >
         <Code className="h-4 w-4" />
       </ToolbarButton>
 
       <div className="w-px h-5 bg-slate-200 dark:bg-dark-700 mx-1" />
 
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-        isActive={editor.isActive('heading', { level: 1 })}
-        title="Título 1"
-      >
-        <Heading1 className="h-4 w-4" />
-      </ToolbarButton>
-
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        isActive={editor.isActive('heading', { level: 2 })}
-        title="Título 2"
-      >
-        <Heading2 className="h-4 w-4" />
-      </ToolbarButton>
+      <HeadingSelector editor={editor} variant="toolbar" />
 
       <div className="w-px h-5 bg-slate-200 dark:bg-dark-700 mx-1" />
 
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
         isActive={editor.isActive('blockquote')}
-        title="Citação"
+        title={`Citação (${kbdShift('B')})`}
       >
         <TextQuote className="h-4 w-4" />
       </ToolbarButton>
 
       <ToolbarButton
         onClick={() => editor.chain().focus().setHorizontalRule().run()}
-        title="Linha horizontal"
+        title={`Linha horizontal (${kbdShift('-')})`}
       >
         <SeparatorHorizontal className="h-4 w-4" />
       </ToolbarButton>
@@ -130,7 +122,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor }) => {
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         isActive={editor.isActive('bulletList')}
-        title="Lista com marcadores"
+        title={`Lista com marcadores (${kbdShift('8')})`}
       >
         <List className="h-4 w-4" />
       </ToolbarButton>
@@ -138,7 +130,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor }) => {
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
         isActive={editor.isActive('orderedList')}
-        title="Lista numerada"
+        title={`Lista numerada (${kbdShift('9')})`}
       >
         <ListOrdered className="h-4 w-4" />
       </ToolbarButton>
