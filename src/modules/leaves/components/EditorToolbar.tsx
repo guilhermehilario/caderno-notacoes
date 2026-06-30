@@ -10,8 +10,11 @@ import {
   SeparatorHorizontal,
   List,
   ListOrdered,
+  MessageSquarePlus,
 } from 'lucide-react';
 import { HeadingSelector } from './HeadingSelector';
+import { LinkPopover } from './LinkPopover';
+import { HighlightPopover } from './HighlightPopover';
 
 interface ToolbarButtonProps {
   onClick: () => void;
@@ -115,6 +118,31 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor }) => {
         title={`Linha horizontal (${kbdShift('-')})`}
       >
         <SeparatorHorizontal className="h-4 w-4" />
+      </ToolbarButton>
+
+      <div className="w-px h-5 bg-slate-200 dark:bg-dark-700 mx-1" />
+
+      <LinkPopover editor={editor} />
+
+      <HighlightPopover editor={editor} variant="toolbar" />
+
+      <ToolbarButton
+        onClick={() => {
+          const selectedText = editor.state.doc.cut(
+            editor.state.selection.from,
+            editor.state.selection.to
+          ).textContent;
+          if (selectedText) {
+            const annotation = window.prompt('Digite sua anotação:');
+            if (annotation) {
+              editor.chain().focus().setAnnotation({ text: annotation }).run();
+            }
+          }
+        }}
+        isActive={editor.isActive('annotation')}
+        title="Marcar texto com anotação"
+      >
+        <MessageSquarePlus className="h-4 w-4" />
       </ToolbarButton>
 
       <div className="w-px h-5 bg-slate-200 dark:bg-dark-700 mx-1" />

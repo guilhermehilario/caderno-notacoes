@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
   ArrowLeft,
   Sparkles,
@@ -12,7 +12,10 @@ import {
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
+import ExtensionLink from '@tiptap/extension-link';
+import Highlight from '@tiptap/extension-highlight';
 import Placeholder from '@tiptap/extension-placeholder';
+import { Annotation } from '../extensions/Annotation';
 import { useLeaf } from '../hooks/useLeaves';
 import { useLeafFlashcards } from '../../study/hooks/useFlashcards';
 import { useDebounce } from '../../../hooks/useDebounce';
@@ -20,6 +23,7 @@ import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { EditorToolbar } from '../components/EditorToolbar';
 import { EditorBubbleMenu } from '../components/EditorBubbleMenu';
+import { AnnotationSidebar } from '../components/AnnotationSidebar';
 
 export const EditorView: React.FC = () => {
   const { notebookId, leafId } = useParams<{ notebookId: string; leafId: string }>();
@@ -42,7 +46,7 @@ export const EditorView: React.FC = () => {
   const [localContent, setLocalContent] = useState('');
   const [localRawText, setLocalRawText] = useState('');
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
-  const [activeTab, setActiveTab] = useState<'summary' | 'flashcards'>('summary');
+  const [activeTab, setActiveTab] = useState<'summary' | 'flashcards' | 'annotations'>('summary');
 
   // Impede loop: quando estamos aplicando conteúdo remoto (do servidor) para o editor
   const isApplyingRemote = useRef(false);
@@ -55,6 +59,9 @@ export const EditorView: React.FC = () => {
   // Evita salvar no primeiro render
   const isFirstRender = useRef(true);
 
+  // Rastreia o último estado salvo no servidor para evitar saves duplicados
+  const lastSavedRef = useRef({ title: '', content: '' });
+
   // Editor TipTap
   const editor = useEditor({
     extensions: [
@@ -64,6 +71,16 @@ export const EditorView: React.FC = () => {
         },
       }),
       Underline,
+      ExtensionLink.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: 'text-brand-500 hover:text-brand-600 underline underline-offset-2 cursor-pointer',
+        },
+      }),
+      Highlight.configure({
+        multicolor: true,
+      }),
+      Annotation,
       Placeholder.configure({
         placeholder: 'Comece a digitar o conteúdo da sua aula aqui...',
       }),
@@ -98,6 +115,7 @@ export const EditorView: React.FC = () => {
     }
 
     setLocalTitle(leaf.title);
+    lastSavedRef.current = { title: leaf.title, content: leaf.content || '' };
     isFirstRender.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leaf?.id]);
@@ -109,26 +127,28 @@ export const EditorView: React.FC = () => {
       return;
     }
 
-    const performAutoSave = async () => {
-      setSaveStatus('saving');
-      try {
-        await updateLeaf({
-          title: debouncedTitle,
-          content: debouncedContent,
-          rawText: debouncedRawText,
-        });
-        setSaveStatus('saved');
-      } catch (error) {
-        console.error('Erro no auto-save:', error);
-        setSaveStatus('error');
-      }
-    };
+    const lastSaved = lastSavedRef.current;
 
-    // Só dispara se os valores locais forem diferentes dos valores salvos da API
-    if (leaf && (debouncedTitle !== leaf.title || debouncedContent !== leaf.content)) {
+    // Só dispara se os valores debounced diferirem do último estado salvo
+    if (debouncedTitle !== lastSaved.title || debouncedContent !== lastSaved.content) {
+      const performAutoSave = async () => {
+        setSaveStatus('saving');
+        try {
+          await updateLeaf({
+            title: debouncedTitle,
+            content: debouncedContent,
+            rawText: debouncedRawText,
+          });
+          lastSavedRef.current = { title: debouncedTitle, content: debouncedContent };
+          setSaveStatus('saved');
+        } catch (error) {
+          console.error('Erro no auto-save:', error);
+          setSaveStatus('error');
+        }
+      };
       performAutoSave();
     }
-  }, [debouncedTitle, debouncedContent, debouncedRawText, leaf, updateLeaf]);
+  }, [debouncedTitle, debouncedContent, debouncedRawText, updateLeaf]);
 
   const handleGenerateSummary = async () => {
     if (!leafId) return;
@@ -160,9 +180,9 @@ export const EditorView: React.FC = () => {
     return (
       <div className="text-center p-8">
         <h3 className="text-lg font-bold">Folha de anotação não encontrada</h3>
-        <Link to={`/notebooks/${notebookId}`} className="text-brand-500 hover:underline">
+        <RouterLink to={`/notebooks/${notebookId}`} className="text-brand-500 hover:underline">
           Voltar para o caderno
-        </Link>
+        </RouterLink>
       </div>
     );
   }
@@ -171,12 +191,12 @@ export const EditorView: React.FC = () => {
     <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
       {/* Top Header */}
       <div className="flex items-center justify-between border-b border-slate-150 dark:border-dark-800 pb-3 flex-shrink-0">
-        <Link
+        <RouterLink
           to={`/notebooks/${notebookId}`}
           className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-dark-300 hover:text-brand-500 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" /> Voltar para o Caderno
-        </Link>
+        </RouterLink>
 
         {/* Status Indicator */}
         <div className="flex items-center gap-2 text-xs font-semibold">
@@ -236,7 +256,17 @@ export const EditorView: React.FC = () => {
                   : 'border-transparent text-slate-500 dark:text-dark-400 hover:text-slate-700'
               }`}
             >
-              Resumo por IA
+              Resumo
+            </button>
+            <button
+              onClick={() => setActiveTab('annotations')}
+              className={`flex-1 py-4 text-center font-heading font-bold text-sm tracking-wide transition-all border-b-2 cursor-pointer ${
+                activeTab === 'annotations'
+                  ? 'border-brand-500 text-brand-500'
+                  : 'border-transparent text-slate-500 dark:text-dark-400 hover:text-slate-700'
+              }`}
+            >
+              Anotações
             </button>
             <button
               onClick={() => setActiveTab('flashcards')}
@@ -252,6 +282,12 @@ export const EditorView: React.FC = () => {
 
           {/* Painel Interno */}
           <div className="flex-grow p-6 overflow-y-auto min-h-0">
+            {activeTab === 'annotations' && (
+              <div className="flex flex-col h-full gap-4">
+                <AnnotationSidebar editor={editor} />
+              </div>
+            )}
+
             {activeTab === 'summary' && (
               <div className="flex flex-col h-full gap-4">
                 {leaf.summary ? (

@@ -10,8 +10,11 @@ import {
   TextQuote,
   List,
   ListOrdered,
+  Link2,
+  MessageSquarePlus,
 } from 'lucide-react';
 import { HeadingSelector } from './HeadingSelector';
+import { HighlightPopover } from './HighlightPopover';
 
 interface BubbleMenuItemProps {
   onClick: () => void;
@@ -114,6 +117,45 @@ export const EditorBubbleMenu: React.FC<EditorBubbleMenuProps> = ({ editor }) =>
         title={`Citação (${kbdShift('B')})`}
       >
         <TextQuote className="h-3.5 w-3.5" />
+      </BubbleMenuItem>
+
+      <div className="w-px h-4 bg-slate-600 dark:bg-dark-600 mx-1" />
+
+      <BubbleMenuItem
+        onClick={() => {
+          const { href } = editor.getAttributes('link');
+          if (href) {
+            editor.chain().focus().unsetLink().run();
+          } else {
+            const url = window.prompt('URL do link:');
+            if (url) {
+              editor.chain().focus().setLink({ href: url }).run();
+            }
+          }
+        }}
+        isActive={editor.isActive('link')}
+        title="Link"
+      >
+        <Link2 className="h-3.5 w-3.5" />
+      </BubbleMenuItem>
+
+      <HighlightPopover editor={editor} variant="bubble" />
+
+      <BubbleMenuItem
+        onClick={() => {
+          const { from, to } = editor.state.selection;
+          const selectedText = editor.state.doc.textBetween(from, to);
+          if (selectedText) {
+            const annotation = window.prompt('Digite sua anotação:');
+            if (annotation) {
+              editor.chain().focus().setAnnotation({ text: annotation }).run();
+            }
+          }
+        }}
+        isActive={editor.isActive('annotation')}
+        title="Anotação"
+      >
+        <MessageSquarePlus className="h-3.5 w-3.5" />
       </BubbleMenuItem>
 
       <div className="w-px h-4 bg-slate-600 dark:bg-dark-600 mx-1" />

@@ -42,18 +42,26 @@ export const HeadingSelector: React.FC<HeadingSelectorProps> = ({
   variant = 'toolbar',
 }) => {
   const [open, setOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
 
-  // Fecha ao clicar fora
+  // Fecha ao clicar fora ou scrollar
   useEffect(() => {
     if (!open) return;
+
+    const close = () => setOpen(false);
     const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpen(false);
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        close();
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('scroll', close, true);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('scroll', close, true);
+    };
   }, [open]);
 
   if (!editor) return null;
@@ -70,13 +78,28 @@ export const HeadingSelector: React.FC<HeadingSelectorProps> = ({
     setOpen(false);
   };
 
+  const toggleOpen = () => {
+    if (!open) {
+      // Calcula posição relativa à viewport (fixed) para evitar clipping dos pais
+      if (buttonRef.current) {
+        const rect = buttonRef.current.getBoundingClientRect();
+        setDropdownStyle({
+          top: rect.bottom + 4,
+          left: Math.max(8, rect.left), // Evita que saia da tela à esquerda
+        });
+      }
+    }
+    setOpen(!open);
+  };
+
   const isToolbar = variant === 'toolbar';
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative" ref={containerRef}>
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setOpen(!open)}
+        onClick={toggleOpen}
         title={`Estilo de texto (${activeLabel})`}
         className={`inline-flex items-center gap-1.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer ${
           isToolbar
@@ -111,7 +134,8 @@ export const HeadingSelector: React.FC<HeadingSelectorProps> = ({
 
       {open && (
         <div
-          className={`absolute z-50 mt-1 min-w-[160px] overflow-hidden rounded-xl shadow-xl border ${
+          style={dropdownStyle}
+          className={`fixed z-[9999] mt-0 min-w-[160px] overflow-hidden rounded-xl shadow-xl border ${
             isToolbar
               ? 'bg-white dark:bg-dark-800 border-slate-200 dark:border-dark-700'
               : 'bg-slate-800 dark:bg-dark-800 border-slate-700 dark:border-dark-700'
