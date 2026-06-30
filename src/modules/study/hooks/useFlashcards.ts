@@ -13,10 +13,12 @@ export function useLeafFlashcards(leafId: string) {
 
 export function useNotebookFlashcards(notebookId: string) {
   return useQuery({
-    queryKey: ['notebooks', notebookId, 'flashcards'],
+    queryKey: ['notebook-flashcards', notebookId],
     queryFn: () => studyService.getNotebookFlashcards(notebookId),
     enabled: !!notebookId,
-    staleTime: 30_000,
+    // 💡 ISSO EVITA O ESTADO DE LOADING DURANTE ATUALIZAÇÕES EM BACKGROUND:
+    staleTime: 1000 * 60 * 5, // 5 minutos
+    refetchOnWindowFocus: false,
   });
 }
 

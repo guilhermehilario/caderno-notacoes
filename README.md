@@ -110,6 +110,12 @@ revisa-aula/
    - **HighlightPopover**: Seletor de cores de destaque (amarelo, dourado, turquesa, roxo).
    - **AnnotationPopover**: Popover para criação e edição de anotações com suporte a atalho de teclado (⌘Enter).
 
+8. **Refatoração HMR e Estabilidade de Hot Reload (Vite 8 + React 19)**:
+   - **Componentes nomeados nas rotas**: Substituído todo JSX inline nas propriedades `element` do `createBrowserRouter` por componentes nomeados explícitos (`LoginPage`, `RegisterPage`, `AppRoot`, `DashboardPage`, `NotebookDetailPage`, `LeafEditorPage`, `StudyPage`, `DefaultRedirect`, `CatchAllRedirect`), garantindo referências estáveis durante o Fast Refresh.
+   - **`AppRoutes` como boundary público**: Criado componente `AppRoutes` que encapsula `<RouterProvider router={router} />`, eliminando a importação direta do `router` no `App.tsx` e isolando a instância do roteador como constante estática do módulo.
+   - **`server.hmr.overlay: true`**: Configurado no `vite.config.ts` para exibir erros de HMR com overlay visual no navegador, facilitando o diagnóstico de falhas de atualização.
+   - **Verificação antiloop**: Auditoria completa contra `window.location.reload()` em todo o código-fonte (0 ocorrências). Confirmado que `isApplyingRemote` no `EditorView.tsx` já utiliza `useRef` estável, e o `client.ts` já implementa fila de renovação de token sem redirecionamentos forçados.
+
 ---
 
 ## 🎯 Melhorias Planejadas & Próximos Passos

@@ -153,10 +153,10 @@
       "id": "13dca7bb-5436-47b5-bb36-ecda51bbad78",
       "notebookId": "5c22b198-7a62-4025-8465-167896a35ac5",
       "title": "etsret",
-      "content": "dsalaskljdask jdaskdpasjd ikapdskaskd acmssak cakskaospdlasmlsa kd\\ac;lasmlcsakdpo jadas,clpkas ;casa sc asko ascas clsmcla cmsamopc cpa caso mcal;kl;cmskl ckc[pask poc cpo kcopaj c skmlcmojapojsm c;macspkos ck opcopakscpjacmpcpamlm oca scicnknjccajakckpoajicajioacmlac pocajopcjocpackopajiojcplacsopkj c aopc ajc opaclascmsioafoij scas;lcm si jcuivnaock xcajaop jviosn spak ciocaijs jo caoijcaij s kanfkajfaojfqojqhjfna la jopjifojfna snf ajiafj ajf paj fjfvi fjisjwfopqmf kan fqjf al;apoj fowj qifmas jfopijwopfej oaj skan fa jopfj wj fanf nuwqhuf oiahfiofk mw jsubfnaj fiaj lkfndknscioajf ijkfnoia fhfiaojf nfkdjoapfj fiosjfiohjiwqoj f,fnoajqi jfs nkdmfaj pfajifqjp lfa opf jiojdioq jfkalnfaln fla jfoiasfji jqfjio fanfakbfjauhfiof oiksio fjij fa kbnfkan oisj of aoiaf afsfa",
+      "content": "<p>dsalaskljdask jdaskdpasjd ikapdskaskd <span data-annotation=\"teste 1\" class=\"annotation-anchor\">acmssak</span> cakskaospdlasmlsa kd\\ac;lasmlcsakdpo jadas,clpkas ;casa sc asko ascas clsmcla cmsamopc cpa caso mcal;kl;cmskl ckc[pask poc cpo kcopaj c skmlcmojapojsm c;macspkos ck opcopakscpjacmpcpamlm oca scicnknjccajakckpoajicajioacmlac pocajopcjocpackopajiojcplacsopkj c <span data-annotation=\"Teste 2\" class=\"annotation-anchor\">aopc</span> ajc opaclascmsioafoij scas;lcm si jcuivnaock xcajaop jviosn spak ciocaijs jo caoijcaij s kanfkajfaojfqojqhjfna la jopjifojfna snf ajiafj ajf paj <span data-annotation=\"dasd\" class=\"annotation-anchor\">fjfvi</span> fjisjwfopqmf kan fqjf al;apoj fowj qifmas jfopijwopfej oaj skan fa jopfj wj fanf nuwqhuf oiahfiofk mw jsubfnaj fiaj lkfndknscioajf ijkfnoia fhfiaojf nfkdjoapfj fiosjfiohjiwqoj f,fnoajqi jfs nkdmfaj pfajifqjp lfa opf jiojdioq jfkalnfaln fla jfoiasfji jqfjio fanfakbfjauhfiof oiksio fjij fa kbnfkan oisj of aoiaf afsfa</p>",
       "rawText": "dsalaskljdask jdaskdpasjd ikapdskaskd acmssak cakskaospdlasmlsa kd\\ac;lasmlcsakdpo jadas,clpkas ;casa sc asko ascas clsmcla cmsamopc cpa caso mcal;kl;cmskl ckc[pask poc cpo kcopaj c skmlcmojapojsm c;macspkos ck opcopakscpjacmpcpamlm oca scicnknjccajakckpoajicajioacmlac pocajopcjocpackopajiojcplacsopkj c aopc ajc opaclascmsioafoij scas;lcm si jcuivnaock xcajaop jviosn spak ciocaijs jo caoijcaij s kanfkajfaojfqojqhjfna la jopjifojfna snf ajiafj ajf paj fjfvi fjisjwfopqmf kan fqjf al;apoj fowj qifmas jfopijwopfej oaj skan fa jopfj wj fanf nuwqhuf oiahfiofk mw jsubfnaj fiaj lkfndknscioajf ijkfnoia fhfiaojf nfkdjoapfj fiosjfiohjiwqoj f,fnoajqi jfs nkdmfaj pfajifqjp lfa opf jiojdioq jfkalnfaln fla jfoiasfji jqfjio fanfakbfjauhfiof oiksio fjij fa kbnfkan oisj of aoiaf afsfa",
       "createdAt": "2026-06-30T01:03:30.925Z",
-      "updatedAt": "2026-06-30T01:04:34.321Z"
+      "updatedAt": "2026-06-30T03:19:20.134Z"
     },
     {
       "id": "47e69fc8-ec30-48ae-8e49-23e9a1709f16",
@@ -202,6 +202,15 @@
       "rawText": "tea da sd ad adsa da dasdakl  dajls; d;lada; ;l dla;ka ;dalk dal;kdhad kadkja dkash ksddlka hd aslsdlkja\n\ndad\n\nsdd\n\nad \n\nd alkj sdbhjkahd;akdahdkjahda\n\nda das dj;dal ds a \n\n a\n\nda",
       "createdAt": "2026-06-30T02:59:13.145Z",
       "updatedAt": "2026-06-30T02:59:33.162Z"
+    },
+    {
+      "id": "ec1015eb-0c91-4690-b65c-f01a08572889",
+      "notebookId": "28cbea1c-8d0c-4694-b4a8-0e1cac4b3e69",
+      "title": "aula 1",
+      "content": "<p>dasj dajlks d ajda kljda dsa jdalj lsalkd j adklj dsalkj dsa dasd ca das d</p>",
+      "rawText": "dasj dajlks d ajda kljda dsa jdalj lsalkd j adklj dsalkj dsa dasd ca das d",
+      "createdAt": "2026-06-30T03:40:03.378Z",
+      "updatedAt": "2026-06-30T03:48:51.726Z"
     }
   ],
   "flashcards": [
@@ -321,6 +330,45 @@
       "nextReviewDate": "2026-06-30T00:34:22.862Z",
       "createdAt": "2026-06-30T00:34:22.862Z",
       "updatedAt": "2026-06-30T00:34:22.862Z"
+    },
+    {
+      "id": "2d6e6501-7694-4303-ae6a-469d060def9c",
+      "leafId": "13dca7bb-5436-47b5-bb36-ecda51bbad78",
+      "notebookId": "5c22b198-7a62-4025-8465-167896a35ac5",
+      "front": "Qual é o tema principal abordado na folha \"etsret\"?",
+      "back": "O tema principal é \"etsret\", focado em aprofundar e consolidar este conteúdo de forma sistemática.",
+      "repetitions": 4,
+      "interval": 33,
+      "easeFactor": 2.4800000000000004,
+      "nextReviewDate": "2026-08-02T03:39:41.322Z",
+      "createdAt": "2026-06-30T03:19:27.572Z",
+      "updatedAt": "2026-06-30T03:39:41.322Z"
+    },
+    {
+      "id": "5b64e195-3aa9-4d60-8093-942d678b371b",
+      "leafId": "13dca7bb-5436-47b5-bb36-ecda51bbad78",
+      "notebookId": "5c22b198-7a62-4025-8465-167896a35ac5",
+      "front": "De acordo com as notas de \"etsret\", qual é uma boa prática de estudo para este tema?",
+      "back": "Escrever resumos com as próprias palavras e fazer exercícios práticos/simulados logo em seguida.",
+      "repetitions": 0,
+      "interval": 0,
+      "easeFactor": 2.5,
+      "nextReviewDate": "2026-06-30T03:19:27.572Z",
+      "createdAt": "2026-06-30T03:19:27.572Z",
+      "updatedAt": "2026-06-30T03:19:27.572Z"
+    },
+    {
+      "id": "1b7d15cc-435c-42d7-aebc-faa1ffb46184",
+      "leafId": "13dca7bb-5436-47b5-bb36-ecda51bbad78",
+      "notebookId": "5c22b198-7a62-4025-8465-167896a35ac5",
+      "front": "Qual a importância da repetição espaçada no aprendizado de \"etsret\"?",
+      "back": "Ela ajuda a combater a curva do esquecimento, movendo a informação da memória de curto prazo para a de longo prazo.",
+      "repetitions": 0,
+      "interval": 0,
+      "easeFactor": 2.5,
+      "nextReviewDate": "2026-06-30T03:19:27.572Z",
+      "createdAt": "2026-06-30T03:19:27.572Z",
+      "updatedAt": "2026-06-30T03:19:27.572Z"
     }
   ]
 }

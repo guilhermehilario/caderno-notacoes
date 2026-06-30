@@ -10,31 +10,48 @@ export const StudyView: React.FC = () => {
   const { notebookId } = useParams<{ notebookId: string }>();
   const navigate = useNavigate();
 
-  const { data: flashcards = [], isLoading } = useNotebookFlashcards(notebookId || '');
+  const { data: serverFlashcards = [], isLoading } = useNotebookFlashcards(notebookId || '');
   const { mutateAsync: submitScore } = useSubmitCardScore(undefined, notebookId);
+
+  // 💡 O SEGREDO: Criamos uma cópia estática da fila assim que os cards carregam.
+  // Isso impede que atualizações do React Query alterem a ordem ou removam cards enquanto você estuda.
+  const [frozenFlashcards, setFrozenFlashcards] = useState<typeof serverFlashcards>([]);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [sessionFinished, setSessionFinished] = useState(false);
   const [reviewedCount, setReviewedCount] = useState(0);
 
+  // Sincroniza os cards do servidor apenas uma vez na inicialização da tela
+  if (!isLoading && serverFlashcards.length > 0 && !hasInitialized) {
+    setFrozenFlashcards(serverFlashcards);
+    setHasInitialized(true);
+  }
+
+  // Passamos a ler tudo do nosso array congelado localmente
+  const flashcards = frozenFlashcards.length > 0 ? frozenFlashcards : serverFlashcards;
   const currentCard = flashcards[currentIndex];
 
   const handleScoreSelect = async (score: StudyScore) => {
     if (!currentCard) return;
 
-    try {
-      // Envia pontuação ao servidor (que recalcula os intervalos do SM-2)
-      await submitScore({ cardId: currentCard.id, score });
-      
-      setReviewedCount((prev) => prev + 1);
+    const isLastCard = currentIndex >= flashcards.length - 1;
+    const cardIdToSubmit = currentCard.id;
 
-      if (currentIndex < flashcards.length - 1) {
-        setShowAnswer(false);
-        setCurrentIndex((prev) => prev + 1);
-      } else {
-        setSessionFinished(true);
-      }
+    // Avança o estado local imediatamente na cópia estática
+    setReviewedCount((prev) => prev + 1);
+
+    if (!isLastCard) {
+      setShowAnswer(false);
+      setCurrentIndex((prev) => prev + 1);
+    } else {
+      setSessionFinished(true);
+    }
+
+    try {
+      // Dispara em background
+      await submitScore({ cardId: cardIdToSubmit, score });
     } catch (error) {
       console.error('Erro ao enviar nota do card:', error);
     }

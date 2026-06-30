@@ -1,4 +1,5 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { memo } from 'react';
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
 import AppLayout from '../components/layout/AppLayout';
 import PrivateRoute from './PrivateRoute';
 import PublicRoute from './PublicRoute';
@@ -9,56 +10,105 @@ import NotebookView from '../modules/notebooks/views/NotebookView';
 import EditorView from '../modules/leaves/views/EditorView';
 import StudyView from '../modules/study/views/StudyView';
 
-export const router = createBrowserRouter([
+/* ─── Componentes nomeados para cada rota ─────────────────────────── */
+
+/* ─── Componentes nomeados e memoizados para cada rota ────────────── */
+
+const LoginPage = memo(function LoginPage() {
+  return (
+    <PublicRoute>
+      <LoginView />
+    </PublicRoute>
+  );
+});
+
+const RegisterPage = memo(function RegisterPage() {
+  return (
+    <PublicRoute>
+      <RegisterView />
+    </PublicRoute>
+  );
+});
+
+const AppRoot = memo(function AppRoot() {
+  return (
+    <PrivateRoute>
+      <AppLayout />
+    </PrivateRoute>
+  );
+});
+
+const DashboardPage = memo(function DashboardPage() {
+  return <DashboardView />;
+});
+
+const NotebookDetailPage = memo(function NotebookDetailPage() {
+  return <NotebookView />;
+});
+
+const LeafEditorPage = memo(function LeafEditorPage() {
+  return <EditorView />;
+});
+
+const StudyPage = memo(function StudyPage() {
+  return <StudyView />;
+});
+
+const DefaultRedirect = memo(function DefaultRedirect() {
+  return <Navigate to="/dashboard" replace />;
+});
+
+const CatchAllRedirect = memo(function CatchAllRedirect() {
+  return <Navigate to="/dashboard" replace />;
+});
+
+/* ─── Router estático (fora de qualquer componente/função) ─────────── */
+
+const router = createBrowserRouter([
   {
     path: '/login',
-    element: (
-      <PublicRoute>
-        <LoginView />
-      </PublicRoute>
-    ),
+    element: <LoginPage />,
   },
   {
     path: '/register',
-    element: (
-      <PublicRoute>
-        <RegisterView />
-      </PublicRoute>
-    ),
+    element: <RegisterPage />,
   },
   {
     path: '/',
-    element: (
-      <PrivateRoute>
-        <AppLayout />
-      </PrivateRoute>
-    ),
+    element: <AppRoot />,
     children: [
       {
         path: '',
-        element: <Navigate to="/dashboard" replace />,
+        element: <DefaultRedirect />,
       },
       {
         path: 'dashboard',
-        element: <DashboardView />,
+        element: <DashboardPage />,
       },
       {
         path: 'notebooks/:notebookId',
-        element: <NotebookView />,
+        element: <NotebookDetailPage />,
       },
       {
         path: 'notebooks/:notebookId/leaves/:leafId',
-        element: <EditorView />,
+        element: <LeafEditorPage />,
       },
       {
         path: 'notebooks/:notebookId/study',
-        element: <StudyView />,
+        element: <StudyPage />,
       },
     ],
   },
   {
     path: '*',
-    element: <Navigate to="/dashboard" replace />,
+    element: <CatchAllRedirect />,
   },
 ]);
-export default router;
+
+/* ─── Componente público que expõe o RouterProvider ───────────────── */
+
+export function AppRoutes() {
+  return <RouterProvider router={router} />;
+}
+
+export default AppRoutes;
