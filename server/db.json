@@ -207,10 +207,10 @@
       "id": "ec1015eb-0c91-4690-b65c-f01a08572889",
       "notebookId": "28cbea1c-8d0c-4694-b4a8-0e1cac4b3e69",
       "title": "aula 1",
-      "content": "<p>dasj dajlks d ajda kljda dsa jdalj lsalkd j adklj dsalkj dsa dasd ca das d</p>",
-      "rawText": "dasj dajlks d ajda kljda dsa jdalj lsalkd j adklj dsalkj dsa dasd ca das d",
+      "content": "<p>dasj dajlks d ajda kljda dsa jdalj lsalkd j adklj dsalkj dsa dasd ca das d adjda </p>",
+      "rawText": "dasj dajlks d ajda kljda dsa jdalj lsalkd j adklj dsalkj dsa dasd ca das d adjda ",
       "createdAt": "2026-06-30T03:40:03.378Z",
-      "updatedAt": "2026-06-30T03:48:51.726Z"
+      "updatedAt": "2026-06-30T12:25:39.417Z"
     }
   ],
   "flashcards": [
@@ -415,12 +415,12 @@
       "notebookId": "28cbea1c-8d0c-4694-b4a8-0e1cac4b3e69",
       "front": "Qual é o tema principal abordado na folha \"aula 1\"?",
       "back": "O tema principal é \"aula 1\", focado em aprofundar e consolidar este conteúdo de forma sistemática.",
-      "repetitions": 1,
-      "interval": 1,
+      "repetitions": 4,
+      "interval": 38,
       "easeFactor": 2.5,
-      "nextReviewDate": "2026-07-01T04:17:38.626Z",
+      "nextReviewDate": "2026-08-07T12:30:24.803Z",
       "createdAt": "2026-06-30T04:16:25.120Z",
-      "updatedAt": "2026-06-30T04:17:38.626Z"
+      "updatedAt": "2026-06-30T12:30:24.803Z"
     },
     {
       "id": "6d50d4b6-3caf-4482-a97c-3b6f667f3889",

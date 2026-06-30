@@ -7,7 +7,7 @@ export function useLeafFlashcards(leafId: string) {
     queryKey: ['leaves', leafId, 'flashcards'],
     queryFn: () => studyService.getLeafFlashcards(leafId),
     enabled: !!leafId,
-    staleTime: 30_000, // Evita refetch ao navegar entre abas ou voltar para o editor
+    staleTime: 30_000,
   });
 }
 
@@ -16,8 +16,7 @@ export function useNotebookFlashcards(notebookId: string) {
     queryKey: ['notebook-flashcards', notebookId],
     queryFn: () => studyService.getNotebookFlashcards(notebookId),
     enabled: !!notebookId,
-    // 💡 ISSO EVITA O ESTADO DE LOADING DURANTE ATUALIZAÇÕES EM BACKGROUND:
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: 1000 * 60 * 5, // 5 minutos – evita refetch agressivo durante a sessão
     refetchOnWindowFocus: false,
   });
 }
@@ -29,34 +28,22 @@ export function useSubmitCardScore(leafId?: string, notebookId?: string) {
     mutationFn: ({ cardId, score }: { cardId: string; score: StudyScore }) =>
       studyService.submitFlashcardScore(cardId, score),
     onSuccess: (updatedCard, { cardId }) => {
-      console.log('[DEBUG:mutation] onSuccess disparado', {
-        cardId,
-        leafId,
-        notebookId,
-        updatedCardId: updatedCard?.id,
-      });
-
+      // Atualização cirúrgica e silenciosa do cache:
+      // substitui apenas o card modificado, sem invalidar a query inteira.
       if (leafId) {
         queryClient.setQueryData<Flashcard[]>(
           ['leaves', leafId, 'flashcards'],
-          (old) => {
-            console.log('[DEBUG:mutation] setQueryData leaves', { oldLen: old?.length });
-            return old?.map((card) => (card.id === cardId ? updatedCard : card)) ?? old;
-          },
+          (old) =>
+            old?.map((card) => (card.id === cardId ? updatedCard : card)) ?? old,
         );
       }
       if (notebookId) {
         queryClient.setQueryData<Flashcard[]>(
           ['notebook-flashcards', notebookId],
-          (old) => {
-            console.log('[DEBUG:mutation] setQueryData notebook-flashcards', { oldLen: old?.length });
-            return old?.map((card) => (card.id === cardId ? updatedCard : card)) ?? old;
-          },
+          (old) =>
+            old?.map((card) => (card.id === cardId ? updatedCard : card)) ?? old,
         );
       }
-    },
-    onError: (error) => {
-      console.error('[DEBUG:mutation] onError:', error);
     },
   });
 }
