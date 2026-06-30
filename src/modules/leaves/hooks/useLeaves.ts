@@ -50,21 +50,16 @@ export function useLeaf(leafId: string) {
   const updateMutation = useMutation({
     mutationFn: (data: UpdateLeafInput) => leafService.updateLeaf(leafId, data),
     onSuccess: (updatedLeaf) => {
-      // Não chamamos setQueryData aqui para evitar que o EditorView
-      // re-renderize inteiro a cada autosave. O EditorView já gerencia
-      // seu estado local (localTitle, localContent) como fonte da verdade.
-      // O cache será atualizado naturalmente na próxima navegação.
+      // ⚡ Atualiza o cache individual silenciosamente — sem invalidar,
+      // sem refetch, sem disparar re-render no EditorView.
+      // O EditorView já gerencia estado local como fonte da verdade.
+      queryClient.setQueryData(['leaves', leafId], updatedLeaf);
       
-      // Apenas invalida a lista para manter títulos sincronizados no menu lateral
-      queryClient.invalidateQueries({
-        queryKey: ['notebooks', updatedLeaf.notebookId, 'leaves'],
-      });
-      // Marca a consulta individual como desatualizada (sem refetch imediato)
-      // para que na próxima visita os dados frescos sejam carregados
-      queryClient.invalidateQueries({
-        queryKey: ['leaves', leafId],
-        refetchType: 'none',
-      });
+      // Atualiza APENAS o título na lista de leaves (cache local),
+      // sem disparar requisição HTTP
+      queryClient.setQueryData<Leaf[]>(['notebooks', updatedLeaf.notebookId, 'leaves'], (old) =>
+        old?.map((l) => (l.id === leafId ? { ...l, title: updatedLeaf.title } : l)) ?? old,
+      );
     },
   });
 

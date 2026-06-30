@@ -19,6 +19,15 @@
       "color": "#aa3bff",
       "createdAt": "2026-06-30T23:31:04.869Z",
       "updatedAt": "2026-06-30T23:31:04.869Z"
+    },
+    {
+      "id": "e05e6d65-b4d7-4b25-8ecf-b8801c176eea",
+      "userId": "acfea061-cc38-4fe2-b450-96094f5189e4",
+      "title": "teste",
+      "description": null,
+      "color": "#aa3bff",
+      "createdAt": "2026-06-30T23:39:17.905Z",
+      "updatedAt": "2026-06-30T23:39:17.905Z"
     }
   ],
   "leaves": [
@@ -26,10 +35,19 @@
       "id": "aff14db2-5fe1-469e-bc5f-c87657d5e5e9",
       "notebookId": "85e0b223-78b6-42e7-94e7-223eec43eefd",
       "title": "aula 01",
-      "content": "<p>sad asddas da dadas das da dsas das dasd asdadasd as dasdas das das dasd sa dsa das das</p>",
-      "rawText": "sad asddas da dadas das da dsas das dasd asdadasd as dasdas das das dasd sa dsa das das",
+      "content": "<p>sad asddas da dadas das da dsas das dasd asdadasd as dasdas das das dasd sa dsa das das ggg j h ,jhkjh kkl kl</p>",
+      "rawText": "sad asddas da dadas das da dsas das dasd asdadasd as dasdas das das dasd sa dsa das das ggg j h ,jhkjh kkl kl",
       "createdAt": "2026-06-30T23:31:18.020Z",
-      "updatedAt": "2026-06-30T23:31:35.020Z"
+      "updatedAt": "2026-06-30T23:36:36.199Z"
+    },
+    {
+      "id": "dc534f28-cd8c-4b9d-98d3-a9653d403d4b",
+      "notebookId": "e05e6d65-b4d7-4b25-8ecf-b8801c176eea",
+      "title": "aula 01",
+      "content": "<p>teste testando uma seguindo ao teste de teste ao teste testando</p>",
+      "rawText": "teste testando uma seguindo ao teste de teste ao teste testando",
+      "createdAt": "2026-06-30T23:39:32.008Z",
+      "updatedAt": "2026-06-30T23:40:22.216Z"
     }
   ],
   "flashcards": []

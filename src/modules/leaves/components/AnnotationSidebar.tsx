@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import type { Editor } from '@tiptap/react';
 import { MessageSquareText } from 'lucide-react';
 
@@ -14,13 +14,19 @@ interface AnnotationSidebarProps {
 
 const AnnotationSidebarComponent: React.FC<AnnotationSidebarProps> = ({ editor }) => {
   const [annotations, setAnnotations] = useState<AnnotationEntry[]>([]);
+  const htmlHashRef = useRef('');
 
-  // Re-scan annotations whenever the editor content updates
+  // Re-scan annotations apenas quando o HTML do editor MUDAR de fato.
+  // Evita parsear o DOM inteiro a cada caractere digitado.
   useEffect(() => {
     if (!editor) return;
 
     const updateAnnotations = () => {
       const html = editor.getHTML();
+      // Só atualiza se o HTML mudou desde a última varredura
+      if (html === htmlHashRef.current) return;
+      htmlHashRef.current = html;
+
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, 'text/html');
       const marks = doc.querySelectorAll('span.annotation-anchor[data-annotation]');

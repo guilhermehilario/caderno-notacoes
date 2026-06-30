@@ -26,21 +26,18 @@ export const StudyView: React.FC = () => {
     useNotebookFlashcards(nbId);
   const { mutateAsync: submitScore } = useSubmitCardScore(undefined, nbId);
 
-  // ── Zustand Store (imune a re-renderizações em cascata) ──
-  // Selectors extraem APENAS o slot da sessão do notebook atual
-  const currentIndex = useStudyStore(
-    (s) => s.sessions[nbId]?.currentIndex ?? 0,
-  );
-  const reviewedCount = useStudyStore(
-    (s) => s.sessions[nbId]?.reviewedCount ?? 0,
-  );
-  const showAnswer = useStudyStore(
-    (s) => s.sessions[nbId]?.showAnswer ?? false,
-  );
+  // ── Zustand Store ──
+  // Selector único para estado da sessão (evita múltiplas inscrições)
+  const sessionSlot = useStudyStore((s) => s.sessions[nbId]);
+  // Ações separadas: são funções estáveis do Zustand, nunca causam re-render
   const setCurrentIndex = useStudyStore((s) => s.setCurrentIndex);
   const setReviewedCount = useStudyStore((s) => s.setReviewedCount);
   const setShowAnswer = useStudyStore((s) => s.setShowAnswer);
   const resetSession = useStudyStore((s) => s.resetSession);
+
+  const currentIndex = sessionSlot?.currentIndex ?? 0;
+  const reviewedCount = sessionSlot?.reviewedCount ?? 0;
+  const showAnswer = sessionSlot?.showAnswer ?? false;
 
   // ── Estado local transitório (não afeta progresso) ──
   const [frozenFlashcards, setFrozenFlashcards] = useState<Flashcard[]>([]);
@@ -85,7 +82,6 @@ export const StudyView: React.FC = () => {
     score: StudyScore,
     e: React.MouseEvent<HTMLButtonElement>,
   ) => {
-    console.log("event: ", Object.keys(e.nativeEvent));
     e.preventDefault();
     e.stopPropagation();
     if (!currentCard) return;

@@ -50,67 +50,46 @@ export const EditorView: React.FC = () => {
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const [activeTab, setActiveTab] = useState<'summary' | 'flashcards' | 'annotations'>('summary');
 
-  // Impede loop: quando estamos aplicando conteúdo remoto (do servidor) para o editor
-  const isApplyingRemote = useRef(false);
-
-  // Debounce dos valores para salvamento automático
-  const debouncedTitle = useDebounce(localTitle, 1500);
-  const debouncedContent = useDebounce(localContent, 1500);
-  const debouncedRawText = useDebounce(localRawText, 1500);
-
-  // Evita salvar no primeiro render
+  // Ref para rastrear o conteúdo que veio do servidor (usado para
+  // distinguir atualizações do servidor de edições do usuário)
+  const serverContentRef = useRef('');
+  // Controle para evitar salvar no primeiro carregamento
   const isFirstRender = useRef(true);
-
   // Rastreia o último estado salvo no servidor para evitar saves duplicados
   const lastSavedRef = useRef({ title: '', content: '' });
-
   // Controla se o conteúdo já foi sincronizado com o editor
-  // Impede flash de editor vazio entre o fim do loading e o sync effect
   const [contentReady, setContentReady] = useState(false);
 
   // Dispara abertura do AnnotationPopover para editar anotação existente
-  // Usamos string | null em vez de objeto para evitar nova referência a cada clique
   const [annotationText, setAnnotationText] = useState<string | null>(null);
-  // Objeto memoizado para passar ao EditorToolbar sem criar nova referência
   const annotationTrigger = useMemo(
     () => (annotationText ? { text: annotationText } : null),
     [annotationText],
   );
   const pendingRAF = useRef<number | null>(null);
 
-  // Estabiliza a lista de extensões para evitar recriação do objeto a cada render
+  // Estabiliza a lista de extensões
   const extensions = useMemo(() => [
-    StarterKit.configure({
-      heading: {
-        levels: [1, 2, 3],
-      },
-    }),
+    StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
     Underline,
     ExtensionLink.configure({
       openOnClick: false,
-      HTMLAttributes: {
-        class: 'text-brand-500 hover:text-brand-600 underline underline-offset-2 cursor-pointer',
-      },
+      HTMLAttributes: { class: 'text-brand-500 hover:text-brand-600 underline underline-offset-2 cursor-pointer' },
     }),
-    Highlight.configure({
-      multicolor: true,
-    }),
+    Highlight.configure({ multicolor: true }),
     Annotation,
-    Placeholder.configure({
-      placeholder: 'Comece a digitar o conteúdo da sua aula aqui...',
-    }),
+    Placeholder.configure({ placeholder: 'Comece a digitar o conteúdo da sua aula aqui...' }),
   ], []);
 
-  // Estabiliza o callback onUpdate para evitar recriação a cada render
+  // Callback de atualização do editor: só atualiza estados LOCAIS
+  // se a mudança veio do USUÁRIO (não do servidor)
   const handleEditorUpdate = useCallback(({ editor: ed }: { editor: Editor }) => {
-    // Se estamos aplicando conteúdo remoto, ignora esta atualização
-    // A flag é resetada no sync effect após setContent(), então mesmo
-    // que onUpdate não dispare (conteúdo idêntico), não há leak.
-    if (isApplyingRemote.current) {
-      isApplyingRemote.current = false;
-      return;
-    }
-    setLocalContent(ed.getHTML());
+    const currentHtml = ed.getHTML();
+    // Se o conteúdo atual do editor é IGUAL ao último conteúdo recebido do servidor,
+    // significa que foi o próprio sync effect que disparou este update — ignoramos.
+    if (currentHtml === serverContentRef.current) return;
+
+    setLocalContent(currentHtml);
     setLocalRawText(ed.getText());
     setSaveStatus('saving');
   }, []);
@@ -126,7 +105,6 @@ export const EditorView: React.FC = () => {
   // Detecta clique em texto anotado e abre o popover para edição
   useEffect(() => {
     if (!editor) return;
-
     const editorDom = editor.view?.dom as HTMLElement | undefined;
     if (!editorDom) return;
 
@@ -134,19 +112,12 @@ export const EditorView: React.FC = () => {
       const target = e.target as HTMLElement | null;
       const spanEl = target?.closest?.('span.annotation-anchor[data-annotation]');
       if (!spanEl) return;
-
       const text = spanEl.getAttribute('data-annotation') || '';
       if (!text) return;
 
-      // Cancela qualquer rAF pendente para evitar race condition
-      if (pendingRAF.current !== null) {
-        cancelAnimationFrame(pendingRAF.current);
-      }
-
-      // Seleciona o range da anotação e abre o popover
+      if (pendingRAF.current !== null) cancelAnimationFrame(pendingRAF.current);
       pendingRAF.current = requestAnimationFrame(() => {
         pendingRAF.current = null;
-        // Verifica se o editor ainda está acessível
         if (!editor.isDestroyed) {
           editor.chain().focus().extendMarkRange('annotation').run();
           setAnnotationText(text);
@@ -157,7 +128,6 @@ export const EditorView: React.FC = () => {
     editorDom.addEventListener('click', handleClick);
     return () => {
       editorDom.removeEventListener('click', handleClick);
-      // Limpa rAF pendente no unmount
       if (pendingRAF.current !== null) {
         cancelAnimationFrame(pendingRAF.current);
         pendingRAF.current = null;
@@ -170,39 +140,36 @@ export const EditorView: React.FC = () => {
     if (!leaf || !editor) return;
 
     const serverContent = leaf.content || '';
-    const currentHtml = localContent;
+    const currentEditorHtml = editor.getHTML();
 
-    if (currentHtml !== serverContent) {
-      isApplyingRemote.current = true;
+    // Só aplica conteúdo do servidor se o editor estiver vazio
+    // ou se o conteúdo do servidor for diferente do que está no editor
+    if (currentEditorHtml !== serverContent) {
+      serverContentRef.current = serverContent;
       editor.commands.setContent(serverContent);
-      // Normaliza para o formato HTML do TipTap dentro de startTransition
-      // para evitar cascading renders (best practice React 19)
+
       startTransition(() => {
         setLocalContent(editor.getHTML());
         setLocalRawText(editor.getText());
-      });
-      // Garante que a flag seja resetada mesmo se onUpdate não disparar
-      // (ex: conteúdo idêntico ao que já estava no editor)
-      isApplyingRemote.current = false;
-      startTransition(() => {
-        setContentReady(true);
-      });
-    } else if (!contentReady) {
-      // Se o conteúdo já é igual (leaf recarregou), ainda marca como pronto
-      startTransition(() => {
-        setContentReady(true);
       });
     }
 
     startTransition(() => {
       setLocalTitle(leaf.title);
+      setContentReady(true);
     });
+
     lastSavedRef.current = { title: leaf.title, content: leaf.content || '' };
     isFirstRender.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leaf?.id, leaf?.content]);
 
-  // Efeito de auto-salvamento para o título e conteúdo
+  // Debounce para autosave
+  const debouncedTitle = useDebounce(localTitle, 1500);
+  const debouncedContent = useDebounce(localContent, 1500);
+  const debouncedRawText = useDebounce(localRawText, 1500);
+
+  // Efeito de auto-salvamento
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
@@ -210,25 +177,20 @@ export const EditorView: React.FC = () => {
     }
 
     const lastSaved = lastSavedRef.current;
-
-    // Só dispara se os valores debounced diferirem do último estado salvo
     if (debouncedTitle !== lastSaved.title || debouncedContent !== lastSaved.content) {
-      const performAutoSave = async () => {
-        setSaveStatus('saving');
-        try {
-          await updateLeaf({
-            title: debouncedTitle,
-            content: debouncedContent,
-            rawText: debouncedRawText,
-          });
+      setSaveStatus('saving');
+      updateLeaf({
+        title: debouncedTitle,
+        content: debouncedContent,
+        rawText: debouncedRawText,
+      })
+        .then(() => {
           lastSavedRef.current = { title: debouncedTitle, content: debouncedContent };
           setSaveStatus('saved');
-        } catch (error) {
-          console.error('Erro no auto-save:', error);
+        })
+        .catch(() => {
           setSaveStatus('error');
-        }
-      };
-      performAutoSave();
+        });
     }
   }, [debouncedTitle, debouncedContent, debouncedRawText, updateLeaf]);
 
