@@ -29,10 +29,10 @@ const MAX_REFRESH_FAILURES = 3;
 const REFRESH_COOLDOWN_MS = 60_000; // 1 min de cooldown entre tentativas de refresh
 let failedQueue: Array<{
   resolve: (value: string | null) => void;
-  reject: (reason: any) => void;
+  reject: (reason: unknown) => void;
 }> = [];
 
-const processQueue = (error: any, token: string | null = null) => {
+const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);

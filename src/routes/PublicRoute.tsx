@@ -12,7 +12,8 @@ export const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
 
   if (isAuthenticated) {
     // Redireciona para o destino salvo (from) ou para o dashboard caso não exista
-    const origin = (location.state as any)?.from?.pathname || '/dashboard';
+    const state = location.state as { from?: { pathname?: string } } | null;
+    const origin = state?.from?.pathname || '/dashboard';
     return <Navigate to={origin} replace />;
   }
 

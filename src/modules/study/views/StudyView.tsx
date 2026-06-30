@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, startTransition } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, RefreshCw, CheckCircle, Brain, Eye, HelpCircle } from 'lucide-react';
 import { useNotebookFlashcards, useSubmitCardScore } from '../hooks/useFlashcards';
@@ -40,8 +40,10 @@ export const StudyView: React.FC = () => {
   // caso o usuário retorne.
   useEffect(() => {
     initializedRef.current = false;
-    setFrozenFlashcards([]);
-    setSessionFinished(false);
+    startTransition(() => {
+      setFrozenFlashcards([]);
+      setSessionFinished(false);
+    });
   }, [nbId]);
 
   // Congela a lista de flashcards assim que carrega, impedindo que
@@ -50,7 +52,9 @@ export const StudyView: React.FC = () => {
   useEffect(() => {
     if (!isLoading && serverFlashcards.length > 0 && !initializedRef.current) {
       initializedRef.current = true;
-      setFrozenFlashcards(serverFlashcards);
+      startTransition(() => {
+        setFrozenFlashcards(serverFlashcards);
+      });
     }
   }, [isLoading, serverFlashcards]);
 

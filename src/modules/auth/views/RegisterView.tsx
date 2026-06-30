@@ -34,9 +34,10 @@ export const RegisterView: React.FC = () => {
     try {
       await registerUser(data);
       navigate('/dashboard');
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const apiError = error as { response?: { data?: { message?: string } } };
       setApiError(
-        error.response?.data?.message || 'Erro ao criar conta. Tente novamente mais tarde.'
+        apiError.response?.data?.message || 'Erro ao criar conta. Tente novamente mais tarde.'
       );
     }
   };

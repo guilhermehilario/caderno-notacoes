@@ -32,9 +32,10 @@ export const LoginView: React.FC = () => {
     try {
       await login(data);
       navigate('/dashboard');
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const apiError = error as { response?: { data?: { message?: string } } };
       setApiError(
-        error.response?.data?.message || 'E-mail ou senha incorretos. Tente novamente.'
+        apiError.response?.data?.message || 'E-mail ou senha incorretos. Tente novamente.'
       );
     }
   };

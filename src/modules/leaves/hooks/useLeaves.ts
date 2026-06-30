@@ -20,7 +20,7 @@ export function useLeaves(notebookId: string) {
         ...(old || []),
         newLeaf,
       ]);
-      queryClient.setQueryData(['notebooks', notebookId], (old: any) => {
+      queryClient.setQueryData(['notebooks', notebookId], (old: { leavesCount: number } | undefined) => {
         if (!old) return old;
         return { ...old, leavesCount: old.leavesCount + 1 };
       });
@@ -77,7 +77,7 @@ export function useLeaf(leafId: string) {
         queryClient.setQueryData<Leaf[]>(['notebooks', notebookId, 'leaves'], (old) =>
           old?.filter((l) => l.id !== leafId) ?? old,
         );
-        queryClient.setQueryData(['notebooks', notebookId], (old: any) => {
+        queryClient.setQueryData(['notebooks', notebookId], (old: { leavesCount: number } | undefined) => {
           if (!old) return old;
           return { ...old, leavesCount: Math.max(0, old.leavesCount - 1) };
         });
@@ -89,7 +89,7 @@ export function useLeaf(leafId: string) {
   const summaryMutation = useMutation({
     mutationFn: () => leafService.generateAISummary(leafId),
     onSuccess: (data) => {
-      queryClient.setQueryData(['leaves', leafId], (old: any) => {
+      queryClient.setQueryData(['leaves', leafId], (old: { summary?: string } | undefined) => {
         if (!old) return old;
         return { ...old, summary: data.summary };
       });
