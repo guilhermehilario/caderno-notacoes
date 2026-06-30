@@ -369,6 +369,84 @@
       "nextReviewDate": "2026-06-30T03:19:27.572Z",
       "createdAt": "2026-06-30T03:19:27.572Z",
       "updatedAt": "2026-06-30T03:19:27.572Z"
+    },
+    {
+      "id": "0fce055b-eee1-4930-bf79-2a4d5677bf3d",
+      "leafId": "84f8bb6d-d90a-4e2a-a28a-9a21b9404d70",
+      "notebookId": "e2c8160b-3f68-4c0f-a0fb-e77416f2f64f",
+      "front": "Qual é o tema principal abordado na folha \"aula 2\"?",
+      "back": "O tema principal é \"aula 2\", focado em aprofundar e consolidar este conteúdo de forma sistemática.",
+      "repetitions": 0,
+      "interval": 1,
+      "easeFactor": 1.3,
+      "nextReviewDate": "2026-07-01T04:16:02.785Z",
+      "createdAt": "2026-06-30T04:02:04.835Z",
+      "updatedAt": "2026-06-30T04:16:02.786Z"
+    },
+    {
+      "id": "6510da17-615d-429e-8792-0c84059bbba7",
+      "leafId": "84f8bb6d-d90a-4e2a-a28a-9a21b9404d70",
+      "notebookId": "e2c8160b-3f68-4c0f-a0fb-e77416f2f64f",
+      "front": "De acordo com as notas de \"aula 2\", qual é uma boa prática de estudo para este tema?",
+      "back": "Escrever resumos com as próprias palavras e fazer exercícios práticos/simulados logo em seguida.",
+      "repetitions": 0,
+      "interval": 0,
+      "easeFactor": 2.5,
+      "nextReviewDate": "2026-06-30T04:02:04.835Z",
+      "createdAt": "2026-06-30T04:02:04.835Z",
+      "updatedAt": "2026-06-30T04:02:04.835Z"
+    },
+    {
+      "id": "2234ba79-2420-487d-a5a0-60fedba6c7df",
+      "leafId": "84f8bb6d-d90a-4e2a-a28a-9a21b9404d70",
+      "notebookId": "e2c8160b-3f68-4c0f-a0fb-e77416f2f64f",
+      "front": "Qual a importância da repetição espaçada no aprendizado de \"aula 2\"?",
+      "back": "Ela ajuda a combater a curva do esquecimento, movendo a informação da memória de curto prazo para a de longo prazo.",
+      "repetitions": 0,
+      "interval": 0,
+      "easeFactor": 2.5,
+      "nextReviewDate": "2026-06-30T04:02:04.835Z",
+      "createdAt": "2026-06-30T04:02:04.835Z",
+      "updatedAt": "2026-06-30T04:02:04.835Z"
+    },
+    {
+      "id": "512145a4-caaf-48b2-a01a-2d95a1e78bd5",
+      "leafId": "ec1015eb-0c91-4690-b65c-f01a08572889",
+      "notebookId": "28cbea1c-8d0c-4694-b4a8-0e1cac4b3e69",
+      "front": "Qual é o tema principal abordado na folha \"aula 1\"?",
+      "back": "O tema principal é \"aula 1\", focado em aprofundar e consolidar este conteúdo de forma sistemática.",
+      "repetitions": 1,
+      "interval": 1,
+      "easeFactor": 2.5,
+      "nextReviewDate": "2026-07-01T04:17:38.626Z",
+      "createdAt": "2026-06-30T04:16:25.120Z",
+      "updatedAt": "2026-06-30T04:17:38.626Z"
+    },
+    {
+      "id": "6d50d4b6-3caf-4482-a97c-3b6f667f3889",
+      "leafId": "ec1015eb-0c91-4690-b65c-f01a08572889",
+      "notebookId": "28cbea1c-8d0c-4694-b4a8-0e1cac4b3e69",
+      "front": "De acordo com as notas de \"aula 1\", qual é uma boa prática de estudo para este tema?",
+      "back": "Escrever resumos com as próprias palavras e fazer exercícios práticos/simulados logo em seguida.",
+      "repetitions": 0,
+      "interval": 0,
+      "easeFactor": 2.5,
+      "nextReviewDate": "2026-06-30T04:16:25.120Z",
+      "createdAt": "2026-06-30T04:16:25.120Z",
+      "updatedAt": "2026-06-30T04:16:25.120Z"
+    },
+    {
+      "id": "138a4744-8045-4940-a81a-6e96f56de249",
+      "leafId": "ec1015eb-0c91-4690-b65c-f01a08572889",
+      "notebookId": "28cbea1c-8d0c-4694-b4a8-0e1cac4b3e69",
+      "front": "Qual a importância da repetição espaçada no aprendizado de \"aula 1\"?",
+      "back": "Ela ajuda a combater a curva do esquecimento, movendo a informação da memória de curto prazo para a de longo prazo.",
+      "repetitions": 0,
+      "interval": 0,
+      "easeFactor": 2.5,
+      "nextReviewDate": "2026-06-30T04:16:25.120Z",
+      "createdAt": "2026-06-30T04:16:25.120Z",
+      "updatedAt": "2026-06-30T04:16:25.120Z"
     }
   ]
 }

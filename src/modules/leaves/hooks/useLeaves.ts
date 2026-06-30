@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import leafService from '../services/leafService';
-import type { CreateLeafInput, UpdateLeafInput } from '../types';
+import type { CreateLeafInput, UpdateLeafInput, Leaf } from '../types';
+import type { Flashcard } from '../../study/types';
 
 export function useLeaves(notebookId: string) {
   const queryClient = useQueryClient();
@@ -13,9 +14,16 @@ export function useLeaves(notebookId: string) {
 
   const createMutation = useMutation({
     mutationFn: (data: CreateLeafInput) => leafService.createLeaf(notebookId, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notebooks', notebookId, 'leaves'] });
-      queryClient.invalidateQueries({ queryKey: ['notebooks', notebookId] }); // Atualiza metadados como folhas acumuladas
+    onSuccess: (newLeaf) => {
+      // ⚡ Adiciona a nova folha ao cache + incrementa contagem — sem refetch
+      queryClient.setQueryData<Leaf[]>(['notebooks', notebookId, 'leaves'], (old) => [
+        ...(old || []),
+        newLeaf,
+      ]);
+      queryClient.setQueryData(['notebooks', notebookId], (old: any) => {
+        if (!old) return old;
+        return { ...old, leavesCount: old.leavesCount + 1 };
+      });
     },
   });
 
@@ -64,12 +72,16 @@ export function useLeaf(leafId: string) {
     mutationFn: () => leafService.deleteLeaf(leafId),
     onSuccess: () => {
       if (leafQuery.data) {
-        queryClient.invalidateQueries({
-          queryKey: ['notebooks', leafQuery.data.notebookId, 'leaves'],
+        const notebookId = leafQuery.data.notebookId;
+        // ⚡ Remove a folha do cache + decrementa contagem — sem refetch
+        queryClient.setQueryData<Leaf[]>(['notebooks', notebookId, 'leaves'], (old) =>
+          old?.filter((l) => l.id !== leafId) ?? old,
+        );
+        queryClient.setQueryData(['notebooks', notebookId], (old: any) => {
+          if (!old) return old;
+          return { ...old, leavesCount: Math.max(0, old.leavesCount - 1) };
         });
-        queryClient.invalidateQueries({
-          queryKey: ['notebooks', leafQuery.data.notebookId],
-        });
+        queryClient.removeQueries({ queryKey: ['leaves', leafId] });
       }
     },
   });
@@ -86,9 +98,9 @@ export function useLeaf(leafId: string) {
 
   const flashcardsMutation = useMutation({
     mutationFn: () => leafService.generateAIFlashcards(leafId),
-    onSuccess: () => {
-      // Invalida cache de flashcards desta folha
-      queryClient.invalidateQueries({ queryKey: ['leaves', leafId, 'flashcards'] });
+    onSuccess: (flashcards) => {
+      // ⚡ Define os flashcards diretamente no cache — sem refetch
+      queryClient.setQueryData<Flashcard[]>(['leaves', leafId, 'flashcards'], flashcards);
     },
   });
 

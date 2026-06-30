@@ -1,21 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, RefreshCw, CheckCircle, Brain, Eye, HelpCircle } from 'lucide-react';
 import { useNotebookFlashcards, useSubmitCardScore } from '../hooks/useFlashcards';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
-import type { StudyScore } from '../types';
+import type { Flashcard, StudyScore } from '../types';
 
 export const StudyView: React.FC = () => {
   const { notebookId } = useParams<{ notebookId: string }>();
   const navigate = useNavigate();
+
+  // DEBUG: captura em sessionStorage (sobrevive a hard reload)
+  const debugLog = (event: string, data: any) => {
+    const key = 'studyview_debug';
+    const prev = JSON.parse(sessionStorage.getItem(key) || '[]');
+    prev.push({ t: Date.now(), event, data });
+    if (prev.length > 100) prev.splice(0, prev.length - 100);
+    sessionStorage.setItem(key, JSON.stringify(prev));
+  };
+
+  // Salva no beforeunload (caso a página reload)
+  useEffect(() => {
+    const handleBeforeUnload = () => debugLog('beforeunload', { reason: 'page reloading' });
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
+  debugLog('render', { currentIndex: 0 }); // valor inicial
 
   const { data: serverFlashcards = [], isLoading } = useNotebookFlashcards(notebookId || '');
   const { mutateAsync: submitScore } = useSubmitCardScore(undefined, notebookId);
 
   // 💡 O SEGREDO: Criamos uma cópia estática da fila assim que os cards carregam.
   // Isso impede que atualizações do React Query alterem a ordem ou removam cards enquanto você estuda.
-  const [frozenFlashcards, setFrozenFlashcards] = useState<typeof serverFlashcards>([]);
+  const [frozenFlashcards, setFrozenFlashcards] = useState<Flashcard[]>([]);
   const [hasInitialized, setHasInitialized] = useState(false);
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -23,23 +41,34 @@ export const StudyView: React.FC = () => {
   const [sessionFinished, setSessionFinished] = useState(false);
   const [reviewedCount, setReviewedCount] = useState(0);
 
-  // Sincroniza os cards do servidor apenas uma vez na inicialização da tela
-  if (!isLoading && serverFlashcards.length > 0 && !hasInitialized) {
-    setFrozenFlashcards(serverFlashcards);
-    setHasInitialized(true);
-  }
+  // Sincroniza os cards do servidor apenas uma vez na inicialização via useEffect
+  // (evita render-phase state updates que podem conflitar com Strict Mode do React 19)
+  // Usamos useRef como guard para evitar o ciclo: setHasInitialized → re-render → effect dispara de novo
+  const initializedRef = useRef(false);
+
+  useEffect(() => {
+    if (!isLoading && serverFlashcards.length > 0 && !initializedRef.current) {
+      initializedRef.current = true;
+      setFrozenFlashcards(serverFlashcards);
+      setHasInitialized(true);
+    }
+  }, [isLoading, serverFlashcards]);
 
   // Passamos a ler tudo do nosso array congelado localmente
   const flashcards = frozenFlashcards.length > 0 ? frozenFlashcards : serverFlashcards;
   const currentCard = flashcards[currentIndex];
 
   const handleScoreSelect = async (score: StudyScore) => {
-    if (!currentCard) return;
+    if (!currentCard) {
+      debugLog('abort', { reason: 'currentCard undefined', currentIndex });
+      return;
+    }
 
     const isLastCard = currentIndex >= flashcards.length - 1;
     const cardIdToSubmit = currentCard.id;
 
-    // Avança o estado local imediatamente na cópia estática
+    debugLog('score-click', { currentIndex, cardIdToSubmit, score, isLastCard });
+
     setReviewedCount((prev) => prev + 1);
 
     if (!isLastCard) {
@@ -50,10 +79,11 @@ export const StudyView: React.FC = () => {
     }
 
     try {
-      // Dispara em background
+      debugLog('submit-before', { cardIdToSubmit, score });
       await submitScore({ cardId: cardIdToSubmit, score });
-    } catch (error) {
-      console.error('Erro ao enviar nota do card:', error);
+      debugLog('submit-success', { cardIdToSubmit, score });
+    } catch (error: any) {
+      debugLog('submit-error', { message: error?.message, status: error?.response?.status });
     }
   };
 

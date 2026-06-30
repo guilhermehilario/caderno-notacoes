@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import notebookService from '../services/notebookService';
-import type { CreateNotebookInput, UpdateNotebookInput } from '../types';
+import type { Notebook, CreateNotebookInput, UpdateNotebookInput } from '../types';
 
 export function useNotebooks() {
   const queryClient = useQueryClient();
@@ -12,8 +12,9 @@ export function useNotebooks() {
 
   const createMutation = useMutation({
     mutationFn: (data: CreateNotebookInput) => notebookService.createNotebook(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notebooks'] });
+    onSuccess: (newNotebook) => {
+      // ⚡ Adiciona o novo caderno ao cache cirurgicamente — sem refetch
+      queryClient.setQueryData<Notebook[]>(['notebooks'], (old) => [...(old || []), newNotebook]);
     },
   });
 
@@ -38,15 +39,22 @@ export function useNotebook(id: string) {
   const updateMutation = useMutation({
     mutationFn: (data: UpdateNotebookInput) => notebookService.updateNotebook(id, data),
     onSuccess: (updatedNotebook) => {
+      // ⚡ Atualiza o cache individual + substitui na lista — sem refetch
       queryClient.setQueryData(['notebooks', id], updatedNotebook);
-      queryClient.invalidateQueries({ queryKey: ['notebooks'] });
+      queryClient.setQueryData<Notebook[]>(['notebooks'], (old) =>
+        old?.map((n) => (n.id === id ? updatedNotebook : n)) ?? old,
+      );
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: () => notebookService.deleteNotebook(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notebooks'] });
+      // ⚡ Remove o caderno do cache + limpa cache individual — sem refetch
+      queryClient.setQueryData<Notebook[]>(['notebooks'], (old) =>
+        old?.filter((n) => n.id !== id) ?? old,
+      );
+      queryClient.removeQueries({ queryKey: ['notebooks', id] });
     },
   });
 
