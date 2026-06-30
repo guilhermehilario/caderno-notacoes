@@ -6,10 +6,10 @@ import { Plus, BookOpen, ChevronRight, Loader2 } from 'lucide-react';
 import { useNotebooks } from '../hooks/useNotebooks';
 import { CreateNotebookSchema } from '../types';
 import type { CreateNotebookInput } from '../types';
-import { Card } from '../../../components/ui/Card';
-import { Button } from '../../../components/ui/Button';
-import { Modal } from '../../../components/ui/Modal';
-import { Input } from '../../../components/ui/Input';
+import { Card } from '../../../components/ui/Card.tsx';
+import { Button } from '../../../components/ui/Button.tsx';
+import { Modal } from '../../../components/ui/Modal.tsx';
+import { Input } from '../../../components/ui/Input.tsx';
 
 const COLORS = [
   '#aa3bff', // Brand Purple

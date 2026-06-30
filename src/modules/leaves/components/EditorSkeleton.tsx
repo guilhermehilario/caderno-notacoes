@@ -1,5 +1,5 @@
 import React from 'react';
-import { Skeleton } from '../../../components/ui/Skeleton';
+import { Skeleton } from '../../../components/ui/Skeleton.tsx';
 
 /**
  * EditorSkeleton — exibido enquanto os dados da folha (leaf) estão sendo carregados.

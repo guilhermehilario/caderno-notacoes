@@ -12,7 +12,7 @@ import {
   ChevronLeft,
   User as UserIcon,
 } from 'lucide-react';
-import { Button } from '../ui/Button';
+import { Button } from '../ui/Button.tsx';
 
 export const AppLayout: React.FC = () => {
   const { user, logout } = useAuth();

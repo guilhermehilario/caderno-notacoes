@@ -6,9 +6,9 @@ import { Brain } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { RegisterSchema } from '../types';
 import type { RegisterInput } from '../types';
-import { Input } from '../../../components/ui/Input';
-import { Button } from '../../../components/ui/Button';
-import { Card } from '../../../components/ui/Card';
+import { Input } from '../../../components/ui/Input.tsx';
+import { Button } from '../../../components/ui/Button.tsx';
+import { Card } from '../../../components/ui/Card.tsx';
 
 export const RegisterView: React.FC = () => {
   const { register: registerUser, isRegistering } = useAuth();

@@ -18,5 +18,21 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
     },
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [
+          {
+            group: ['./**/!(*.*)'],
+            message:
+              'Import resolves to index.ts[x] via directory resolution. Use explicit file path with extension (e.g. "../Component/index.tsx").',
+          },
+          {
+            group: ['../**/!(*.*)'],
+            message:
+              'Import resolves to index.ts[x] via directory resolution. Use explicit file path with extension (e.g. "../Component/index.tsx").',
+          },
+        ],
+      }],
+    },
   },
 ])

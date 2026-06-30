@@ -1,14 +1,14 @@
 import { memo } from 'react';
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
-import AppLayout from '../components/layout/AppLayout';
-import PrivateRoute from './PrivateRoute';
-import PublicRoute from './PublicRoute';
-import LoginView from '../modules/auth/views/LoginView';
-import RegisterView from '../modules/auth/views/RegisterView';
-import DashboardView from '../modules/notebooks/views/DashboardView';
-import NotebookView from '../modules/notebooks/views/NotebookView';
-import EditorView from '../modules/leaves/views/EditorView';
-import StudyView from '../modules/study/views/StudyView';
+import AppLayout from '../components/layout/AppLayout.tsx';
+import PrivateRoute from './PrivateRoute.tsx';
+import PublicRoute from './PublicRoute.tsx';
+import LoginView from '../modules/auth/views/LoginView.tsx';
+import RegisterView from '../modules/auth/views/RegisterView.tsx';
+import DashboardView from '../modules/notebooks/views/DashboardView.tsx';
+import NotebookView from '../modules/notebooks/views/NotebookView.tsx';
+import EditorView from '../modules/leaves/views/EditorView.tsx';
+import StudyView from '../modules/study/views/StudyView.tsx';
 
 /* ─── Componentes nomeados para cada rota ─────────────────────────── */
 

@@ -6,9 +6,9 @@ import { Brain } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { LoginSchema } from '../types';
 import type { LoginInput } from '../types';
-import { Input } from '../../../components/ui/Input';
-import { Button } from '../../../components/ui/Button';
-import { Card } from '../../../components/ui/Card';
+import { Input } from '../../../components/ui/Input.tsx';
+import { Button } from '../../../components/ui/Button.tsx';
+import { Card } from '../../../components/ui/Card.tsx';
 
 export const LoginView: React.FC = () => {
   const { login, isLoggingIn } = useAuth();

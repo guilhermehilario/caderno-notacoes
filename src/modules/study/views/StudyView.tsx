@@ -3,8 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, RefreshCw, CheckCircle, Brain, Eye, HelpCircle } from 'lucide-react';
 import { useNotebookFlashcards, useSubmitCardScore } from '../hooks/useFlashcards';
 import { useStudyStore } from '../studyStore';
-import { Card } from '../../../components/ui/Card';
-import { Button } from '../../../components/ui/Button';
+import { Card } from '../../../components/ui/Card.tsx';
+import { Button } from '../../../components/ui/Button.tsx';
 import type { Flashcard, StudyScore } from '../types';
 
 export const StudyView: React.FC = () => {
