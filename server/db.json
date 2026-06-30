@@ -1,0 +1,236 @@
+{
+  "users": [
+    {
+      "id": "e47e8836-c07a-42d9-96ca-c6a657b642e1",
+      "name": "João Testador",
+      "email": "test_1782042405446@example.com",
+      "password": "mypassword123",
+      "avatarUrl": "https://api.dicebear.com/7.x/adventurer/svg?seed=Jo%C3%A3o%20Testador",
+      "createdAt": "2026-06-21T11:46:45.777Z",
+      "updatedAt": "2026-06-21T11:46:45.777Z"
+    },
+    {
+      "id": "6f185c65-a824-4bff-a4b5-c0a0fe8cc7d9",
+      "name": "João Testador",
+      "email": "test_1782043299224@example.com",
+      "password": "mypassword123",
+      "avatarUrl": "https://api.dicebear.com/7.x/adventurer/svg?seed=Jo%C3%A3o%20Testador",
+      "createdAt": "2026-06-21T12:01:39.547Z",
+      "updatedAt": "2026-06-21T12:01:39.547Z"
+    },
+    {
+      "id": "1e76550f-88bc-47fa-92fc-add169301091",
+      "name": "Guilherme Hilario",
+      "email": "guilhermehilariosilva@gmail.com",
+      "password": "Cacia5392@",
+      "avatarUrl": "https://api.dicebear.com/7.x/adventurer/svg?seed=Guilherme%20Hilario",
+      "createdAt": "2026-06-21T12:05:55.601Z",
+      "updatedAt": "2026-06-21T12:05:55.601Z"
+    },
+    {
+      "id": "8153bdd8-ebfd-46e5-9374-2188985d8b72",
+      "name": "Guilherme Hilario",
+      "email": "exemplo@email.com",
+      "password": "12345678",
+      "avatarUrl": "https://api.dicebear.com/7.x/adventurer/svg?seed=Guilherme%20Hilario",
+      "createdAt": "2026-06-29T23:14:01.223Z",
+      "updatedAt": "2026-06-29T23:14:01.223Z"
+    },
+    {
+      "id": "37990d03-097b-433a-aa24-a271c4d1bbf0",
+      "name": "Teste Build",
+      "email": "build@teste.com",
+      "password": "123456",
+      "avatarUrl": "https://api.dicebear.com/7.x/adventurer/svg?seed=Teste%20Build",
+      "createdAt": "2026-06-30T00:32:57.173Z",
+      "updatedAt": "2026-06-30T00:32:57.173Z"
+    },
+    {
+      "id": "3cf9ddc8-6320-4a5d-8528-59326570477f",
+      "name": "Teste Build",
+      "email": "build_teste@email.com",
+      "password": "123456",
+      "avatarUrl": "https://api.dicebear.com/7.x/adventurer/svg?seed=Teste%20Build",
+      "createdAt": "2026-06-30T00:34:22.561Z",
+      "updatedAt": "2026-06-30T00:34:22.561Z"
+    }
+  ],
+  "notebooks": [
+    {
+      "id": "98c004c0-c1b1-4396-8e33-c4cf419c1d05",
+      "userId": "1e76550f-88bc-47fa-92fc-add169301091",
+      "title": "caderno de teste",
+      "description": "esse caderno e um teste do que esta podendo fazer ao decorrer do desenvolvimento",
+      "color": "#ef4444",
+      "createdAt": "2026-06-21T12:07:04.875Z",
+      "updatedAt": "2026-06-21T12:07:04.875Z"
+    },
+    {
+      "id": "df767eeb-e52f-4d24-952b-21d8881cda8a",
+      "userId": "37990d03-097b-433a-aa24-a271c4d1bbf0",
+      "title": "Caderno Teste Build",
+      "description": "Testando o build",
+      "color": "#3b82f6",
+      "createdAt": "2026-06-30T00:32:57.283Z",
+      "updatedAt": "2026-06-30T00:32:57.283Z"
+    },
+    {
+      "id": "149ea152-cdc6-4cf0-b597-4df0b90b8558",
+      "userId": "3cf9ddc8-6320-4a5d-8528-59326570477f",
+      "title": "Validacao Teste",
+      "description": "Testando todas as funcionalidades",
+      "color": "#10b981",
+      "createdAt": "2026-06-30T00:34:22.668Z",
+      "updatedAt": "2026-06-30T00:34:22.668Z"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "9e9fa7b4-b155-42c2-80ce-c7cccef06e17",
+      "notebookId": "98c004c0-c1b1-4396-8e33-c4cf419c1d05",
+      "title": "Introducao ao caderno",
+      "content": "1. Flashcards: O Poder do Estudo Ativo\nOs flashcards são pequenos cartões com uma pergunta na frente e a resposta atrás. Eles baseiam-se em dois princípios científicos da aprendizagem: a lembrança ativa (forçar o cérebro a buscar a resposta) e a repetição espaçada (rever o conteúdo em intervalos de tempo que aumentam gradativamente).\n\nComo usar: Escreva um conceito ou pergunta direta na frente (ex: \"O que é a Mitocôndria?\") e uma resposta curta e objetiva no verso (ex: \"Organela responsável pela respiração celular e produção de energia\").\n\nO segredo: Tente responder mentalmente ou em voz alta antes de virar o cartão. Separe os cartões que você errou para revisar mais vezes do que os que você acertou.\n\n2. Resumos: Sintetizando o Conhecimento\nFazer um resumo não é copiar o livro com outras palavras, mas sim explicar o conteúdo para si mesmo de forma condensada.\n\nComo usar: Após ler um capítulo ou assistir a uma aula, feche o material e tente sintetizar os pontos principais. Use tópicos, esquemas e palavras-chave. Se você consegue resumir um assunto complexo em poucas linhas, significa que você realmente o compreendeu.\n\nA Regra de Ouro: Escreva à Mão para Gravar de Verdade\nHoje em dia, é muito tentador digitar os resumos no computador ou usar aplicativos digitais para criar flashcards. Embora a tecnologia ajude na organização, a ciência da aprendizagem faz um alerta: sempre que possível, prefira a escrita tradicional, com papel e caneta.\n\nPor que escrever à mão funciona melhor?\nQuando você digita, o movimento dos seus dedos é praticamente o mesmo para qualquer tecla, tornando o processo mecânico e rápido demais. Já ao escrever à mão, seu cérebro precisa coordenar movimentos complexos para desenhar cada letra. Esse esforço motor ativa áreas motoras e cognitivas ligadas à memória de longo prazo. Além disso, como escrever à mão é mais lento, você é forçado a selecionar e processar as informações mais importantes, fixando o aprendizado logo na primeira escrita.\n\nComo unir tudo no seu dia a dia:\nEstude a matéria e faça suas anotações principais.\n\nCrie seu resumo à mão em uma folha de papel, forçando seu cérebro a sintetizar o que foi aprendido.\n\nMonte seus flashcards físicos (usando papel cartão ou fichas pautadas), escrevendo as perguntas e respostas também à mão.\n\nRevise os flashcards periodicamente para garantir que o conteúdo colou de vez na memória.\n\nTrocar o teclado pelo papel pode parecer mais trabalhoso no início, mas o tempo economizado na hora de fixar o conteúdo compensa cada linha escrita. Experimente essa abordagem e veja seu rendimento decolar!",
+      "rawText": "1. Flashcards: O Poder do Estudo Ativo\nOs flashcards são pequenos cartões com uma pergunta na frente e a resposta atrás. Eles baseiam-se em dois princípios científicos da aprendizagem: a lembrança ativa (forçar o cérebro a buscar a resposta) e a repetição espaçada (rever o conteúdo em intervalos de tempo que aumentam gradativamente).\n\nComo usar: Escreva um conceito ou pergunta direta na frente (ex: \"O que é a Mitocôndria?\") e uma resposta curta e objetiva no verso (ex: \"Organela responsável pela respiração celular e produção de energia\").\n\nO segredo: Tente responder mentalmente ou em voz alta antes de virar o cartão. Separe os cartões que você errou para revisar mais vezes do que os que você acertou.\n\n2. Resumos: Sintetizando o Conhecimento\nFazer um resumo não é copiar o livro com outras palavras, mas sim explicar o conteúdo para si mesmo de forma condensada.\n\nComo usar: Após ler um capítulo ou assistir a uma aula, feche o material e tente sintetizar os pontos principais. Use tópicos, esquemas e palavras-chave. Se você consegue resumir um assunto complexo em poucas linhas, significa que você realmente o compreendeu.\n\nA Regra de Ouro: Escreva à Mão para Gravar de Verdade\nHoje em dia, é muito tentador digitar os resumos no computador ou usar aplicativos digitais para criar flashcards. Embora a tecnologia ajude na organização, a ciência da aprendizagem faz um alerta: sempre que possível, prefira a escrita tradicional, com papel e caneta.\n\nPor que escrever à mão funciona melhor?\nQuando você digita, o movimento dos seus dedos é praticamente o mesmo para qualquer tecla, tornando o processo mecânico e rápido demais. Já ao escrever à mão, seu cérebro precisa coordenar movimentos complexos para desenhar cada letra. Esse esforço motor ativa áreas motoras e cognitivas ligadas à memória de longo prazo. Além disso, como escrever à mão é mais lento, você é forçado a selecionar e processar as informações mais importantes, fixando o aprendizado logo na primeira escrita.\n\nComo unir tudo no seu dia a dia:\nEstude a matéria e faça suas anotações principais.\n\nCrie seu resumo à mão em uma folha de papel, forçando seu cérebro a sintetizar o que foi aprendido.\n\nMonte seus flashcards físicos (usando papel cartão ou fichas pautadas), escrevendo as perguntas e respostas também à mão.\n\nRevise os flashcards periodicamente para garantir que o conteúdo colou de vez na memória.\n\nTrocar o teclado pelo papel pode parecer mais trabalhoso no início, mas o tempo economizado na hora de fixar o conteúdo compensa cada linha escrita. Experimente essa abordagem e veja seu rendimento decolar!",
+      "summary": "### Resumo da Aula: Introducao ao caderno\n\nEste resumo foi gerado dinamicamente pela inteligência artificial com base nas notas fornecidas.\n\n- **Conceito Principal**: Foco em Introducao ao caderno.\n- **Ideias Chave**:\n  1. A importância de reter os conceitos práticos e relacioná-los a exemplos do cotidiano.\n  2. Uso de revisões sistemáticas para evitar a curva do esquecimento de Ebbinghaus.\n- **Conteúdo Analisado**: \n  > \"1. Flashcards: O Poder do Estudo Ativo\nOs flashcards são pequenos cartões com uma pergunta na frente e a resposta atrás. Eles baseiam-se em dois princ...\"\n\n*Utilize os flashcards associados para testar sua memória ativa!*",
+      "createdAt": "2026-06-21T12:07:36.455Z",
+      "updatedAt": "2026-06-21T12:10:36.456Z"
+    },
+    {
+      "id": "cf8baf0e-98c4-4f2f-bb79-acfc5bb14720",
+      "notebookId": "df767eeb-e52f-4d24-952b-21d8881cda8a",
+      "title": "Aula Teste",
+      "content": "Conteudo de teste para validar o build",
+      "rawText": "Conteudo de teste para validar o build",
+      "summary": "### Resumo da Aula: Aula Teste\n\nEste resumo foi gerado dinamicamente pela inteligência artificial com base nas notas fornecidas.\n\n- **Conceito Principal**: Foco em Aula Teste.\n- **Ideias Chave**:\n  1. A importância de reter os conceitos práticos e relacioná-los a exemplos do cotidiano.\n  2. Uso de revisões sistemáticas para evitar a curva do esquecimento de Ebbinghaus.\n- **Conteúdo Analisado**: \n  > \"Conteudo de teste para validar o build\"\n\n*Utilize os flashcards associados para testar sua memória ativa!*",
+      "createdAt": "2026-06-30T00:32:57.365Z",
+      "updatedAt": "2026-06-30T00:32:57.443Z"
+    },
+    {
+      "id": "08d7b068-8dcb-462d-83c2-43b7b37c2962",
+      "notebookId": "149ea152-cdc6-4cf0-b597-4df0b90b8558",
+      "title": "Aula de Teste - Editada",
+      "content": "Conteudo editado",
+      "createdAt": "2026-06-30T00:34:22.722Z",
+      "updatedAt": "2026-06-30T00:34:22.950Z"
+    }
+  ],
+  "flashcards": [
+    {
+      "id": "30de5fff-4f5d-47f4-95c4-09e26db075db",
+      "leafId": "9e9fa7b4-b155-42c2-80ce-c7cccef06e17",
+      "notebookId": "98c004c0-c1b1-4396-8e33-c4cf419c1d05",
+      "front": "Qual é o tema principal abordado na folha \"Introducao ao caderno\"?",
+      "back": "O tema principal é \"Introducao ao caderno\", focado em aprofundar e consolidar este conteúdo de forma sistemática.",
+      "repetitions": 4,
+      "interval": 38,
+      "easeFactor": 2.6,
+      "nextReviewDate": "2026-07-29T12:49:22.759Z",
+      "createdAt": "2026-06-21T12:12:04.985Z",
+      "updatedAt": "2026-06-21T12:49:22.759Z"
+    },
+    {
+      "id": "886fb203-3392-4f27-9a65-f395f95b5026",
+      "leafId": "9e9fa7b4-b155-42c2-80ce-c7cccef06e17",
+      "notebookId": "98c004c0-c1b1-4396-8e33-c4cf419c1d05",
+      "front": "De acordo com as notas de \"Introducao ao caderno\", qual é uma boa prática de estudo para este tema?",
+      "back": "Escrever resumos com as próprias palavras e fazer exercícios práticos/simulados logo em seguida.",
+      "repetitions": 0,
+      "interval": 0,
+      "easeFactor": 2.5,
+      "nextReviewDate": "2026-06-21T12:12:04.985Z",
+      "createdAt": "2026-06-21T12:12:04.985Z",
+      "updatedAt": "2026-06-21T12:12:04.985Z"
+    },
+    {
+      "id": "8ca04858-94b2-4b85-9c14-0844d51b0ec9",
+      "leafId": "9e9fa7b4-b155-42c2-80ce-c7cccef06e17",
+      "notebookId": "98c004c0-c1b1-4396-8e33-c4cf419c1d05",
+      "front": "Qual a importância da repetição espaçada no aprendizado de \"Introducao ao caderno\"?",
+      "back": "Ela ajuda a combater a curva do esquecimento, movendo a informação da memória de curto prazo para a de longo prazo.",
+      "repetitions": 0,
+      "interval": 0,
+      "easeFactor": 2.5,
+      "nextReviewDate": "2026-06-21T12:12:04.985Z",
+      "createdAt": "2026-06-21T12:12:04.985Z",
+      "updatedAt": "2026-06-21T12:12:04.985Z"
+    },
+    {
+      "id": "3d3ee7b0-e702-46ea-a8b8-623b2c73a184",
+      "leafId": "cf8baf0e-98c4-4f2f-bb79-acfc5bb14720",
+      "notebookId": "df767eeb-e52f-4d24-952b-21d8881cda8a",
+      "front": "Qual é o tema principal abordado na folha \"Aula Teste\"?",
+      "back": "O tema principal é \"Aula Teste\", focado em aprofundar e consolidar este conteúdo de forma sistemática.",
+      "repetitions": 0,
+      "interval": 0,
+      "easeFactor": 2.5,
+      "nextReviewDate": "2026-06-30T00:32:57.481Z",
+      "createdAt": "2026-06-30T00:32:57.481Z",
+      "updatedAt": "2026-06-30T00:32:57.481Z"
+    },
+    {
+      "id": "096172de-574e-4e7c-929f-bc08e55a9df9",
+      "leafId": "cf8baf0e-98c4-4f2f-bb79-acfc5bb14720",
+      "notebookId": "df767eeb-e52f-4d24-952b-21d8881cda8a",
+      "front": "De acordo com as notas de \"Aula Teste\", qual é uma boa prática de estudo para este tema?",
+      "back": "Escrever resumos com as próprias palavras e fazer exercícios práticos/simulados logo em seguida.",
+      "repetitions": 0,
+      "interval": 0,
+      "easeFactor": 2.5,
+      "nextReviewDate": "2026-06-30T00:32:57.481Z",
+      "createdAt": "2026-06-30T00:32:57.481Z",
+      "updatedAt": "2026-06-30T00:32:57.481Z"
+    },
+    {
+      "id": "ff3dcd14-26b0-43c6-84c4-2c62be05d582",
+      "leafId": "cf8baf0e-98c4-4f2f-bb79-acfc5bb14720",
+      "notebookId": "df767eeb-e52f-4d24-952b-21d8881cda8a",
+      "front": "Qual a importância da repetição espaçada no aprendizado de \"Aula Teste\"?",
+      "back": "Ela ajuda a combater a curva do esquecimento, movendo a informação da memória de curto prazo para a de longo prazo.",
+      "repetitions": 0,
+      "interval": 0,
+      "easeFactor": 2.5,
+      "nextReviewDate": "2026-06-30T00:32:57.481Z",
+      "createdAt": "2026-06-30T00:32:57.481Z",
+      "updatedAt": "2026-06-30T00:32:57.481Z"
+    },
+    {
+      "id": "57ccd1e8-1709-4ba6-a6c4-e702779a88d0",
+      "leafId": "08d7b068-8dcb-462d-83c2-43b7b37c2962",
+      "notebookId": "149ea152-cdc6-4cf0-b597-4df0b90b8558",
+      "front": "Qual é o tema principal abordado na folha \"Aula de Teste Completo\"?",
+      "back": "O tema principal é \"Aula de Teste Completo\", focado em aprofundar e consolidar este conteúdo de forma sistemática.",
+      "repetitions": 0,
+      "interval": 0,
+      "easeFactor": 2.5,
+      "nextReviewDate": "2026-06-30T00:34:22.862Z",
+      "createdAt": "2026-06-30T00:34:22.862Z",
+      "updatedAt": "2026-06-30T00:34:22.862Z"
+    },
+    {
+      "id": "8f11750c-a54d-4141-940f-873cc9651387",
+      "leafId": "08d7b068-8dcb-462d-83c2-43b7b37c2962",
+      "notebookId": "149ea152-cdc6-4cf0-b597-4df0b90b8558",
+      "front": "De acordo com as notas de \"Aula de Teste Completo\", qual é uma boa prática de estudo para este tema?",
+      "back": "Escrever resumos com as próprias palavras e fazer exercícios práticos/simulados logo em seguida.",
+      "repetitions": 0,
+      "interval": 0,
+      "easeFactor": 2.5,
+      "nextReviewDate": "2026-06-30T00:34:22.862Z",
+      "createdAt": "2026-06-30T00:34:22.862Z",
+      "updatedAt": "2026-06-30T00:34:22.862Z"
+    },
+    {
+      "id": "06c9c4f7-9a90-4ae1-bd5d-13d51d7341f8",
+      "leafId": "08d7b068-8dcb-462d-83c2-43b7b37c2962",
+      "notebookId": "149ea152-cdc6-4cf0-b597-4df0b90b8558",
+      "front": "Qual a importância da repetição espaçada no aprendizado de \"Aula de Teste Completo\"?",
+      "back": "Ela ajuda a combater a curva do esquecimento, movendo a informação da memória de curto prazo para a de longo prazo.",
+      "repetitions": 0,
+      "interval": 0,
+      "easeFactor": 2.5,
+      "nextReviewDate": "2026-06-30T00:34:22.862Z",
+      "createdAt": "2026-06-30T00:34:22.862Z",
+      "updatedAt": "2026-06-30T00:34:22.862Z"
+    }
+  ]
+}

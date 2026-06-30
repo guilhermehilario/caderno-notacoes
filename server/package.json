@@ -1,0 +1,17 @@
+{
+  "name": "revisa-aula-api",
+  "version": "1.0.0",
+  "description": "API básica de suporte para o frontend do Revisa Aula",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2"
+  }
+}
