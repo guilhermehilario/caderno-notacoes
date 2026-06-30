@@ -24,6 +24,8 @@ dist-ssr
 *.sw?
 
 .antigravityignore
+.env
+.env.local
 TarefasAfazer
 CHANGELOG.md
 DOCUMENTACAO_CONTEXTO.md

@@ -180,10 +180,10 @@
       "id": "b3badac6-43ab-4571-8622-b579665efab9",
       "notebookId": "e2c8160b-3f68-4c0f-a0fb-e77416f2f64f",
       "title": "",
-      "content": "<p>kjdaslkjdlaksjd aa dasdjp ajdopas<mark data-annotation=\"teste de anotacao\" class=\"annotation-anchor\">dmada</mark> da dsdajl ;da das;'dkasdd a</p>",
-      "rawText": "kjdaslkjdlaksjd aa dasdjp ajdopasdmada da dsdajl ;da das;'dkasdd a",
+      "content": "<p>kjdaslkjdlaksjd aa dasdjp ajdopas<mark>dmada</mark> da dsdajl ;da das;'dkasdd a dadasda</p>",
+      "rawText": "kjdaslkjdlaksjd aa dasdjp ajdopasdmada da dsdajl ;da das;'dkasdd a dadasda",
       "createdAt": "2026-06-30T02:24:15.090Z",
-      "updatedAt": "2026-06-30T02:25:01.356Z"
+      "updatedAt": "2026-06-30T23:08:17.171Z"
     },
     {
       "id": "84f8bb6d-d90a-4e2a-a28a-9a21b9404d70",
@@ -413,12 +413,12 @@
       "notebookId": "e2c8160b-3f68-4c0f-a0fb-e77416f2f64f",
       "front": "Qual é o tema principal abordado na folha \"aula 2\"?",
       "back": "O tema principal é \"aula 2\", focado em aprofundar e consolidar este conteúdo de forma sistemática.",
-      "repetitions": 0,
-      "interval": 1,
-      "easeFactor": 1.3,
-      "nextReviewDate": "2026-07-01T04:16:02.785Z",
+      "repetitions": 3,
+      "interval": 9,
+      "easeFactor": 1.6000000000000003,
+      "nextReviewDate": "2026-07-09T23:09:33.603Z",
       "createdAt": "2026-06-30T04:02:04.835Z",
-      "updatedAt": "2026-06-30T04:16:02.786Z"
+      "updatedAt": "2026-06-30T23:09:33.603Z"
     },
     {
       "id": "6510da17-615d-429e-8792-0c84059bbba7",
@@ -601,6 +601,45 @@
       "nextReviewDate": "2026-06-30T22:01:23.718Z",
       "createdAt": "2026-06-30T22:01:23.719Z",
       "updatedAt": "2026-06-30T22:01:23.719Z"
+    },
+    {
+      "id": "e12344a9-1b00-4e63-aa45-802f78148f59",
+      "leafId": "b3badac6-43ab-4571-8622-b579665efab9",
+      "notebookId": "e2c8160b-3f68-4c0f-a0fb-e77416f2f64f",
+      "front": "Qual é o tema principal abordado na folha \"\"?",
+      "back": "O tema principal é \"\", focado em aprofundar e consolidar este conteúdo de forma sistemática.",
+      "repetitions": 0,
+      "interval": 0,
+      "easeFactor": 2.5,
+      "nextReviewDate": "2026-06-30T23:09:25.681Z",
+      "createdAt": "2026-06-30T23:09:25.681Z",
+      "updatedAt": "2026-06-30T23:09:25.681Z"
+    },
+    {
+      "id": "fccd55d3-2218-4cab-9a18-e5962d06af48",
+      "leafId": "b3badac6-43ab-4571-8622-b579665efab9",
+      "notebookId": "e2c8160b-3f68-4c0f-a0fb-e77416f2f64f",
+      "front": "De acordo com as notas de \"\", qual é uma boa prática de estudo para este tema?",
+      "back": "Escrever resumos com as próprias palavras e fazer exercícios práticos/simulados logo em seguida.",
+      "repetitions": 0,
+      "interval": 0,
+      "easeFactor": 2.5,
+      "nextReviewDate": "2026-06-30T23:09:25.681Z",
+      "createdAt": "2026-06-30T23:09:25.681Z",
+      "updatedAt": "2026-06-30T23:09:25.681Z"
+    },
+    {
+      "id": "8833b77a-18d0-4751-9ed7-dfc8b67dc447",
+      "leafId": "b3badac6-43ab-4571-8622-b579665efab9",
+      "notebookId": "e2c8160b-3f68-4c0f-a0fb-e77416f2f64f",
+      "front": "Qual a importância da repetição espaçada no aprendizado de \"\"?",
+      "back": "Ela ajuda a combater a curva do esquecimento, movendo a informação da memória de curto prazo para a de longo prazo.",
+      "repetitions": 0,
+      "interval": 0,
+      "easeFactor": 2.5,
+      "nextReviewDate": "2026-06-30T23:09:25.681Z",
+      "createdAt": "2026-06-30T23:09:25.681Z",
+      "updatedAt": "2026-06-30T23:09:25.681Z"
     }
   ]
 }

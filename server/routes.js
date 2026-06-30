@@ -1,11 +1,21 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 import { db } from './database.js';
 import { authMiddleware, JWT_SECRET } from './authMiddleware.js';
 
 export const router = express.Router();
-const REFRESH_SECRET = 'super-secret-refresh-key-revisa-aula';
+
+// Lê a chave de refresh do ambiente, com fallback para desenvolvimento local
+const REFRESH_SECRET = process.env.REFRESH_SECRET;
+if (!REFRESH_SECRET) {
+  console.error('❌ REFRESH_SECRET não definido. Configure a variável de ambiente REFRESH_SECRET.');
+  process.exit(1);
+}
+
+const isSecure = process.env.NODE_ENV === 'production';
+const SALT_ROUNDS = 12;
 
 // ==========================================
 // 1. ROTAS DE AUTENTICAÇÃO
@@ -32,11 +42,14 @@ router.post('/auth/register', async (req, res) => {
       });
     }
 
+    // Hash da senha com bcrypt
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
     const newUser = {
       id: crypto.randomUUID(),
       name,
       email: email.toLowerCase(),
-      password, // Em produção, usar bcryptjs. Para fins básicos, armazenamos simples
+      password: hashedPassword,
       avatarUrl: `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name)}`,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -45,13 +58,13 @@ router.post('/auth/register', async (req, res) => {
     await db.insert('users', newUser);
 
     // Gerar tokens
-    const accessToken = jwt.sign({ userId: newUser.id }, JWT_SECRET, { expiresIn: '15m' });
+    const accessToken = jwt.sign({ userId: newUser.id }, JWT_SECRET, { expiresIn: '24h' });
     const refreshToken = jwt.sign({ userId: newUser.id }, REFRESH_SECRET, { expiresIn: '7d' });
 
-    // Setar refresh token cookie
+    // Setar refresh token cookie (secure ativado apenas em produção)
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: false, // local development
+      secure: isSecure,
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 dias
     });
@@ -83,8 +96,12 @@ router.post('/auth/login', async (req, res) => {
     }
 
     const users = await db.get('users');
-    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
-    if (!user) {
+    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+
+    // Usa comparação segura com bcrypt (tempo constante, resistente a timing attack)
+    const isPasswordValid = user ? await bcrypt.compare(password, user.password) : false;
+
+    if (!user || !isPasswordValid) {
       return res.status(401).json({ 
         error: 'E-mail ou senha incorretos', 
         message: 'E-mail ou senha incorretos' 
@@ -92,13 +109,13 @@ router.post('/auth/login', async (req, res) => {
     }
 
     // Gerar tokens
-    const accessToken = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '15m' });
+    const accessToken = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '24h' });
     const refreshToken = jwt.sign({ userId: user.id }, REFRESH_SECRET, { expiresIn: '7d' });
 
     // Setar refresh token cookie
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: false, // local development
+      secure: isSecure,
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 dias
     });
@@ -121,7 +138,7 @@ router.post('/auth/login', async (req, res) => {
 router.post('/auth/logout', (req, res) => {
   res.clearCookie('refreshToken', {
     httpOnly: true,
-    secure: false,
+    secure: isSecure,
     sameSite: 'lax'
   });
   return res.status(200).json({ message: 'Deslogado com sucesso' });
@@ -144,7 +161,7 @@ router.post('/auth/refresh', async (req, res) => {
       return res.status(401).json({ error: 'Usuário não encontrado' });
     }
 
-    const accessToken = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '15m' });
+    const accessToken = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '24h' });
     return res.json({ accessToken });
   } catch (error) {
     return res.status(401).json({ error: 'Refresh token inválido ou expirado' });
@@ -281,9 +298,30 @@ router.delete('/notebooks/:id', authMiddleware, async (req, res) => {
 // 3. ROTAS DE FOLHAS/AULAS (LEAVES)
 // ==========================================
 
-// Listar folhas de um caderno
+// Utilitário: verifica se uma folha pertence a um notebook do usuário autenticado
+async function verifyLeafOwnership(leafId, userId) {
+  const leaves = await db.get('leaves');
+  const leaf = leaves.find(l => l.id === leafId);    if (!leaf) return { leaf: null, error: 'Folha não encontrada' };
+
+  const notebooks = await db.get('notebooks');
+  const notebook = notebooks.find(nb => nb.id === leaf.notebookId);
+  if (!notebook || notebook.userId !== userId) {
+    return { leaf: null, error: 'Acesso negado' };
+  }
+
+  return { leaf, error: null };
+}
+
+// Listar folhas de um caderno (com owner check)
 router.get('/notebooks/:notebookId/leaves', authMiddleware, async (req, res) => {
   try {
+    // Verifica se o caderno pertence ao usuário
+    const notebooks = await db.get('notebooks');
+    const notebook = notebooks.find(nb => nb.id === req.params.notebookId && nb.userId === req.user.id);
+    if (!notebook) {
+      return res.status(404).json({ error: 'Caderno não encontrado' });
+    }
+
     const leaves = await db.get('leaves');
     const filtered = leaves.filter(l => l.notebookId === req.params.notebookId);
     return res.json(filtered);
@@ -292,9 +330,16 @@ router.get('/notebooks/:notebookId/leaves', authMiddleware, async (req, res) => 
   }
 });
 
-// Criar folha
+// Criar folha (com owner check)
 router.post('/notebooks/:notebookId/leaves', authMiddleware, async (req, res) => {
   try {
+    // Verifica se o caderno pertence ao usuário
+    const notebooks = await db.get('notebooks');
+    const notebook = notebooks.find(nb => nb.id === req.params.notebookId && nb.userId === req.user.id);
+    if (!notebook) {
+      return res.status(404).json({ error: 'Caderno não encontrado' });
+    }
+
     const { title, content, rawText } = req.body;
 
     if (!title) {
@@ -319,26 +364,24 @@ router.post('/notebooks/:notebookId/leaves', authMiddleware, async (req, res) =>
   }
 });
 
-// Detalhes da folha
+// Detalhes da folha (com owner check)
 router.get('/leaves/:leafId', authMiddleware, async (req, res) => {
   try {
-    const leaves = await db.get('leaves');
-    const leaf = leaves.find(l => l.id === req.params.leafId);
-    if (!leaf) return res.status(404).json({ error: 'Folha não encontrada' });
+    const { leaf, error } = await verifyLeafOwnership(req.params.leafId, req.user.id);
+    if (error) return res.status(404).json({ error });
     return res.json(leaf);
   } catch (error) {
     return res.status(500).json({ error: 'Erro ao obter folha' });
   }
 });
 
-// Editar folha
+// Editar folha (com owner check)
 router.put('/leaves/:leafId', authMiddleware, async (req, res) => {
   try {
-    const { title, content, rawText, summary } = req.body;
-    const leaves = await db.get('leaves');
-    const leaf = leaves.find(l => l.id === req.params.leafId);
-    if (!leaf) return res.status(404).json({ error: 'Folha não encontrada' });
+    const { leaf, error } = await verifyLeafOwnership(req.params.leafId, req.user.id);
+    if (error) return res.status(404).json({ error });
 
+    const { title, content, rawText, summary } = req.body;
     const updated = await db.update('leaves', req.params.leafId, { title, content, rawText, summary });
     return res.json(updated);
   } catch (error) {
@@ -346,12 +389,11 @@ router.put('/leaves/:leafId', authMiddleware, async (req, res) => {
   }
 });
 
-// Deletar folha
+// Deletar folha (com owner check)
 router.delete('/leaves/:leafId', authMiddleware, async (req, res) => {
   try {
-    const leaves = await db.get('leaves');
-    const leaf = leaves.find(l => l.id === req.params.leafId);
-    if (!leaf) return res.status(404).json({ error: 'Folha não encontrada' });
+    const { leaf, error } = await verifyLeafOwnership(req.params.leafId, req.user.id);
+    if (error) return res.status(404).json({ error });
 
     await db.delete('leaves', req.params.leafId);
 
@@ -366,28 +408,16 @@ router.delete('/leaves/:leafId', authMiddleware, async (req, res) => {
   }
 });
 
-// Geração de Resumo com IA (Mockado)
+// Geração de Resumo com IA (Mockado) — com owner check
 router.post('/leaves/:leafId/summary', authMiddleware, async (req, res) => {
   try {
-    const leaves = await db.get('leaves');
-    const leaf = leaves.find(l => l.id === req.params.leafId);
-    if (!leaf) return res.status(404).json({ error: 'Folha não encontrada' });
+    const { leaf, error } = await verifyLeafOwnership(req.params.leafId, req.user.id);
+    if (error) return res.status(404).json({ error });
 
     const cleanTitle = leaf.title;
     const cleanText = leaf.rawText || 'Sem conteúdo adicional.';
 
-    const summaryText = `### Resumo da Aula: ${cleanTitle}
-
-Este resumo foi gerado dinamicamente pela inteligência artificial com base nas notas fornecidas.
-
-- **Conceito Principal**: Foco em ${cleanTitle}.
-- **Ideias Chave**:
-  1. A importância de reter os conceitos práticos e relacioná-los a exemplos do cotidiano.
-  2. Uso de revisões sistemáticas para evitar a curva do esquecimento de Ebbinghaus.
-- **Conteúdo Analisado**: 
-  > "${cleanText.substring(0, 150)}${cleanText.length > 150 ? '...' : ''}"
-
-*Utilize os flashcards associados para testar sua memória ativa!*`;
+    const summaryText = `### Resumo da Aula: ${cleanTitle}\n\nEste resumo foi gerado dinamicamente pela inteligência artificial com base nas notas fornecidas.\n\n- **Conceito Principal**: Foco em ${cleanTitle}.\n- **Ideias Chave**:\n  1. A importância de reter os conceitos práticos e relacioná-los a exemplos do cotidiano.\n  2. Uso de revisões sistemáticas para evitar a curva do esquecimento de Ebbinghaus.\n- **Conteúdo Analisado**: \n  > "${cleanText.substring(0, 150)}${cleanText.length > 150 ? '...' : ''}"\n\n*Utilize os flashcards associados para testar sua memória ativa!*`;
 
     const updated = await db.update('leaves', req.params.leafId, { summary: summaryText });
     return res.json({ summary: updated.summary });
@@ -396,12 +426,11 @@ Este resumo foi gerado dinamicamente pela inteligência artificial com base nas 
   }
 });
 
-// Geração de Flashcards com IA (Mockado)
+// Geração de Flashcards com IA (Mockado) — com owner check
 router.post('/leaves/:leafId/flashcards', authMiddleware, async (req, res) => {
   try {
-    const leaves = await db.get('leaves');
-    const leaf = leaves.find(l => l.id === req.params.leafId);
-    if (!leaf) return res.status(404).json({ error: 'Folha não encontrada' });
+    const { leaf, error } = await verifyLeafOwnership(req.params.leafId, req.user.id);
+    if (error) return res.status(404).json({ error });
 
     // Gerar 3 cards mockados baseados no título
     const mockCards = [
@@ -461,9 +490,12 @@ router.post('/leaves/:leafId/flashcards', authMiddleware, async (req, res) => {
 // 4. ROTAS DE FLASHCARDS & ESTUDO (SM-2)
 // ==========================================
 
-// Obter flashcards de uma folha
+// Obter flashcards de uma folha (com owner check via verifyLeafOwnership)
 router.get('/leaves/:leafId/flashcards', authMiddleware, async (req, res) => {
   try {
+    const { error } = await verifyLeafOwnership(req.params.leafId, req.user.id);
+    if (error) return res.status(404).json({ error });
+
     const flashcards = await db.get('flashcards');
     const filtered = flashcards.filter(c => c.leafId === req.params.leafId);
     return res.json(filtered);
@@ -472,9 +504,15 @@ router.get('/leaves/:leafId/flashcards', authMiddleware, async (req, res) => {
   }
 });
 
-// Obter flashcards de um caderno inteiro
+// Obter flashcards de um caderno inteiro (com owner check)
 router.get('/notebooks/:notebookId/flashcards', authMiddleware, async (req, res) => {
   try {
+    const notebooks = await db.get('notebooks');
+    const notebook = notebooks.find(nb => nb.id === req.params.notebookId && nb.userId === req.user.id);
+    if (!notebook) {
+      return res.status(404).json({ error: 'Caderno não encontrado' });
+    }
+
     const flashcards = await db.get('flashcards');
     const filtered = flashcards.filter(c => c.notebookId === req.params.notebookId);
     return res.json(filtered);
@@ -483,7 +521,7 @@ router.get('/notebooks/:notebookId/flashcards', authMiddleware, async (req, res)
   }
 });
 
-// Submeter score do flashcard (Algoritmo SM-2)
+// Submeter score do flashcard (Algoritmo SM-2) — com owner check
 router.post('/flashcards/:cardId/review', authMiddleware, async (req, res) => {
   try {
     const { score } = req.body;
@@ -496,6 +534,13 @@ router.post('/flashcards/:cardId/review', authMiddleware, async (req, res) => {
     const card = flashcards.find(c => c.id === req.params.cardId);
     if (!card) {
       return res.status(404).json({ error: 'Flashcard não encontrado' });
+    }
+
+    // Verifica se o flashcard pertence a um notebook do usuário
+    const notebooks = await db.get('notebooks');
+    const notebook = notebooks.find(nb => nb.id === card.notebookId && nb.userId === req.user.id);
+    if (!notebook) {
+      return res.status(403).json({ error: 'Acesso negado' });
     }
 
     let { repetitions, interval, easeFactor } = card;

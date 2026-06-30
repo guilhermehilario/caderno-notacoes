@@ -1,7 +1,15 @@
 import jwt from 'jsonwebtoken';
 import { db } from './database.js';
 
-export const JWT_SECRET = 'super-secret-key-revisa-aula';
+// Lê a chave secreta do ambiente, com fallback seguro apenas para desenvolvimento
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  console.error('❌ JWT_SECRET não definido. Configure a variável de ambiente JWT_SECRET.');
+  process.exit(1);
+}
+
+export { JWT_SECRET };
 
 export async function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
