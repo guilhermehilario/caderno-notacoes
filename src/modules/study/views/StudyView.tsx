@@ -1,25 +1,42 @@
-import React, { useState, useEffect, useRef, startTransition } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, RefreshCw, CheckCircle, Brain, Eye, HelpCircle } from 'lucide-react';
-import { useNotebookFlashcards, useSubmitCardScore } from '../hooks/useFlashcards';
-import { useStudyStore } from '../studyStore';
-import { Card } from '../../../components/ui/Card.tsx';
-import { Button } from '../../../components/ui/Button.tsx';
-import type { Flashcard, StudyScore } from '../types';
+import React, { useState, useEffect, useRef, startTransition } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import {
+  ArrowLeft,
+  RefreshCw,
+  CheckCircle,
+  Brain,
+  Eye,
+  HelpCircle,
+} from "lucide-react";
+import {
+  useNotebookFlashcards,
+  useSubmitCardScore,
+} from "../hooks/useFlashcards";
+import { useStudyStore } from "../studyStore";
+import { Card } from "../../../components/ui/Card.tsx";
+import { Button } from "../../../components/ui/Button.tsx";
+import type { Flashcard, StudyScore } from "../types";
 
 export const StudyView: React.FC = () => {
   const { notebookId } = useParams<{ notebookId: string }>();
   const navigate = useNavigate();
-  const nbId = notebookId ?? '';
+  const nbId = notebookId ?? "";
 
-  const { data: serverFlashcards = [], isLoading } = useNotebookFlashcards(nbId);
+  const { data: serverFlashcards = [], isLoading } =
+    useNotebookFlashcards(nbId);
   const { mutateAsync: submitScore } = useSubmitCardScore(undefined, nbId);
 
   // ── Zustand Store (imune a re-renderizações em cascata) ──
   // Selectors extraem APENAS o slot da sessão do notebook atual
-  const currentIndex = useStudyStore((s) => s.sessions[nbId]?.currentIndex ?? 0);
-  const reviewedCount = useStudyStore((s) => s.sessions[nbId]?.reviewedCount ?? 0);
-  const showAnswer = useStudyStore((s) => s.sessions[nbId]?.showAnswer ?? false);
+  const currentIndex = useStudyStore(
+    (s) => s.sessions[nbId]?.currentIndex ?? 0,
+  );
+  const reviewedCount = useStudyStore(
+    (s) => s.sessions[nbId]?.reviewedCount ?? 0,
+  );
+  const showAnswer = useStudyStore(
+    (s) => s.sessions[nbId]?.showAnswer ?? false,
+  );
   const setCurrentIndex = useStudyStore((s) => s.setCurrentIndex);
   const setReviewedCount = useStudyStore((s) => s.setReviewedCount);
   const setShowAnswer = useStudyStore((s) => s.setShowAnswer);
@@ -58,14 +75,19 @@ export const StudyView: React.FC = () => {
     }
   }, [isLoading, serverFlashcards]);
 
-  const flashcards = frozenFlashcards.length > 0 ? frozenFlashcards : serverFlashcards;
+  const flashcards =
+    frozenFlashcards.length > 0 ? frozenFlashcards : serverFlashcards;
   const currentCard = flashcards[currentIndex];
-  const progressPercent = flashcards.length > 0
-    ? (currentIndex / flashcards.length) * 100
-    : 0;
+  const progressPercent =
+    flashcards.length > 0 ? (currentIndex / flashcards.length) * 100 : 0;
 
-  const handleScoreSelect = async (score: StudyScore, e?: React.MouseEvent<HTMLButtonElement>) => {
-    e?.preventDefault();
+  const handleScoreSelect = async (
+    score: StudyScore,
+    e: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    console.log("event: ", Object.keys(e.nativeEvent));
+    e.preventDefault();
+    e.stopPropagation();
     if (!currentCard) return;
 
     const isLastCard = currentIndex >= flashcards.length - 1;
@@ -111,11 +133,16 @@ export const StudyView: React.FC = () => {
             Tudo revisado!
           </h2>
           <p className="text-slate-500 dark:text-dark-350 text-sm mt-2">
-            Não existem flashcards agendados para revisão hoje neste caderno. Excelente trabalho!
+            Não existem flashcards agendados para revisão hoje neste caderno.
+            Excelente trabalho!
           </p>
         </div>
         <div className="flex gap-3 mt-2 w-full">
-          <Button variant="outline" onClick={() => navigate(`/notebooks/${nbId}`)} className="flex-1">
+          <Button
+            variant="outline"
+            onClick={() => navigate(`/notebooks/${nbId}`)}
+            className="flex-1"
+          >
             Voltar ao Caderno
           </Button>
         </div>
@@ -134,11 +161,18 @@ export const StudyView: React.FC = () => {
             Sessão Concluída!
           </h2>
           <p className="text-slate-500 dark:text-dark-350 text-sm mt-2">
-            Parabéns! Você revisou <span className="font-bold text-slate-800 dark:text-dark-100">{reviewedCount}</span> flashcards. Mantenha a consistência de estudos diária!
+            Parabéns! Você revisou{" "}
+            <span className="font-bold text-slate-800 dark:text-dark-100">
+              {reviewedCount}
+            </span>{" "}
+            flashcards. Mantenha a consistência de estudos diária!
           </p>
         </div>
         <div className="flex flex-col gap-3 mt-4 w-full">
-          <Button onClick={() => navigate(`/notebooks/${nbId}`)} className="w-full">
+          <Button
+            onClick={() => navigate(`/notebooks/${nbId}`)}
+            className="w-full"
+          >
             Voltar ao Caderno
           </Button>
           <Button
@@ -223,14 +257,52 @@ export const StudyView: React.FC = () => {
             Como foi sua facilidade para lembrar do conteúdo?
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
-            {([
-              { score: 0 as StudyScore, label: '0', title: 'Errei feio', color: 'bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100 hover:border-rose-300 dark:bg-rose-950/20 dark:border-rose-950/30 dark:text-rose-400' },
-              { score: 1 as StudyScore, label: '1', title: 'Errei', color: 'bg-rose-50 border-rose-100 text-rose-500 hover:bg-rose-100 dark:bg-rose-950/10 dark:text-rose-300' },
-              { score: 2 as StudyScore, label: '2', title: 'Hesitei', color: 'bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100 dark:bg-amber-950/20 dark:text-amber-400' },
-              { score: 3 as StudyScore, label: '3', title: 'Dificuldade', color: 'bg-amber-50 border-amber-100 text-amber-500 hover:bg-amber-100 dark:bg-amber-950/10 dark:text-amber-300' },
-              { score: 4 as StudyScore, label: '4', title: 'Lembrei', color: 'bg-emerald-50 border-emerald-100 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-950/10 dark:text-emerald-350' },
-              { score: 5 as StudyScore, label: '5', title: 'Excelente', color: 'bg-emerald-500 border-emerald-500 text-white hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-500' },
-            ] as const).map((btn) => (
+            {(
+              [
+                {
+                  score: 0 as StudyScore,
+                  label: "0",
+                  title: "Errei feio",
+                  color:
+                    "bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100 hover:border-rose-300 dark:bg-rose-950/20 dark:border-rose-950/30 dark:text-rose-400",
+                },
+                {
+                  score: 1 as StudyScore,
+                  label: "1",
+                  title: "Errei",
+                  color:
+                    "bg-rose-50 border-rose-100 text-rose-500 hover:bg-rose-100 dark:bg-rose-950/10 dark:text-rose-300",
+                },
+                {
+                  score: 2 as StudyScore,
+                  label: "2",
+                  title: "Hesitei",
+                  color:
+                    "bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100 dark:bg-amber-950/20 dark:text-amber-400",
+                },
+                {
+                  score: 3 as StudyScore,
+                  label: "3",
+                  title: "Dificuldade",
+                  color:
+                    "bg-amber-50 border-amber-100 text-amber-500 hover:bg-amber-100 dark:bg-amber-950/10 dark:text-amber-300",
+                },
+                {
+                  score: 4 as StudyScore,
+                  label: "4",
+                  title: "Lembrei",
+                  color:
+                    "bg-emerald-50 border-emerald-100 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-950/10 dark:text-emerald-350",
+                },
+                {
+                  score: 5 as StudyScore,
+                  label: "5",
+                  title: "Excelente",
+                  color:
+                    "bg-emerald-500 border-emerald-500 text-white hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-500",
+                },
+              ] as const
+            ).map((btn) => (
               <button
                 key={btn.score}
                 type="button"

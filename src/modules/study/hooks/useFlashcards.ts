@@ -1,10 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import studyService from '../services/studyService';
-import type { Flashcard, StudyScore } from '../types';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import studyService from "../services/studyService";
+import type { Flashcard, StudyScore } from "../types";
 
 export function useLeafFlashcards(leafId: string) {
   return useQuery({
-    queryKey: ['leaves', leafId, 'flashcards'],
+    queryKey: ["leaves", leafId, "flashcards"],
     queryFn: () => studyService.getLeafFlashcards(leafId),
     enabled: !!leafId,
     staleTime: 30_000,
@@ -13,7 +13,7 @@ export function useLeafFlashcards(leafId: string) {
 
 export function useNotebookFlashcards(notebookId: string) {
   return useQuery({
-    queryKey: ['notebook-flashcards', notebookId],
+    queryKey: ["notebook-flashcards", notebookId],
     queryFn: () => studyService.getNotebookFlashcards(notebookId),
     enabled: !!notebookId,
     staleTime: 1000 * 60 * 5, // 5 minutos – evita refetch agressivo durante a sessão
@@ -32,16 +32,18 @@ export function useSubmitCardScore(leafId?: string, notebookId?: string) {
       // substitui apenas o card modificado, sem invalidar a query inteira.
       if (leafId) {
         queryClient.setQueryData<Flashcard[]>(
-          ['leaves', leafId, 'flashcards'],
+          ["leaves", leafId, "flashcards"],
           (old) =>
-            old?.map((card) => (card.id === cardId ? updatedCard : card)) ?? old,
+            old?.map((card) => (card.id === cardId ? updatedCard : card)) ??
+            old,
         );
       }
       if (notebookId) {
         queryClient.setQueryData<Flashcard[]>(
-          ['notebook-flashcards', notebookId],
+          ["notebook-flashcards", notebookId],
           (old) =>
-            old?.map((card) => (card.id === cardId ? updatedCard : card)) ?? old,
+            old?.map((card) => (card.id === cardId ? updatedCard : card)) ??
+            old,
         );
       }
     },

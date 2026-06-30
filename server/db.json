@@ -109,6 +109,15 @@
       "color": "#aa3bff",
       "createdAt": "2026-06-30T02:44:59.287Z",
       "updatedAt": "2026-06-30T02:44:59.287Z"
+    },
+    {
+      "id": "9e6625f5-2c1d-4935-a646-8594da1a3e11",
+      "userId": "8153bdd8-ebfd-46e5-9374-2188985d8b72",
+      "title": "Engenharia ",
+      "description": null,
+      "color": "#10b981",
+      "createdAt": "2026-06-30T22:00:02.627Z",
+      "updatedAt": "2026-06-30T22:00:02.627Z"
     }
   ],
   "leaves": [
@@ -220,6 +229,25 @@
       "rawText": "dasd da dasd adas dasd a",
       "createdAt": "2026-06-30T16:23:40.773Z",
       "updatedAt": "2026-06-30T16:23:53.245Z"
+    },
+    {
+      "id": "c4908e68-9bb3-43ee-8051-381ab9df93dc",
+      "notebookId": "5c22b198-7a62-4025-8465-167896a35ac5",
+      "title": "http",
+      "content": "<p>hgghjjg jgjhgjh gkjgyfyfu y huiguyyu fgfch h hjbhcvghvhhbn, vnvnb vhj gh vhj vb vnn gxbvh hjv h hg jhvnvh vhjb j.b hjbjbhj bhjvnm h vhj hjbbhjbn vghcghvh vh vhjvhj vghfvbv k hgvgvv hghgvghnb hjvhbm jhvhjbj bhj vhjknhvykbm j hjb m bljfcghfxhjb hjbhj vfgv hjhjbhj hl hj vhjbhj vhjhj vkgh vn bh hj hjv hjvhjv hjbhj hjhj ds jdajlsadalksaj</p>",
+      "rawText": "hgghjjg jgjhgjh gkjgyfyfu y huiguyyu fgfch h hjbhcvghvhhbn, vnvnb vhj gh vhj vb vnn gxbvh hjv h hg jhvnvh vhjb j.b hjbjbhj bhjvnm h vhj hjbbhjbn vghcghvh vh vhjvhj vghfvbv k hgvgvv hghgvghnb hjvhbm jhvhjbj bhj vhjknhvykbm j hjb m bljfcghfxhjb hjbhj vfgv hjhjbhj hl hj vhjbhj vhjhj vkgh vn bh hj hjv hjvhjv hjbhj hjhj ds jdajlsadalksaj",
+      "createdAt": "2026-06-30T17:33:43.101Z",
+      "updatedAt": "2026-06-30T17:35:34.097Z"
+    },
+    {
+      "id": "5cff3253-5c16-45aa-bf9f-0b375e10666e",
+      "notebookId": "9e6625f5-2c1d-4935-a646-8594da1a3e11",
+      "title": "Aula 01",
+      "content": "<p>JKLDAjd daj sldja;l dl;asj dasj dasd l;saldjasldj l;dkal; <span data-annotation=\"aqui é assunto importante\" class=\"annotation-anchor\">sdlasj</span> dla daj dl;sa ;lk asl;dk ;ldsakl ;asdl;a kd;lka ;dlakl;dsa a d;lsak da;kdal;skdas kd;ladksal; ksd;la a;ls kda;lkda;</p>",
+      "rawText": "JKLDAjd daj sldja;l dl;asj dasj dasd l;saldjasldj l;dkal; sdlasj dla daj dl;sa ;lk asl;dk ;ldsakl ;asdl;a kd;lka ;dlakl;dsa a d;lsak da;kdal;skdas kd;ladksal; ksd;la a;ls kda;lkda;",
+      "summary": "### Resumo da Aula: Aula 01\n\nEste resumo foi gerado dinamicamente pela inteligência artificial com base nas notas fornecidas.\n\n- **Conceito Principal**: Foco em Aula 01.\n- **Ideias Chave**:\n  1. A importância de reter os conceitos práticos e relacioná-los a exemplos do cotidiano.\n  2. Uso de revisões sistemáticas para evitar a curva do esquecimento de Ebbinghaus.\n- **Conteúdo Analisado**: \n  > \"JKLDAjd daj sldja;l dl;asj dasj dasd l;saldjasldj l;dkal; sdlasj dla daj dl;sa ;lk asl;dk ;ldsakl ;asdl;a kd;lka ;dlakl;dsa a d;lsak da;kdal;skdas kd;...\"\n\n*Utilize os flashcards associados para testar sua memória ativa!*",
+      "createdAt": "2026-06-30T22:00:20.429Z",
+      "updatedAt": "2026-06-30T22:01:09.831Z"
     }
   ],
   "flashcards": [
@@ -346,12 +374,12 @@
       "notebookId": "5c22b198-7a62-4025-8465-167896a35ac5",
       "front": "Qual é o tema principal abordado na folha \"etsret\"?",
       "back": "O tema principal é \"etsret\", focado em aprofundar e consolidar este conteúdo de forma sistemática.",
-      "repetitions": 6,
-      "interval": 212,
-      "easeFactor": 2.6800000000000006,
-      "nextReviewDate": "2027-01-28T13:06:21.926Z",
+      "repetitions": 10,
+      "interval": 12185,
+      "easeFactor": 2.980000000000001,
+      "nextReviewDate": "2059-11-09T22:50:21.754Z",
       "createdAt": "2026-06-30T03:19:27.572Z",
-      "updatedAt": "2026-06-30T13:06:21.926Z"
+      "updatedAt": "2026-06-30T22:50:21.754Z"
     },
     {
       "id": "5b64e195-3aa9-4d60-8093-942d678b371b",
@@ -495,6 +523,84 @@
       "nextReviewDate": "2026-06-30T16:23:53.388Z",
       "createdAt": "2026-06-30T16:23:53.388Z",
       "updatedAt": "2026-06-30T16:23:53.389Z"
+    },
+    {
+      "id": "961f3168-986f-4eb0-a835-609cd42c48a1",
+      "leafId": "c4908e68-9bb3-43ee-8051-381ab9df93dc",
+      "notebookId": "5c22b198-7a62-4025-8465-167896a35ac5",
+      "front": "Qual é o tema principal abordado na folha \"http\"?",
+      "back": "O tema principal é \"http\", focado em aprofundar e consolidar este conteúdo de forma sistemática.",
+      "repetitions": 0,
+      "interval": 0,
+      "easeFactor": 2.5,
+      "nextReviewDate": "2026-06-30T17:35:43.380Z",
+      "createdAt": "2026-06-30T17:35:43.380Z",
+      "updatedAt": "2026-06-30T17:35:43.380Z"
+    },
+    {
+      "id": "6a390748-33ea-4040-badf-01c95a0df440",
+      "leafId": "c4908e68-9bb3-43ee-8051-381ab9df93dc",
+      "notebookId": "5c22b198-7a62-4025-8465-167896a35ac5",
+      "front": "De acordo com as notas de \"http\", qual é uma boa prática de estudo para este tema?",
+      "back": "Escrever resumos com as próprias palavras e fazer exercícios práticos/simulados logo em seguida.",
+      "repetitions": 0,
+      "interval": 0,
+      "easeFactor": 2.5,
+      "nextReviewDate": "2026-06-30T17:35:43.380Z",
+      "createdAt": "2026-06-30T17:35:43.380Z",
+      "updatedAt": "2026-06-30T17:35:43.380Z"
+    },
+    {
+      "id": "2197f902-d2cb-480e-846e-a5908d4551da",
+      "leafId": "c4908e68-9bb3-43ee-8051-381ab9df93dc",
+      "notebookId": "5c22b198-7a62-4025-8465-167896a35ac5",
+      "front": "Qual a importância da repetição espaçada no aprendizado de \"http\"?",
+      "back": "Ela ajuda a combater a curva do esquecimento, movendo a informação da memória de curto prazo para a de longo prazo.",
+      "repetitions": 0,
+      "interval": 0,
+      "easeFactor": 2.5,
+      "nextReviewDate": "2026-06-30T17:35:43.380Z",
+      "createdAt": "2026-06-30T17:35:43.380Z",
+      "updatedAt": "2026-06-30T17:35:43.380Z"
+    },
+    {
+      "id": "5707774c-14c0-483c-a82f-49c469528f36",
+      "leafId": "5cff3253-5c16-45aa-bf9f-0b375e10666e",
+      "notebookId": "9e6625f5-2c1d-4935-a646-8594da1a3e11",
+      "front": "Qual é o tema principal abordado na folha \"Aula 01\"?",
+      "back": "O tema principal é \"Aula 01\", focado em aprofundar e consolidar este conteúdo de forma sistemática.",
+      "repetitions": 11,
+      "interval": 116185,
+      "easeFactor": 3.500000000000001,
+      "nextReviewDate": "2344-08-07T22:38:01.191Z",
+      "createdAt": "2026-06-30T22:01:23.718Z",
+      "updatedAt": "2026-06-30T22:38:01.191Z"
+    },
+    {
+      "id": "e0ed8086-6957-478c-adeb-288e61b6948d",
+      "leafId": "5cff3253-5c16-45aa-bf9f-0b375e10666e",
+      "notebookId": "9e6625f5-2c1d-4935-a646-8594da1a3e11",
+      "front": "De acordo com as notas de \"Aula 01\", qual é uma boa prática de estudo para este tema?",
+      "back": "Escrever resumos com as próprias palavras e fazer exercícios práticos/simulados logo em seguida.",
+      "repetitions": 0,
+      "interval": 0,
+      "easeFactor": 2.5,
+      "nextReviewDate": "2026-06-30T22:01:23.718Z",
+      "createdAt": "2026-06-30T22:01:23.718Z",
+      "updatedAt": "2026-06-30T22:01:23.718Z"
+    },
+    {
+      "id": "0285cfbe-7939-4d40-a969-915060423be8",
+      "leafId": "5cff3253-5c16-45aa-bf9f-0b375e10666e",
+      "notebookId": "9e6625f5-2c1d-4935-a646-8594da1a3e11",
+      "front": "Qual a importância da repetição espaçada no aprendizado de \"Aula 01\"?",
+      "back": "Ela ajuda a combater a curva do esquecimento, movendo a informação da memória de curto prazo para a de longo prazo.",
+      "repetitions": 0,
+      "interval": 0,
+      "easeFactor": 2.5,
+      "nextReviewDate": "2026-06-30T22:01:23.718Z",
+      "createdAt": "2026-06-30T22:01:23.719Z",
+      "updatedAt": "2026-06-30T22:01:23.719Z"
     }
   ]
 }

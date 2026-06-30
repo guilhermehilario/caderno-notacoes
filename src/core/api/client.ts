@@ -1,10 +1,10 @@
-import axios from 'axios';
-import { useAuthStore } from '../../modules/auth/store';
+import axios from "axios";
+import { useAuthStore } from "../../modules/auth/store";
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api",
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
   withCredentials: true, // Para cookies seguros contendo Refresh Tokens
 });
@@ -18,7 +18,7 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // Controle de Fila para Renovação Concorrente do Token
@@ -50,7 +50,11 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     // Se for erro 401 Unauthorized e ainda não tentamos repetir
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry
+    ) {
       // 🔴 Se já estourou o limite de falhas consecutivas de refresh,
       //    não tenta mais — só rejeita. Evita loop infinito.
       if (refreshFailCount >= MAX_REFRESH_FAILURES) {
@@ -79,16 +83,17 @@ api.interceptors.response.use(
         const response = await axios.post(
           `${api.defaults.baseURL}/auth/refresh`,
           {},
-          { withCredentials: true }
+          { withCredentials: true },
         );
 
         const { accessToken } = response.data;
+        console.log("access: ", accessToken);
         useAuthStore.getState().setAccessToken(accessToken);
         refreshFailCount = 0; // ✅ Reseta contador no refresh bem-sucedido
 
         processQueue(null, accessToken);
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-        
+
         return api(originalRequest);
       } catch (refreshError) {
         lastRefreshAttempt = Date.now();
@@ -107,5 +112,5 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
