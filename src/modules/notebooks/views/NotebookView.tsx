@@ -273,14 +273,14 @@ export const NotebookView: React.FC = () => {
           </div>
         }
       >
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <div>
           <Input
             label="Título da Folha"
             placeholder="Ex: Aula 01 - Introdução ao Protocolo HTTP"
             error={errors.title?.message}
             {...register('title')}
           />
-        </form>
+        </div>
       </Modal>
 
       {/* Modal Editar Caderno */}
@@ -306,7 +306,7 @@ export const NotebookView: React.FC = () => {
           </div>
         }
       >
-        <form onSubmit={handleSubmitEdit(onEditSubmit)} className="flex flex-col gap-5">
+        <div className="flex flex-col gap-5">
           <Input
             label="Título do Caderno"
             placeholder="Ex: Engenharia de Software II, Cálculo III"
@@ -346,7 +346,7 @@ export const NotebookView: React.FC = () => {
               ))}
             </div>
           </div>
-        </form>
+        </div>
       </Modal>
     </div>
   );

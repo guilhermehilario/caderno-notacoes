@@ -53,7 +53,7 @@ export const AppLayout: React.FC = () => {
             </div>
             {!sidebarCollapsed && (
               <span className="font-heading font-extrabold text-lg tracking-tight whitespace-nowrap">
-                StudyNotes <span className="text-brand-500">Flash</span>
+                StudyNotes <span className="text-brand-500">AI</span>
               </span>
             )}
           </Link>

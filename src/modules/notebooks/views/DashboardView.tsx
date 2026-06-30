@@ -168,7 +168,7 @@ export const DashboardView: React.FC = () => {
           </div>
         }
       >
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
+        <div className="flex flex-col gap-5">
           <Input
             label="Título do Caderno"
             placeholder="Ex: Engenharia de Software II, Cálculo III"
@@ -208,7 +208,7 @@ export const DashboardView: React.FC = () => {
               ))}
             </div>
           </div>
-        </form>
+        </div>
       </Modal>
     </div>
   );

@@ -53,7 +53,7 @@ export const LoginView: React.FC = () => {
             <Brain className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-3xl font-heading font-extrabold text-slate-900 dark:text-dark-50 tracking-tight m-0">
-            StudyNotes <span className="text-brand-500">Flash</span>
+            StudyNotes <span className="text-brand-500">AI</span>
           </h1>
           <p className="text-slate-500 dark:text-dark-300 mt-2 text-center text-sm font-medium">
             Seu copiloto inteligente para resumos e flashcards
@@ -86,12 +86,9 @@ export const LoginView: React.FC = () => {
                 <label className="text-sm font-medium text-slate-700 dark:text-dark-200">
                   Senha
                 </label>
-                <Link
-                  to="/forgot-password"
-                  className="text-xs font-semibold text-brand-500 hover:text-brand-600 transition-colors"
-                >
+                <span className="text-xs text-slate-400 dark:text-dark-500 select-none">
                   Esqueceu a senha?
-                </Link>
+                </span>
               </div>
               <Input
                 type="password"
