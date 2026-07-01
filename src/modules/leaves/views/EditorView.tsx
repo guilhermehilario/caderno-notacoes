@@ -1,6 +1,14 @@
-import { useState, useEffect, useRef, useMemo, useCallback, startTransition } from 'react';
-import type { Editor } from '@tiptap/react';
-import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
+import {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+  startTransition,
+  memo,
+} from "react";
+import type { Editor } from "@tiptap/react";
+import { useParams, useNavigate, Link as RouterLink } from "react-router-dom";
 import {
   ArrowLeft,
   Sparkles,
@@ -9,26 +17,29 @@ import {
   Check,
   RefreshCw,
   AlertTriangle,
-} from 'lucide-react';
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Underline from '@tiptap/extension-underline';
-import ExtensionLink from '@tiptap/extension-link';
-import Highlight from '@tiptap/extension-highlight';
-import Placeholder from '@tiptap/extension-placeholder';
-import { Annotation } from '../extensions/Annotation';
-import { useLeaf } from '../hooks/useLeaves';
-import { useLeafFlashcards } from '../../study/hooks/useFlashcards';
-import { useDebounce } from '../../../hooks/useDebounce';
-import { Card } from '../../../components/ui/Card.tsx';
-import { Button } from '../../../components/ui/Button.tsx';
-import { EditorToolbar } from '../components/EditorToolbar';
-import { EditorBubbleMenu } from '../components/EditorBubbleMenu';
-import { AnnotationSidebar } from '../components/AnnotationSidebar';
-import { EditorSkeleton } from '../components/EditorSkeleton';
+} from "lucide-react";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Underline from "@tiptap/extension-underline";
+import ExtensionLink from "@tiptap/extension-link";
+import Highlight from "@tiptap/extension-highlight";
+import Placeholder from "@tiptap/extension-placeholder";
+import { Annotation } from "../extensions/Annotation";
+import { useLeaf } from "../hooks/useLeaves";
+import { useLeafFlashcards } from "../../study/hooks/useFlashcards";
+import { useDebounce } from "../../../hooks/useDebounce";
+import { Card } from "../../../components/ui/Card.tsx";
+import { Button } from "../../../components/ui/Button.tsx";
+import { EditorToolbar } from "../components/EditorToolbar";
+import { EditorBubbleMenu } from "../components/EditorBubbleMenu";
+import { AnnotationSidebar } from "../components/AnnotationSidebar";
+import { EditorSkeleton } from "../components/EditorSkeleton";
 
-export const EditorView: React.FC = () => {
-  const { notebookId, leafId } = useParams<{ notebookId: string; leafId: string }>();
+const EditorView: React.FC = () => {
+  const { notebookId, leafId } = useParams<{
+    notebookId: string;
+    leafId: string;
+  }>();
   const navigate = useNavigate();
 
   const {
@@ -39,24 +50,28 @@ export const EditorView: React.FC = () => {
     isGeneratingSummary,
     generateAIFlashcards,
     isGeneratingFlashcards,
-  } = useLeaf(leafId || '');
+  } = useLeaf(leafId || "");
 
-  const { data: flashcards = [] } = useLeafFlashcards(leafId || '');
+  const { data: flashcards = [] } = useLeafFlashcards(leafId || "");
 
   // Estados locais para inputs editáveis do usuário
-  const [localTitle, setLocalTitle] = useState('');
-  const [localContent, setLocalContent] = useState('');
-  const [localRawText, setLocalRawText] = useState('');
-  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
-  const [activeTab, setActiveTab] = useState<'summary' | 'flashcards' | 'annotations'>('summary');
+  const [localTitle, setLocalTitle] = useState("");
+  const [localContent, setLocalContent] = useState("");
+  const [localRawText, setLocalRawText] = useState("");
+  const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "error">(
+    "saved",
+  );
+  const [activeTab, setActiveTab] = useState<
+    "summary" | "flashcards" | "annotations"
+  >("summary");
 
   // Ref para rastrear o conteúdo que veio do servidor (usado para
   // distinguir atualizações do servidor de edições do usuário)
-  const serverContentRef = useRef('');
+  const serverContentRef = useRef("");
   // Controle para evitar salvar no primeiro carregamento
   const isFirstRender = useRef(true);
   // Rastreia o último estado salvo no servidor para evitar saves duplicados
-  const lastSavedRef = useRef({ title: '', content: '' });
+  const lastSavedRef = useRef({ title: "", content: "" });
   // Controla se o conteúdo já foi sincronizado com o editor
   const [contentReady, setContentReady] = useState(false);
 
@@ -69,36 +84,44 @@ export const EditorView: React.FC = () => {
   const pendingRAF = useRef<number | null>(null);
 
   // Estabiliza a lista de extensões
-  const extensions = useMemo(() => [
-    StarterKit.configure({
-      heading: { levels: [1, 2, 3] },
-      // TipTap v3 StarterKit já inclui 'link' e 'underline' — desabilitamos
-      // para evitar o erro "Duplicate extension names found: ['link', 'underline']"
-      link: false,
-      underline: false,
-    }),
-    Highlight.configure({ multicolor: true }),
-    Annotation,
-    Placeholder.configure({ placeholder: 'Comece a digitar o conteúdo da sua aula aqui...' }),
-  ], []);
+  const extensions = useMemo(
+    () => [
+      StarterKit.configure({
+        heading: { levels: [1, 2, 3] },
+        // TipTap v3 StarterKit já inclui 'link' e 'underline' — desabilitamos
+        // para evitar o erro "Duplicate extension names found: ['link', 'underline']"
+        link: false,
+        underline: false,
+      }),
+      Highlight.configure({ multicolor: true }),
+      Annotation,
+      Placeholder.configure({
+        placeholder: "Comece a digitar o conteúdo da sua aula aqui...",
+      }),
+    ],
+    [],
+  );
 
   // Callback de atualização do editor: só atualiza estados LOCAIS
   // se a mudança veio do USUÁRIO (não do servidor)
-  const handleEditorUpdate = useCallback(({ editor: ed }: { editor: Editor }) => {
-    const currentHtml = ed.getHTML();
-    // Se o conteúdo atual do editor é IGUAL ao último conteúdo recebido do servidor,
-    // significa que foi o próprio sync effect que disparou este update — ignoramos.
-    if (currentHtml === serverContentRef.current) return;
+  const handleEditorUpdate = useCallback(
+    ({ editor: ed }: { editor: Editor }) => {
+      const currentHtml = ed.getHTML();
+      // Se o conteúdo atual do editor é IGUAL ao último conteúdo recebido do servidor,
+      // significa que foi o próprio sync effect que disparou este update — ignoramos.
+      if (currentHtml === serverContentRef.current) return;
 
-    setLocalContent(currentHtml);
-    setLocalRawText(ed.getText());
-    setSaveStatus('saving');
-  }, []);
+      setLocalContent(currentHtml);
+      setLocalRawText(ed.getText());
+      setSaveStatus("saving");
+    },
+    [],
+  );
 
   // Editor TipTap
   const editor = useEditor({
     extensions,
-    content: '',
+    content: "",
     onUpdate: handleEditorUpdate,
     immediatelyRender: false,
   });
@@ -111,24 +134,26 @@ export const EditorView: React.FC = () => {
 
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
-      const spanEl = target?.closest?.('span.annotation-anchor[data-annotation]');
+      const spanEl = target?.closest?.(
+        "span.annotation-anchor[data-annotation]",
+      );
       if (!spanEl) return;
-      const text = spanEl.getAttribute('data-annotation') || '';
+      const text = spanEl.getAttribute("data-annotation") || "";
       if (!text) return;
 
       if (pendingRAF.current !== null) cancelAnimationFrame(pendingRAF.current);
       pendingRAF.current = requestAnimationFrame(() => {
         pendingRAF.current = null;
         if (!editor.isDestroyed) {
-          editor.chain().focus().extendMarkRange('annotation').run();
+          editor.chain().focus().extendMarkRange("annotation").run();
           setAnnotationText(text);
         }
       });
     };
 
-    editorDom.addEventListener('click', handleClick);
+    editorDom.addEventListener("click", handleClick);
     return () => {
-      editorDom.removeEventListener('click', handleClick);
+      editorDom.removeEventListener("click", handleClick);
       if (pendingRAF.current !== null) {
         cancelAnimationFrame(pendingRAF.current);
         pendingRAF.current = null;
@@ -140,7 +165,7 @@ export const EditorView: React.FC = () => {
   useEffect(() => {
     if (!leaf || !editor) return;
 
-    const serverContent = leaf.content || '';
+    const serverContent = leaf.content || "";
     const currentEditorHtml = editor.getHTML();
 
     // Só aplica conteúdo do servidor se o editor estiver vazio
@@ -160,7 +185,7 @@ export const EditorView: React.FC = () => {
       setContentReady(true);
     });
 
-    lastSavedRef.current = { title: leaf.title, content: leaf.content || '' };
+    lastSavedRef.current = { title: leaf.title, content: leaf.content || "" };
     isFirstRender.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leaf?.id, leaf?.content]);
@@ -178,19 +203,25 @@ export const EditorView: React.FC = () => {
     }
 
     const lastSaved = lastSavedRef.current;
-    if (debouncedTitle !== lastSaved.title || debouncedContent !== lastSaved.content) {
-      setSaveStatus('saving');
+    if (
+      debouncedTitle !== lastSaved.title ||
+      debouncedContent !== lastSaved.content
+    ) {
+      setSaveStatus("saving");
       updateLeaf({
         title: debouncedTitle,
         content: debouncedContent,
         rawText: debouncedRawText,
       })
         .then(() => {
-          lastSavedRef.current = { title: debouncedTitle, content: debouncedContent };
-          setSaveStatus('saved');
+          lastSavedRef.current = {
+            title: debouncedTitle,
+            content: debouncedContent,
+          };
+          setSaveStatus("saved");
         })
         .catch(() => {
-          setSaveStatus('error');
+          setSaveStatus("error");
         });
     }
   }, [debouncedTitle, debouncedContent, debouncedRawText, updateLeaf]);
@@ -200,7 +231,7 @@ export const EditorView: React.FC = () => {
     try {
       await generateAISummary();
     } catch (err) {
-      console.error('Erro ao gerar resumo:', err);
+      console.error("Erro ao gerar resumo:", err);
     }
   };
 
@@ -209,7 +240,7 @@ export const EditorView: React.FC = () => {
     try {
       await generateAIFlashcards();
     } catch (err) {
-      console.error('Erro ao gerar flashcards:', err);
+      console.error("Erro ao gerar flashcards:", err);
     }
   };
 
@@ -223,7 +254,10 @@ export const EditorView: React.FC = () => {
     return (
       <div className="text-center p-8">
         <h3 className="text-lg font-bold">Folha de anotação não encontrada</h3>
-        <RouterLink to={`/notebooks/${notebookId}`} className="text-brand-500 hover:underline">
+        <RouterLink
+          to={`/notebooks/${notebookId}`}
+          className="text-brand-500 hover:underline"
+        >
           Voltar para o caderno
         </RouterLink>
       </div>
@@ -243,17 +277,17 @@ export const EditorView: React.FC = () => {
 
         {/* Status Indicator */}
         <div className="flex items-center gap-2 text-xs font-semibold">
-          {saveStatus === 'saved' && (
+          {saveStatus === "saved" && (
             <span className="flex items-center gap-1 text-emerald-500">
               <Check className="h-3.5 w-3.5" /> Salvo
             </span>
           )}
-          {saveStatus === 'saving' && (
+          {saveStatus === "saving" && (
             <span className="flex items-center gap-1 text-brand-500">
               <RefreshCw className="h-3.5 w-3.5 animate-spin" /> Salvando...
             </span>
           )}
-          {saveStatus === 'error' && (
+          {saveStatus === "error" && (
             <span className="flex items-center gap-1 text-rose-500">
               <AlertTriangle className="h-3.5 w-3.5" /> Falha ao salvar rascunho
             </span>
@@ -270,13 +304,16 @@ export const EditorView: React.FC = () => {
             value={localTitle}
             onChange={(e) => {
               setLocalTitle(e.target.value);
-              setSaveStatus('saving');
+              setSaveStatus("saving");
             }}
             placeholder="Título da folha..."
             className="w-full text-2xl font-heading font-extrabold tracking-tight bg-transparent text-slate-900 dark:text-dark-50 placeholder-slate-350 focus:outline-none mb-6 border-b border-transparent focus:border-slate-100 dark:focus:border-dark-800 pb-2 transition-all"
           />
 
-          <EditorToolbar editor={editor} annotationTrigger={annotationTrigger} />
+          <EditorToolbar
+            editor={editor}
+            annotationTrigger={annotationTrigger}
+          />
 
           <div className="tiptap-editor flex-grow overflow-y-auto text-slate-750 dark:text-dark-100 relative">
             <EditorBubbleMenu editor={editor} />
@@ -292,31 +329,31 @@ export const EditorView: React.FC = () => {
           {/* Abas */}
           <div className="flex border-b border-slate-100 dark:border-dark-800/60 flex-shrink-0 bg-slate-50 dark:bg-dark-950/20">
             <button
-              onClick={() => setActiveTab('summary')}
+              onClick={() => setActiveTab("summary")}
               className={`flex-1 py-4 text-center font-heading font-bold text-sm tracking-wide transition-all border-b-2 cursor-pointer ${
-                activeTab === 'summary'
-                  ? 'border-brand-500 text-brand-500'
-                  : 'border-transparent text-slate-500 dark:text-dark-400 hover:text-slate-700'
+                activeTab === "summary"
+                  ? "border-brand-500 text-brand-500"
+                  : "border-transparent text-slate-500 dark:text-dark-400 hover:text-slate-700"
               }`}
             >
               Resumo
             </button>
             <button
-              onClick={() => setActiveTab('annotations')}
+              onClick={() => setActiveTab("annotations")}
               className={`flex-1 py-4 text-center font-heading font-bold text-sm tracking-wide transition-all border-b-2 cursor-pointer ${
-                activeTab === 'annotations'
-                  ? 'border-brand-500 text-brand-500'
-                  : 'border-transparent text-slate-500 dark:text-dark-400 hover:text-slate-700'
+                activeTab === "annotations"
+                  ? "border-brand-500 text-brand-500"
+                  : "border-transparent text-slate-500 dark:text-dark-400 hover:text-slate-700"
               }`}
             >
               Anotações
             </button>
             <button
-              onClick={() => setActiveTab('flashcards')}
+              onClick={() => setActiveTab("flashcards")}
               className={`flex-1 py-4 text-center font-heading font-bold text-sm tracking-wide transition-all border-b-2 cursor-pointer ${
-                activeTab === 'flashcards'
-                  ? 'border-brand-500 text-brand-500'
-                  : 'border-transparent text-slate-500 dark:text-dark-400 hover:text-slate-700'
+                activeTab === "flashcards"
+                  ? "border-brand-500 text-brand-500"
+                  : "border-transparent text-slate-500 dark:text-dark-400 hover:text-slate-700"
               }`}
             >
               Flashcards ({flashcards.length})
@@ -325,13 +362,13 @@ export const EditorView: React.FC = () => {
 
           {/* Painel Interno */}
           <div className="flex-grow p-6 overflow-y-auto min-h-0">
-            {activeTab === 'annotations' && (
+            {activeTab === "annotations" && (
               <div className="flex flex-col h-full gap-4">
                 <AnnotationSidebar editor={editor} />
               </div>
             )}
 
-            {activeTab === 'summary' && (
+            {activeTab === "summary" && (
               <div className="flex flex-col h-full gap-4">
                 {leaf.summary ? (
                   <div className="flex flex-col gap-4">
@@ -358,7 +395,8 @@ export const EditorView: React.FC = () => {
                         Nenhum resumo gerado
                       </h4>
                       <p className="text-xs text-slate-500 dark:text-dark-350 mt-1 max-w-xs">
-                        Escreva suas anotações no editor e clique abaixo para gerar um resumo inteligente estruturado pela nossa IA.
+                        Escreva suas anotações no editor e clique abaixo para
+                        gerar um resumo inteligente estruturado pela nossa IA.
                       </p>
                     </div>
                     <Button
@@ -374,7 +412,7 @@ export const EditorView: React.FC = () => {
               </div>
             )}
 
-            {activeTab === 'flashcards' && (
+            {activeTab === "flashcards" && (
               <div className="flex flex-col h-full gap-4">
                 {flashcards.length === 0 ? (
                   <div className="flex-grow flex flex-col items-center justify-center text-center p-6 gap-4">
@@ -386,7 +424,8 @@ export const EditorView: React.FC = () => {
                         Nenhum flashcard gerado
                       </h4>
                       <p className="text-xs text-slate-500 dark:text-dark-350 mt-1 max-w-xs">
-                        Deixe que a inteligência artificial formule perguntas e respostas de fixação baseadas nos seus textos.
+                        Deixe que a inteligência artificial formule perguntas e
+                        respostas de fixação baseadas nos seus textos.
                       </p>
                     </div>
                     <Button
@@ -407,7 +446,9 @@ export const EditorView: React.FC = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => navigate(`/notebooks/${notebookId}/study`)}
+                        onClick={() =>
+                          navigate(`/notebooks/${notebookId}/study`)
+                        }
                         leftIcon={<Play className="h-3.5 w-3.5" />}
                       >
                         Estudar Agora
@@ -416,7 +457,10 @@ export const EditorView: React.FC = () => {
 
                     <div className="flex flex-col gap-3 max-h-[50vh] overflow-y-auto pr-1">
                       {flashcards.map((card) => (
-                        <Card key={card.id} className="p-4 bg-slate-50/50 dark:bg-dark-950/30 border border-slate-100 dark:border-dark-850 flex flex-col gap-2.5">
+                        <Card
+                          key={card.id}
+                          className="p-4 bg-slate-50/50 dark:bg-dark-950/30 border border-slate-100 dark:border-dark-850 flex flex-col gap-2.5"
+                        >
                           <div className="text-xs font-bold text-brand-500 tracking-wide uppercase">
                             Pergunta:
                           </div>
@@ -451,4 +495,4 @@ export const EditorView: React.FC = () => {
     </div>
   );
 };
-export default EditorView;
+export default memo(EditorView);

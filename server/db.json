@@ -28,6 +28,15 @@
       "color": "#aa3bff",
       "createdAt": "2026-06-30T23:39:17.905Z",
       "updatedAt": "2026-06-30T23:39:17.905Z"
+    },
+    {
+      "id": "4fea54b1-5686-4138-a2ac-6261e54a733d",
+      "userId": "acfea061-cc38-4fe2-b450-96094f5189e4",
+      "title": "Caclculo",
+      "description": null,
+      "color": "#aa3bff",
+      "createdAt": "2026-07-01T03:46:31.176Z",
+      "updatedAt": "2026-07-01T03:46:31.176Z"
     }
   ],
   "leaves": [
@@ -57,6 +66,15 @@
       "rawText": "das d dasd ada dsa da dadasd asdasd ad a dasda dada",
       "createdAt": "2026-06-30T23:47:46.883Z",
       "updatedAt": "2026-06-30T23:48:01.432Z"
+    },
+    {
+      "id": "3a34e488-fbf7-4431-a36f-092875da665f",
+      "notebookId": "4fea54b1-5686-4138-a2ac-6261e54a733d",
+      "title": "aula 01",
+      "content": "<p>ds dasd sdasda ds dasd das</p>",
+      "rawText": "ds dasd sdasda ds dasd das",
+      "createdAt": "2026-07-01T03:46:42.059Z",
+      "updatedAt": "2026-07-01T03:47:40.855Z"
     }
   ],
   "flashcards": [
@@ -98,6 +116,45 @@
       "nextReviewDate": "2026-06-30T23:48:12.561Z",
       "createdAt": "2026-06-30T23:48:12.561Z",
       "updatedAt": "2026-06-30T23:48:12.561Z"
+    },
+    {
+      "id": "2dfb6011-5193-4d68-88d5-00d4bd7b0ea7",
+      "leafId": "3a34e488-fbf7-4431-a36f-092875da665f",
+      "notebookId": "4fea54b1-5686-4138-a2ac-6261e54a733d",
+      "front": "Qual é o tema principal abordado na folha \"aula 01\"?",
+      "back": "O tema principal é \"aula 01\", focado em aprofundar e consolidar este conteúdo de forma sistemática.",
+      "repetitions": 1,
+      "interval": 1,
+      "easeFactor": 2.6,
+      "nextReviewDate": "2026-07-02T03:47:03.955Z",
+      "createdAt": "2026-07-01T03:46:58.767Z",
+      "updatedAt": "2026-07-01T03:47:03.955Z"
+    },
+    {
+      "id": "99ef8a0b-b838-4ea8-b970-1fb84361cbe5",
+      "leafId": "3a34e488-fbf7-4431-a36f-092875da665f",
+      "notebookId": "4fea54b1-5686-4138-a2ac-6261e54a733d",
+      "front": "De acordo com as notas de \"aula 01\", qual é uma boa prática de estudo para este tema?",
+      "back": "Escrever resumos com as próprias palavras e fazer exercícios práticos/simulados logo em seguida.",
+      "repetitions": 1,
+      "interval": 1,
+      "easeFactor": 2.6,
+      "nextReviewDate": "2026-07-02T03:47:07.749Z",
+      "createdAt": "2026-07-01T03:46:58.767Z",
+      "updatedAt": "2026-07-01T03:47:07.750Z"
+    },
+    {
+      "id": "1c67bf13-771c-4711-8a4c-fa811ec09805",
+      "leafId": "3a34e488-fbf7-4431-a36f-092875da665f",
+      "notebookId": "4fea54b1-5686-4138-a2ac-6261e54a733d",
+      "front": "Qual a importância da repetição espaçada no aprendizado de \"aula 01\"?",
+      "back": "Ela ajuda a combater a curva do esquecimento, movendo a informação da memória de curto prazo para a de longo prazo.",
+      "repetitions": 1,
+      "interval": 1,
+      "easeFactor": 2.5,
+      "nextReviewDate": "2026-07-02T03:47:32.856Z",
+      "createdAt": "2026-07-01T03:46:58.767Z",
+      "updatedAt": "2026-07-01T03:47:32.857Z"
     }
   ]
 }

@@ -8,6 +8,9 @@ export function useLeafFlashcards(leafId: string) {
     queryFn: () => studyService.getLeafFlashcards(leafId),
     enabled: !!leafId,
     staleTime: 30_000,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -17,6 +20,8 @@ export function useNotebookFlashcards(notebookId: string) {
     queryFn: () => studyService.getNotebookFlashcards(notebookId),
     enabled: !!notebookId,
     staleTime: 1000 * 60 * 5, // 5 minutos – evita refetch agressivo durante a sessão
+    refetchOnMount: false,
+    refetchOnReconnect: false,
     refetchOnWindowFocus: false,
   });
 }
