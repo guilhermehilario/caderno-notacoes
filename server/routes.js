@@ -521,6 +521,214 @@ router.get('/notebooks/:notebookId/flashcards', authMiddleware, async (req, res)
   }
 });
 
+// Atualizar flashcard (front/back) — com owner check
+router.put('/flashcards/:cardId', authMiddleware, async (req, res) => {
+  try {
+    const { front, back } = req.body;
+
+    const flashcards = await db.get('flashcards');
+    const card = flashcards.find(c => c.id === req.params.cardId);
+    if (!card) {
+      return res.status(404).json({ error: 'Flashcard não encontrado' });
+    }
+
+    // Verifica se o flashcard pertence a um notebook do usuário
+    const notebooks = await db.get('notebooks');
+    const notebook = notebooks.find(nb => nb.id === card.notebookId && nb.userId === req.user.id);
+    if (!notebook) {
+      return res.status(403).json({ error: 'Acesso negado' });
+    }
+
+    const updates = {};
+    if (front !== undefined) updates.front = front;
+    if (back !== undefined) updates.back = back;
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: 'Nenhum campo para atualizar. Envie front e/ou back.' });
+    }
+
+    const updatedCard = await db.update('flashcards', req.params.cardId, updates);
+    return res.json(updatedCard);
+  } catch (error) {
+    return res.status(500).json({ error: 'Erro ao atualizar flashcard' });
+  }
+});
+
+// ==========================================
+// 4.5. ESTATÍSTICAS DE ESTUDO
+// ==========================================
+
+// Obter estatísticas gerais de estudo do usuário
+router.get('/study/stats', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const flashcards = await db.get('flashcards');
+    const notebooks = await db.get('notebooks');
+    const userNotebookIds = notebooks
+      .filter(nb => nb.userId === userId)
+      .map(nb => nb.id);
+
+    // Filtra apenas flashcards dos notebooks do usuário
+    const userCards = flashcards.filter(c => userNotebookIds.includes(c.notebookId));
+
+    // Data de hoje (início do dia)
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    // Cards revisados hoje:
+    // - updatedAt é de hoje
+    // - E (já foi revisado ao menos uma vez com sucesso OU não foi criado hoje)
+    // Isso garante que cards com score < 3 (repetitions resetado para 0)
+    // ainda sejam contados como "revisados hoje".
+    const reviewedToday = userCards.filter(c => {
+      const updated = new Date(c.updatedAt);
+      if (updated < todayStart) return false;
+      // Se já foi revisado com score >=3 alguma vez, conta
+      if (c.repetitions > 0) return true;
+      // Se foi atualizado hoje mas NÃO foi criado hoje, é uma revisão com falha
+      const created = new Date(c.createdAt);
+      return created < todayStart;
+    });
+
+    // Cards disponíveis para revisão (nextReviewDate <= now)
+    const now = new Date();
+    const dueForReview = userCards.filter(c => {
+      return new Date(c.nextReviewDate) <= now;
+    });
+
+    // Cálculo da taxa média de acerto baseada no easeFactor
+    // easeFactor > 2.5 = boa performance, < 2.5 = dificuldade
+    const totalReviewed = userCards.filter(c => c.repetitions > 0).length;
+    const avgEaseFactor = totalReviewed > 0
+      ? userCards
+          .filter(c => c.repetitions > 0)
+          .reduce((sum, c) => sum + c.easeFactor, 0) / totalReviewed
+      : 2.5;
+
+    // Converte easeFactor para uma taxa percentual (2.5 = 70%, 3.3 = 90%, 1.3 = 30%)
+    const accuracyRate = Math.min(100, Math.max(0,
+      Math.round(((avgEaseFactor - 1.3) / (3.3 - 1.3)) * 100)
+    ));
+
+    // Distribuição por notebook
+    const perNotebook = userNotebookIds.map(nbId => {
+      const notebook = notebooks.find(nb => nb.id === nbId);
+      const nbCards = userCards.filter(c => c.notebookId === nbId);
+      const nbReviewedToday = reviewedToday.filter(c => c.notebookId === nbId);
+      const nbDue = dueForReview.filter(c => c.notebookId === nbId);
+
+      return {
+        notebookId: nbId,
+        notebookTitle: notebook?.title ?? 'Sem título',
+        notebookColor: notebook?.color ?? '#aa3bff',
+        totalCards: nbCards.length,
+        reviewedToday: nbReviewedToday.length,
+        dueForReview: nbDue.length,
+      };
+    }).filter(nb => nb.totalCards > 0);
+
+    return res.json({
+      totalCards: userCards.length,
+      reviewedToday: reviewedToday.length,
+      dueForReview: dueForReview.length,
+      accuracyRate,
+      avgEaseFactor: Math.round(avgEaseFactor * 100) / 100,
+      perNotebook,
+    });
+  } catch (error) {
+    console.error('Erro ao obter stats de estudo:', error);
+    return res.status(500).json({ error: 'Erro ao obter estatísticas de estudo' });
+  }
+});
+
+// ==========================================
+// 5. ROTAS DE PERSISTÊNCIA DE SESSÃO DE ESTUDO
+// ==========================================
+
+// Salvar/criar sessão de estudo para um caderno
+router.put('/study-sessions/:notebookId', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const notebookId = req.params.notebookId;
+
+    // Verifica se o notebook pertence ao usuário
+    const notebooks = await db.get('notebooks');
+    const notebook = notebooks.find(nb => nb.id === notebookId && nb.userId === userId);
+    if (!notebook) {
+      return res.status(404).json({ error: 'Caderno não encontrado' });
+    }
+
+    const { currentIndex, reviewedCount, showAnswer, sessionActive, flashcards, completedCardIds, scores } = req.body;
+
+    const sessions = await db.get('studySessions');
+    const existingIndex = sessions.findIndex(s => s.notebookId === notebookId && s.userId === userId);
+
+    const sessionData = {
+      notebookId,
+      userId,
+      currentIndex: currentIndex ?? 0,
+      reviewedCount: reviewedCount ?? 0,
+      showAnswer: showAnswer ?? false,
+      sessionActive: sessionActive ?? false,
+      flashcards: flashcards ?? [],
+      completedCardIds: completedCardIds ?? [],
+      scores: scores ?? {},
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (existingIndex >= 0) {
+      sessions[existingIndex] = { ...sessions[existingIndex], ...sessionData };
+      await db.save('studySessions', sessions);
+      return res.json(sessions[existingIndex]);
+    }
+
+    await db.insert('studySessions', {
+      ...sessionData,
+      createdAt: new Date().toISOString(),
+    });
+    return res.status(201).json(sessionData);
+  } catch (error) {
+    console.error('Erro ao salvar sessão de estudo:', error);
+    return res.status(500).json({ error: 'Erro ao salvar sessão de estudo' });
+  }
+});
+
+// Carregar sessão de estudo de um caderno
+router.get('/study-sessions/:notebookId', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const notebookId = req.params.notebookId;
+
+    const sessions = await db.get('studySessions');
+    const session = sessions.find(s => s.notebookId === notebookId && s.userId === userId);
+
+    if (!session) {
+      return res.status(404).json({ error: 'Nenhuma sessão de estudo encontrada para este caderno' });
+    }
+
+    return res.json(session);
+  } catch (error) {
+    return res.status(500).json({ error: 'Erro ao carregar sessão de estudo' });
+  }
+});
+
+// Deletar sessão de estudo (ao finalizar ou resetar)
+router.delete('/study-sessions/:notebookId', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const notebookId = req.params.notebookId;
+
+    const sessions = await db.get('studySessions');
+    const filtered = sessions.filter(s => !(s.notebookId === notebookId && s.userId === userId));
+    await db.save('studySessions', filtered);
+
+    return res.status(204).end();
+  } catch (error) {
+    return res.status(500).json({ error: 'Erro ao deletar sessão de estudo' });
+  }
+});
+
 // Submeter score do flashcard (Algoritmo SM-2) — com owner check
 router.post('/flashcards/:cardId/review', authMiddleware, async (req, res) => {
   try {

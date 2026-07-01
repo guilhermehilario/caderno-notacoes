@@ -10,6 +10,7 @@ import { Card } from '../../../components/ui/Card.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
 import { Modal } from '../../../components/ui/Modal.tsx';
 import { Input } from '../../../components/ui/Input.tsx';
+import { StudyProgressSummary } from '../../../modules/study/components/StudyProgressSummary.tsx';
 
 const COLORS = [
   '#aa3bff', // Brand Purple
@@ -64,6 +65,9 @@ export const DashboardView: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto flex flex-col gap-8">
+      {/* Study Progress Summary */}
+      <StudyProgressSummary />
+
       {/* Top Welcome Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>

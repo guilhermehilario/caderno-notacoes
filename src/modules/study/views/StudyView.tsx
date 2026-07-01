@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, startTransition } from "react";
+import React, { useState, useEffect, useRef, startTransition, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -7,70 +7,87 @@ import {
   Brain,
   Eye,
   HelpCircle,
+  AlertTriangle,
+  Check,
 } from "lucide-react";
 import {
   useNotebookFlashcards,
   useSubmitCardScore,
 } from "../hooks/useFlashcards";
+import { useStudySessionPersistence } from "../hooks/useStudySessionPersistence";
 import { useStudyStore } from "../studyStore";
 import { Card } from "../../../components/ui/Card.tsx";
 import { Button } from "../../../components/ui/Button.tsx";
-import type { Flashcard, StudyScore } from "../types";
+import type { StudyScore } from "../types";
 
 export const StudyView: React.FC = () => {
   const { notebookId } = useParams<{ notebookId: string }>();
   const navigate = useNavigate();
   const nbId = notebookId ?? "";
 
+  // ⚡ Persistência automática da sessão de estudo no backend
+  const { clearPersistedSession } = useStudySessionPersistence(nbId);
+
   const { data: serverFlashcards = [], isLoading } =
     useNotebookFlashcards(nbId);
   const { mutateAsync: submitScore } = useSubmitCardScore(undefined, nbId);
 
-  // ── Zustand Store ──
-  // Selector único para estado da sessão (evita múltiplas inscrições)
+  // ── Zustand Store (dados persistem entre remounts) ──
   const sessionSlot = useStudyStore((s) => s.sessions[nbId]);
-  // Ações separadas: são funções estáveis do Zustand, nunca causam re-render
   const setCurrentIndex = useStudyStore((s) => s.setCurrentIndex);
   const setReviewedCount = useStudyStore((s) => s.setReviewedCount);
   const setShowAnswer = useStudyStore((s) => s.setShowAnswer);
+  const setSessionActive = useStudyStore((s) => s.setSessionActive);
+  const setSessionFlashcards = useStudyStore((s) => s.setSessionFlashcards);
+  const markCardCompleted = useStudyStore((s) => s.markCardCompleted);
   const resetSession = useStudyStore((s) => s.resetSession);
 
   const currentIndex = sessionSlot?.currentIndex ?? 0;
   const reviewedCount = sessionSlot?.reviewedCount ?? 0;
   const showAnswer = sessionSlot?.showAnswer ?? false;
+  const frozenFlashcards = sessionSlot?.flashcards ?? [];
 
   // ── Estado local transitório (não afeta progresso) ──
-  const [frozenFlashcards, setFrozenFlashcards] = useState<Flashcard[]>([]);
   const [sessionFinished, setSessionFinished] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const saveStatusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Ref que impede o congelamento dos flashcards mais de uma vez
-  // dentro da mesma sessão (mesmo que o cache do React Query se atualize).
-  const initializedRef = useRef(false);
+  // Ref que impede congelamentos múltiplos após remount
+  const freezeAttemptedRef = useRef(false);
 
   // ── Reset automático ao navegar entre notebooks ──────────────
-  // Quando o usuário muda de notebook (ex.: /notebooks/abc/study → /xyz/study),
-  // limpa os estados locais para começar do zero. A store do Zustand já isola
-  // as sessões por nbId, portanto o progresso do notebook anterior fica preservado
-  // caso o usuário retorne.
   useEffect(() => {
-    initializedRef.current = false;
+    freezeAttemptedRef.current = false;
     startTransition(() => {
-      setFrozenFlashcards([]);
       setSessionFinished(false);
+      setSaveStatus("idle");
     });
   }, [nbId]);
 
-  // Congela a lista de flashcards assim que carrega, impedindo que
-  // atualizações silenciosas do cache (React Query) alterem a ordem
-  // ou removam cards durante a sessão.
+  // ── Congela os flashcards na Zustand Store UMA VEZ ──
+  // ⚡ Diferente da versão anterior (que usava useState local),
+  //    agora os flashcards ficam na store e sobrevivem a remounts.
   useEffect(() => {
-    if (!isLoading && serverFlashcards.length > 0 && !initializedRef.current) {
-      initializedRef.current = true;
+    if (
+      !isLoading &&
+      serverFlashcards.length > 0 &&
+      !freezeAttemptedRef.current &&
+      frozenFlashcards.length === 0
+    ) {
+      freezeAttemptedRef.current = true;
       startTransition(() => {
-        setFrozenFlashcards(serverFlashcards);
+        setSessionFlashcards(nbId, serverFlashcards);
+        setSessionActive(nbId, true);
       });
     }
-  }, [isLoading, serverFlashcards]);
+  }, [
+    isLoading,
+    serverFlashcards,
+    frozenFlashcards.length,
+    nbId,
+    setSessionFlashcards,
+    setSessionActive,
+  ]);
 
   const flashcards =
     frozenFlashcards.length > 0 ? frozenFlashcards : serverFlashcards;
@@ -78,36 +95,69 @@ export const StudyView: React.FC = () => {
   const progressPercent =
     flashcards.length > 0 ? (currentIndex / flashcards.length) * 100 : 0;
 
-  const handleScoreSelect = async (
-    score: StudyScore,
-    e: React.MouseEvent<HTMLButtonElement>,
-  ) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!currentCard) return;
+  const handleScoreSelect = useCallback(
+    async (score: StudyScore, e: React.MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!currentCard) return;
 
-    const isLastCard = currentIndex >= flashcards.length - 1;
-    const cardIdToSubmit = currentCard.id;
+      const isLastCard = currentIndex >= flashcards.length - 1;
+      const cardIdToSubmit = currentCard.id;
 
-    // ⚡ Atualiza os estados síncronos da Store IMEDIATAMENTE
-    // (antes da mutação assíncrona) para que o avanço do card
-    // seja instantâneo na UI.
-    setReviewedCount(nbId, reviewedCount + 1);
+      // ⚡ Atualiza estados síncronos IMEDIATAMENTE (antes da requisição)
+      setSaveStatus("saving");
+      setReviewedCount(nbId, reviewedCount + 1);
+      markCardCompleted(nbId, cardIdToSubmit, score);
 
-    if (!isLastCard) {
-      setShowAnswer(nbId, false);
-      setCurrentIndex(nbId, currentIndex + 1);
-    } else {
-      setSessionFinished(true);
-    }
+      if (!isLastCard) {
+        setShowAnswer(nbId, false);
+        setCurrentIndex(nbId, currentIndex + 1);
+      } else {
+        setSessionFinished(true);
+      }
 
-    // Mutação assíncrona – não bloqueia a UI
-    try {
-      await submitScore({ cardId: cardIdToSubmit, score });
-    } catch {
-      // Falha silenciosa – o score será reenviado na próxima interação
-    }
-  };
+      // Mutação assíncrona – não bloqueia a UI
+      try {
+        await submitScore({ cardId: cardIdToSubmit, score });
+        startTransition(() => {
+          setSaveStatus("saved");
+          // Auto-reset do status após 2s
+          if (saveStatusTimerRef.current !== null) {
+            clearTimeout(saveStatusTimerRef.current);
+          }
+          saveStatusTimerRef.current = setTimeout(
+            () => setSaveStatus("idle"),
+            2000,
+          );
+        });
+      } catch {
+        startTransition(() => {
+          setSaveStatus("error");
+        });
+      }
+    },
+    [
+      currentCard,
+      currentIndex,
+      flashcards.length,
+      nbId,
+      reviewedCount,
+      setCurrentIndex,
+      setReviewedCount,
+      setShowAnswer,
+      markCardCompleted,
+      submitScore,
+    ],
+  );
+
+  // Cleanup do timer de auto-reset do saveStatus ao desmontar
+  useEffect(() => {
+    return () => {
+      if (saveStatusTimerRef.current !== null) {
+        clearTimeout(saveStatusTimerRef.current);
+      }
+    };
+  }, []);
 
   if (isLoading) {
     return (
@@ -175,6 +225,7 @@ export const StudyView: React.FC = () => {
             variant="outline"
             onClick={() => {
               resetSession(nbId);
+              clearPersistedSession();
               setSessionFinished(false);
             }}
             className="w-full"
@@ -196,9 +247,34 @@ export const StudyView: React.FC = () => {
         >
           <ArrowLeft className="h-4 w-4" /> Parar Revisão
         </Link>
-        <span className="text-sm font-bold text-slate-450 dark:text-dark-400">
-          Card {currentIndex + 1} de {flashcards.length}
-        </span>
+
+        <div className="flex items-center gap-3">
+          {/* ── Indicador de salvamento discreto ── */}
+          {saveStatus === "saving" && (
+            <span className="flex items-center gap-1 text-xs font-semibold text-brand-500 animate-in fade-in duration-200">
+              <span className="flex items-center gap-0.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-500 animate-pulse" />
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-400 animate-pulse [animation-delay:150ms]" />
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-300 animate-pulse [animation-delay:300ms]" />
+              </span>
+              Salvando
+            </span>
+          )}
+          {saveStatus === "saved" && (
+            <span className="flex items-center gap-1 text-xs font-semibold text-emerald-500 animate-in fade-in duration-300">
+              <Check className="h-3 w-3" /> Salvo
+            </span>
+          )}
+          {saveStatus === "error" && (
+            <span className="flex items-center gap-1 text-xs font-semibold text-rose-500 animate-in fade-in duration-300">
+              <AlertTriangle className="h-3 w-3" /> Erro
+            </span>
+          )}
+
+          <span className="text-sm font-bold text-slate-450 dark:text-dark-400">
+            Card {currentIndex + 1} de {flashcards.length}
+          </span>
+        </div>
       </div>
 
       {/* Progress Bar */}

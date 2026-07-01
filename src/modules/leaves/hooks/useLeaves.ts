@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import leafService from "../services/leafService";
 import type { CreateLeafInput, UpdateLeafInput, Leaf } from "../types";
@@ -61,6 +62,24 @@ export function useLeaf(leafId: string) {
     refetchOnWindowFocus: false, // Evita refetch ao focar janela durante edição
   });
 
+  const summaryCache = queryClient.getQueryData<{ summary?: string }>([
+    "leaves",
+    leafId,
+    "summary",
+  ]);
+
+  const leaf = useMemo(() => {
+    if (!leafQuery.data) return undefined;
+
+    const summary = summaryCache?.summary ?? leafQuery.data.summary;
+    if (summary === leafQuery.data.summary) return leafQuery.data;
+
+    return {
+      ...leafQuery.data,
+      summary,
+    };
+  }, [leafQuery.data, summaryCache?.summary]);
+
   const updateMutation = useMutation({
     mutationFn: (data: UpdateLeafInput) => leafService.updateLeaf(leafId, data),
     onSuccess: (updatedLeaf) => {
@@ -105,6 +124,7 @@ export function useLeaf(leafId: string) {
           },
         );
         queryClient.removeQueries({ queryKey: ["leaves", leafId] });
+        queryClient.removeQueries({ queryKey: ["leaves", leafId, "summary"] });
       }
     },
   });
@@ -112,12 +132,11 @@ export function useLeaf(leafId: string) {
   const summaryMutation = useMutation({
     mutationFn: () => leafService.generateAISummary(leafId),
     onSuccess: (data) => {
-      queryClient.setQueryData(
-        ["leaves", leafId],
-        (old: { summary?: string } | undefined) => {
-          if (!old) return old;
-          if (old.summary === data.summary) return old;
-          return { ...old, summary: data.summary };
+      queryClient.setQueryData<{ summary?: string }>(
+        ["leaves", leafId, "summary"],
+        (old) => {
+          if (old?.summary === data.summary) return old;
+          return { ...(old ?? {}), summary: data.summary };
         },
       );
     },
@@ -148,7 +167,7 @@ export function useLeaf(leafId: string) {
   });
 
   return {
-    leaf: leafQuery.data,
+    leaf,
     isLoading: leafQuery.isLoading,
     error: leafQuery.error,
     updateLeaf: updateMutation.mutateAsync,

@@ -15,13 +15,10 @@ import {
   HelpCircle,
   Play,
   Check,
-  RefreshCw,
   AlertTriangle,
 } from "lucide-react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import Underline from "@tiptap/extension-underline";
-import ExtensionLink from "@tiptap/extension-link";
 import Highlight from "@tiptap/extension-highlight";
 import Placeholder from "@tiptap/extension-placeholder";
 import { Annotation } from "../extensions/Annotation";
@@ -65,13 +62,17 @@ const EditorView: React.FC = () => {
     "summary" | "flashcards" | "annotations"
   >("summary");
 
+  // Ref que garante que a sincronização servidor→editor ocorra APENAS UMA VEZ
+  // (no carregamento inicial da folha). Depois disso, o editor é a fonte da
+  // verdade local e nenhum re-render subsequente sobrescreve o conteúdo.
+  const initialSyncDoneRef = useRef(false);
   // Ref para rastrear o conteúdo que veio do servidor (usado para
   // distinguir atualizações do servidor de edições do usuário)
   const serverContentRef = useRef("");
-  // Controle para evitar salvar no primeiro carregamento
-  const isFirstRender = useRef(true);
   // Rastreia o último estado salvo no servidor para evitar saves duplicados
   const lastSavedRef = useRef({ title: "", content: "" });
+  // Garante que o autosave seja serializado e não force re-renderes em cascata
+  const saveInFlightRef = useRef(false);
   // Controla se o conteúdo já foi sincronizado com o editor
   const [contentReady, setContentReady] = useState(false);
 
@@ -113,7 +114,6 @@ const EditorView: React.FC = () => {
 
       setLocalContent(currentHtml);
       setLocalRawText(ed.getText());
-      setSaveStatus("saving");
     },
     [],
   );
@@ -161,54 +161,56 @@ const EditorView: React.FC = () => {
     };
   }, [editor]);
 
-  // Sincroniza conteúdo do servidor → editor quando leaf carrega/atualiza
+  // ═══════════════════════════════════════════════════════════════
+  //  Sincronização ÚNICA: servidor → editor (apenas no 1º load)
+  // ═══════════════════════════════════════════════════════════════
+  // Este efeito executa UMA VEZ quando a leaf carrega e o editor
+  // está pronto. Depois disso, `initialSyncDoneRef` é setado para
+  // `true` e NUNCA MAIS o conteúdo do servidor sobrescreve o editor,
+  // eliminando o loop de renderização que causava "Maximum update
+  // depth exceeded" e o flicker de tela.
   useEffect(() => {
-    if (!leaf || !editor) return;
+    if (!leaf || !editor || initialSyncDoneRef.current) return;
 
     const serverContent = leaf.content || "";
-    const currentEditorHtml = editor.getHTML();
+    serverContentRef.current = serverContent;
+    lastSavedRef.current = { title: leaf.title, content: serverContent };
 
-    // Só aplica conteúdo do servidor se o editor estiver vazio
-    // ou se o conteúdo do servidor for diferente do que está no editor
-    if (currentEditorHtml !== serverContent) {
-      serverContentRef.current = serverContent;
-      editor.commands.setContent(serverContent);
-
-      startTransition(() => {
-        setLocalContent(editor.getHTML());
-        setLocalRawText(editor.getText());
-      });
-    }
+    // Aplica o conteúdo do servidor no editor TipTap
+    editor.commands.setContent(serverContent);
 
     startTransition(() => {
       setLocalTitle(leaf.title);
+      setLocalContent(serverContent);
+      setLocalRawText(leaf.rawText || "");
       setContentReady(true);
     });
 
-    lastSavedRef.current = { title: leaf.title, content: leaf.content || "" };
-    isFirstRender.current = true;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [leaf?.id, leaf?.content]);
+    initialSyncDoneRef.current = true;
+  }, [leaf, editor]);
 
   // Debounce para autosave
   const debouncedTitle = useDebounce(localTitle, 1500);
   const debouncedContent = useDebounce(localContent, 1500);
   const debouncedRawText = useDebounce(localRawText, 1500);
 
-  // Efeito de auto-salvamento
+  // Efeito de auto-salvamento — discreto, sem bloquear a UI
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
+    if (!initialSyncDoneRef.current) return;
 
     const lastSaved = lastSavedRef.current;
     if (
       debouncedTitle !== lastSaved.title ||
       debouncedContent !== lastSaved.content
     ) {
-      setSaveStatus("saving");
-      updateLeaf({
+      if (saveInFlightRef.current) return;
+
+      saveInFlightRef.current = true;
+      startTransition(() => {
+        setSaveStatus("saving");
+      });
+
+      void updateLeaf({
         title: debouncedTitle,
         content: debouncedContent,
         rawText: debouncedRawText,
@@ -218,10 +220,17 @@ const EditorView: React.FC = () => {
             title: debouncedTitle,
             content: debouncedContent,
           };
-          setSaveStatus("saved");
+          startTransition(() => {
+            setSaveStatus("saved");
+          });
         })
         .catch(() => {
-          setSaveStatus("error");
+          startTransition(() => {
+            setSaveStatus("error");
+          });
+        })
+        .finally(() => {
+          saveInFlightRef.current = false;
         });
     }
   }, [debouncedTitle, debouncedContent, debouncedRawText, updateLeaf]);
@@ -275,21 +284,36 @@ const EditorView: React.FC = () => {
           <ArrowLeft className="h-4 w-4" /> Voltar para o Caderno
         </RouterLink>
 
-        {/* Status Indicator */}
-        <div className="flex items-center gap-2 text-xs font-semibold">
+        {/* ── Indicador de salvamento discreto e animado ── */}
+        <div className="flex items-center gap-2 text-xs font-semibold select-none">
           {saveStatus === "saved" && (
-            <span className="flex items-center gap-1 text-emerald-500">
-              <Check className="h-3.5 w-3.5" /> Salvo
+            <span
+              key="saved"
+              className="flex items-center gap-1 text-emerald-500 animate-in fade-in duration-300"
+            >
+              <Check className="h-3.5 w-3.5" />
+              <span>Salvo</span>
             </span>
           )}
           {saveStatus === "saving" && (
-            <span className="flex items-center gap-1 text-brand-500">
-              <RefreshCw className="h-3.5 w-3.5 animate-spin" /> Salvando...
+            <span
+              key="saving"
+              className="flex items-center gap-1.5 text-brand-500"
+            >
+              <span className="flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-500 animate-pulse" />
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-400 animate-pulse [animation-delay:150ms]" />
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-300 animate-pulse [animation-delay:300ms]" />
+              </span>
+              Salvando
             </span>
           )}
           {saveStatus === "error" && (
-            <span className="flex items-center gap-1 text-rose-500">
-              <AlertTriangle className="h-3.5 w-3.5" /> Falha ao salvar rascunho
+            <span
+              key="error"
+              className="flex items-center gap-1 text-rose-500 animate-in fade-in duration-300"
+            >
+              <AlertTriangle className="h-3.5 w-3.5" /> Falha ao salvar
             </span>
           )}
         </div>
