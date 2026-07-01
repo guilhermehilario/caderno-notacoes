@@ -2,48 +2,95 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import { router } from './routes.js';
+
+// 📦 Módulos de rota separados por domínio
+import { authRouter } from './routes/auth.js';
+import { notebookRouter } from './routes/notebooks.js';
+import { leafRouter } from './routes/leaves.js';
+import { flashcardRouter } from './routes/flashcards.js';
+import { studyRouter } from './routes/study.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configuração do CORS
-// Permite que o frontend faça requisições e envie cookies de qualquer origem local ou externa
+// ═══════════════════════════════════════════════════════════════
+//  Middleware Globais
+// ═══════════════════════════════════════════════════════════════
+
 app.use(cors({
-  origin: true, // Reflete dinamicamente a origem da requisição
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// Middlewares
-app.use(express.json());
+app.use(express.json({ limit: '1mb' })); // Limite de payload
 app.use(cookieParser());
 
-// Logger simples
+// Logger estruturado
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    console.log(
+      `[${new Date().toISOString()}] ${req.method} ${req.originalUrl} → ${res.statusCode} (${duration}ms)`,
+    );
+  });
   next();
 });
 
-// Rotas da API montadas sob /api
-app.use('/api', router);
+// ═══════════════════════════════════════════════════════════════
+//  Rotas da API
+// ═══════════════════════════════════════════════════════════════
 
-// Rota padrão de status
-app.get('/', (req, res) => {
+app.use('/api/auth', authRouter);
+app.use('/api/notebooks', notebookRouter);
+
+// ⚠️ Ordem importante: rotas específicas (/notebooks/:notebookId/leaves)
+//    devem vir ANTES de rotas genéricas (/leaves/:leafId) para evitar
+//    conflito de parâmetros. O leafRouter gerencia ambas.
+app.use('/api', leafRouter);
+
+app.use('/api', flashcardRouter);
+app.use('/api', studyRouter);
+
+// ═══════════════════════════════════════════════════════════════
+//  Rotas de Sistema
+// ═══════════════════════════════════════════════════════════════
+
+app.get('/', (_req, res) => {
   res.json({ message: 'API Revisa Aula está ativa!', status: 'OK' });
 });
 
-// Tratamento de erros genéricos
-app.use((err, req, res, next) => {
-  console.error(err.stack);
+app.get('/api/health', (_req, res) => {
+  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  Tratamento de Erros (deve ser o ÚLTIMO middleware)
+// ═══════════════════════════════════════════════════════════════
+
+app.use((err, _req, res, _next) => {
+  console.error('[ERRO NÃO TRATADO]', err.stack || err.message || err);
+
+  // Erros conhecidos do Express
+  if (err.type === 'entity.parse.failed') {
+    return res.status(400).json({ error: 'JSON inválido no corpo da requisição' });
+  }
+  if (err.type === 'entity.too.large') {
+    return res.status(413).json({ error: 'Payload muito grande' });
+  }
+
   res.status(500).json({ error: 'Ocorreu um erro interno no servidor' });
 });
 
-// Inicialização
+// ═══════════════════════════════════════════════════════════════
+//  Inicialização
+// ═══════════════════════════════════════════════════════════════
+
 app.listen(PORT, () => {
-  console.log(`=============================================`);
-  console.log(` Servidor rodando em: http://localhost:${PORT}`);
-  console.log(` Base da API: http://localhost:${PORT}/api`);
-  console.log(`=============================================`);
+  console.log('=============================================');
+  console.log(`  🚀 Servidor rodando em: http://localhost:${PORT}`);
+  console.log(`  📡 Base da API: http://localhost:${PORT}/api`);
+  console.log('=============================================');
 });

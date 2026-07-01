@@ -6,6 +6,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const dbPath = path.join(__dirname, 'db.json');
 
+/**
+ * 🗄️ Coleções padrão inicializadas quando o db.json não existe.
+ * `studySessions` foi adicionada para suportar persistência de sessão.
+ */
+const DEFAULT_COLLECTIONS = {
+  users: [],
+  notebooks: [],
+  leaves: [],
+  flashcards: [],
+  studySessions: [],
+};
+
 let inMemoryDb = null;
 
 async function loadDb() {
@@ -13,9 +25,15 @@ async function loadDb() {
   try {
     const content = await fs.readFile(dbPath, 'utf8');
     inMemoryDb = JSON.parse(content);
+
+    // Garante que coleções novas existam mesmo em db.json existente
+    for (const [key, defaultValue] of Object.entries(DEFAULT_COLLECTIONS)) {
+      if (!inMemoryDb[key]) {
+        inMemoryDb[key] = defaultValue;
+      }
+    }
   } catch (error) {
-    // If file doesn't exist, initialize it
-    inMemoryDb = { users: [], notebooks: [], leaves: [], flashcards: [] };
+    inMemoryDb = { ...DEFAULT_COLLECTIONS };
     await saveDb();
   }
   return inMemoryDb;
@@ -27,18 +45,18 @@ async function saveDb() {
 }
 
 export const db = {
-  get: async (collection) => {
+  async get(collection) {
     const data = await loadDb();
     return data[collection] || [];
   },
-  
-  save: async (collection, items) => {
+
+  async save(collection, items) {
     const data = await loadDb();
     data[collection] = items;
     await saveDb();
   },
 
-  insert: async (collection, item) => {
+  async insert(collection, item) {
     const data = await loadDb();
     if (!data[collection]) data[collection] = [];
     data[collection].push(item);
@@ -46,22 +64,25 @@ export const db = {
     return item;
   },
 
-  update: async (collection, id, updates) => {
+  async update(collection, id, updates) {
     const data = await loadDb();
     const items = data[collection] || [];
-    const index = items.findIndex(item => item.id === id);
+    const index = items.findIndex((item) => item.id === id);
     if (index === -1) return null;
-    items[index] = { ...items[index], ...updates, updatedAt: new Date().toISOString() };
+    items[index] = {
+      ...items[index],
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
     await saveDb();
     return items[index];
   },
 
-  delete: async (collection, id) => {
+  async delete(collection, id) {
     const data = await loadDb();
     const items = data[collection] || [];
-    const filtered = items.filter(item => item.id !== id);
-    data[collection] = filtered;
+    data[collection] = items.filter((item) => item.id !== id);
     await saveDb();
     return true;
-  }
+  },
 };

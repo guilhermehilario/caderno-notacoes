@@ -130,6 +130,87 @@ O fluxo principal já está implementado e funcional:
 | `src/modules/notebooks/views/DashboardView.tsx` | Componente integrado |
 | `AGENTS.md` | Documentação atualizada |
 
+### ⚡ Quarta rodada: Refatoração completa da API (Julho 2026)
+
+**O que foi feito:** Reestruturação completa do backend Express, antes monolítico em `server/routes.js` (~900 linhas), agora modularizado em 5 módulos de rota + 1 middleware de validação.
+
+#### 🏗️ Nova estrutura do backend:
+
+```
+server/
+├── index.js              → Entry point refatorado com:
+│                           • Middleware globais (CORS, JSON, cookie-parser)
+│                           • Logger estruturado com duração das requisições
+│                           • Montagem modular das rotas
+│                           • Tratamento de erros específicos (JSON malformado, payload grande)
+│                           • Endpoint /api/health
+├── database.js            → Refatorado:
+│                           • DEFAULT_COLLECTIONS com studySessions incluída
+│                           • Migração automática para coleções faltantes
+├── authMiddleware.js      → Mantido (JWT_SECRET validation + user injection)
+├── middleware/
+│   └── validate.js        → NOVO: validateBody, validateStudyScore, sendError, sendSuccess
+├── routes/
+│   ├── auth.js            → Autenticação: register, login, logout, refresh, profile
+│   ├── notebooks.js       → CRUD notebooks com ownership check + cascade delete
+│   ├── leaves.js          → CRUD folhas + geração IA + flashcards da folha
+│   ├── flashcards.js      → Flashcards CRUD + SM-2 com CAP de 365 dias
+│   └── study.js           → Sessão de estudo persistente + estatísticas
+└── server/
+    ├── db.json
+    └── package.json
+```
+
+#### 🔒 Melhorias de segurança:
+
+1. **Validação de entrada** — Middleware `validateBody()` para campos obrigatórios em TODOS os endpoints
+2. **Validação de email** — Regex no registro
+3. **Validação de score** — `validateStudyScore()` garante inteiro 0-5
+4. **Limite de payload** — `express.json({ limit: '1mb' })`
+5. **Tratamento de erros** — JSON malformado e payload grande têm respostas específicas
+6. **Ownership chain** — Preservada em todos os endpoints (leaf → notebook → userId)
+
+#### 🛡️ Correção crítica: SM-2 overflow
+
+**Problema:** O algoritmo SM-2 original permitia que `interval * easeFactor` crescesse exponencialmente sem limite. No `db.json`, um card tinha `interval: 9942399` e `nextReviewDate: "+029247-..."` (ano 29.247!).
+
+**Correção:** Adicionado `MAX_INTERVAL_DAYS = 365` (cap de 1 ano) + `MIN_EASE_FACTOR = 1.3` + arredondamento do easeFactor para 2 casas.
+
+```javascript
+// Antes (sem proteção):
+interval = Math.round(interval * easeFactor);  // Cresce sem limite!
+
+// Depois (com cap):
+interval = Math.round(interval * easeFactor);
+if (interval > MAX_INTERVAL_DAYS) {
+  interval = MAX_INTERVAL_DAYS;  // Cap de 1 ano
+}
+```
+
+#### 📦 Módulos e caminhos:
+
+| Módulo | Montado em | Rotas |
+|--------|-----------|-------|
+| `authRouter` | `/api/auth` | register, login, logout, refresh, profile |
+| `notebookRouter` | `/api/notebooks` | CRUD completo |
+| `leafRouter` | `/api` | Leaves CRUD + IA + flashcards da folha |
+| `flashcardRouter` | `/api` | Flashcards CRUD + SM-2 review |
+| `studyRouter` | `/api` | Sessão persistente + stats |
+
+#### Arquivos alterados/criados (rodada 4):
+
+| Arquivo | Ação |
+|---------|------|
+| `server/index.js` | **Reescrito** — modular, logger, error handling |
+| `server/database.js` | **Reescrito** — DEFAULT_COLLECTIONS, migração automática |
+| `server/routes/auth.js` | **Novo** — rotas de auth extraídas |
+| `server/routes/notebooks.js` | **Novo** — CRUD notebooks extraído |
+| `server/routes/leaves.js` | **Novo** — CRUD leaves + IA extraído |
+| `server/routes/flashcards.js` | **Novo** — flashcards + SM-2 com CAP |
+| `server/routes/study.js` | **Novo** — sessão + stats extraído |
+| `server/middleware/validate.js` | **Novo** — validações reutilizáveis |
+| `server/routes.js` | **Removido** — substituído pelos módulos |
+
 ## Arquivos relevantes para o contexto
 
 - [src/main.tsx](src/main.tsx)
