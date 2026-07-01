@@ -48,7 +48,56 @@
       "rawText": "teste testando uma seguindo ao teste de teste ao teste testando",
       "createdAt": "2026-06-30T23:39:32.008Z",
       "updatedAt": "2026-06-30T23:40:22.216Z"
+    },
+    {
+      "id": "f9bc64fc-61e5-4ee4-8465-c0763f754a4b",
+      "notebookId": "85e0b223-78b6-42e7-94e7-223eec43eefd",
+      "title": "aula 02",
+      "content": "<p>das d dasd ada dsa da dadasd asdasd ad a dasda dada</p>",
+      "rawText": "das d dasd ada dsa da dadasd asdasd ad a dasda dada",
+      "createdAt": "2026-06-30T23:47:46.883Z",
+      "updatedAt": "2026-06-30T23:48:01.432Z"
     }
   ],
-  "flashcards": []
+  "flashcards": [
+    {
+      "id": "7032a201-b567-4609-9807-16c9cde6f537",
+      "leafId": "f9bc64fc-61e5-4ee4-8465-c0763f754a4b",
+      "notebookId": "85e0b223-78b6-42e7-94e7-223eec43eefd",
+      "front": "Qual é o tema principal abordado na folha \"aula 02\"?",
+      "back": "O tema principal é \"aula 02\", focado em aprofundar e consolidar este conteúdo de forma sistemática.",
+      "repetitions": 1,
+      "interval": 1,
+      "easeFactor": 2.6,
+      "nextReviewDate": "2026-07-01T23:48:21.041Z",
+      "createdAt": "2026-06-30T23:48:12.561Z",
+      "updatedAt": "2026-06-30T23:48:21.041Z"
+    },
+    {
+      "id": "28acbc67-8025-4197-9850-895ef3646c61",
+      "leafId": "f9bc64fc-61e5-4ee4-8465-c0763f754a4b",
+      "notebookId": "85e0b223-78b6-42e7-94e7-223eec43eefd",
+      "front": "De acordo com as notas de \"aula 02\", qual é uma boa prática de estudo para este tema?",
+      "back": "Escrever resumos com as próprias palavras e fazer exercícios práticos/simulados logo em seguida.",
+      "repetitions": 0,
+      "interval": 0,
+      "easeFactor": 2.5,
+      "nextReviewDate": "2026-06-30T23:48:12.561Z",
+      "createdAt": "2026-06-30T23:48:12.561Z",
+      "updatedAt": "2026-06-30T23:48:12.561Z"
+    },
+    {
+      "id": "056942fe-1273-4807-9068-9513c246c8b2",
+      "leafId": "f9bc64fc-61e5-4ee4-8465-c0763f754a4b",
+      "notebookId": "85e0b223-78b6-42e7-94e7-223eec43eefd",
+      "front": "Qual a importância da repetição espaçada no aprendizado de \"aula 02\"?",
+      "back": "Ela ajuda a combater a curva do esquecimento, movendo a informação da memória de curto prazo para a de longo prazo.",
+      "repetitions": 0,
+      "interval": 0,
+      "easeFactor": 2.5,
+      "nextReviewDate": "2026-06-30T23:48:12.561Z",
+      "createdAt": "2026-06-30T23:48:12.561Z",
+      "updatedAt": "2026-06-30T23:48:12.561Z"
+    }
+  ]
 }

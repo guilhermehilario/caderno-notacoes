@@ -70,11 +70,12 @@ export const EditorView: React.FC = () => {
 
   // Estabiliza a lista de extensões
   const extensions = useMemo(() => [
-    StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
-    Underline,
-    ExtensionLink.configure({
-      openOnClick: false,
-      HTMLAttributes: { class: 'text-brand-500 hover:text-brand-600 underline underline-offset-2 cursor-pointer' },
+    StarterKit.configure({
+      heading: { levels: [1, 2, 3] },
+      // TipTap v3 StarterKit já inclui 'link' e 'underline' — desabilitamos
+      // para evitar o erro "Duplicate extension names found: ['link', 'underline']"
+      link: false,
+      underline: false,
     }),
     Highlight.configure({ multicolor: true }),
     Annotation,
