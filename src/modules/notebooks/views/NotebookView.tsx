@@ -9,7 +9,6 @@ import {
   Trash2,
   Edit2,
   Calendar,
-  Clock,
   Loader2,
   ChevronRight,
   Sparkles,
@@ -227,10 +226,6 @@ export const NotebookView: React.FC = () => {
           </h1>
           <p className="text-slate-550 dark:text-dark-300 text-sm max-w-xl">
             {notebook.description || 'Nenhuma descrição adicionada.'}
-          </p>
-          <p className="text-xs text-slate-400 dark:text-dark-400 flex items-center gap-1.5 pl-4">
-            <Clock className="h-3 w-3" />
-            Última alteração: {new Date(notebook.updatedAt).toLocaleString('pt-BR')}
           </p>
         </div>
 

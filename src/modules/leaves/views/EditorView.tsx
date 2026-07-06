@@ -15,7 +15,6 @@ import {
   Play,
   BookmarkIcon,
   Plus,
-  Clock,
 } from "lucide-react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -343,12 +342,7 @@ const EditorView: React.FC = () => {
           </button>
         </div>
 
-        {leaf && (
-          <span className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-dark-400">
-            <Clock className="h-3 w-3" />
-            {new Date(leaf.updatedAt).toLocaleString('pt-BR')}
-          </span>
-        )}
+
       </div>
 
       {/* Split Pane Editor / IA */}
