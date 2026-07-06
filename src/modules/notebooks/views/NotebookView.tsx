@@ -35,15 +35,8 @@ import { Card } from '../../../components/ui/Card.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
 import { Modal } from '../../../components/ui/Modal.tsx';
 import { Input } from '../../../components/ui/Input.tsx';
-
-const COLORS = [
-  '#aa3bff', // Brand Purple
-  '#3b82f6', // Blue
-  '#10b981', // Teal
-  '#f59e0b', // Gold/Amber
-  '#ef4444', // Red
-  '#ec4899', // Pink
-];
+import { NOTEBOOK_COLORS, DEFAULT_NOTEBOOK_COLOR } from '../../notebooks/constants';
+import { TAG_COLOR_MAP, getTagColor as getTagColorUtil } from '../../tags/constants';
 
 export const NotebookView: React.FC = () => {
   const { notebookId } = useParams<{ notebookId: string }>();
@@ -51,7 +44,7 @@ export const NotebookView: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isFlashcardModalOpen, setIsFlashcardModalOpen] = useState(false);
-  const [selectedColor, setSelectedColor] = useState(COLORS[0]);
+  const [selectedColor, setSelectedColor] = useState(NOTEBOOK_COLORS[0]);
   const [selectedLeafId, setSelectedLeafId] = useState('');
   const [parentLeafId, setParentLeafId] = useState<string | undefined>(undefined);
 
@@ -159,7 +152,7 @@ export const NotebookView: React.FC = () => {
     if (notebook) {
       setEditValue('title', notebook.title);
       setEditValue('description', notebook.description || '');
-      setSelectedColor(notebook.color || COLORS[0]);
+      setSelectedColor(notebook.color || NOTEBOOK_COLORS[0]);
       setIsEditModalOpen(true);
     }
   };
@@ -595,7 +588,7 @@ export const NotebookView: React.FC = () => {
               Cor de Identificação
             </label>
             <div className="flex gap-3">
-              {COLORS.map((color) => (
+              {NOTEBOOK_COLORS.map((color) => (
                 <button
                   key={color}
                   type="button"
@@ -628,15 +621,6 @@ const LeafCard: React.FC<LeafCardProps> = ({ leaf, notebookId, navigate, onCreat
   const [expanded, setExpanded] = useState(false);
   const hasChildren = leaf.children && leaf.children.length > 0;
 
-  const tagColors: Record<string, string> = {
-    Importante: '#ef4444',
-    Prova: '#f59e0b',
-    ProvaFinal: '#aa3bff',
-    Exercicios: '#10b981',
-    Revisao: '#3b82f6',
-    Professor: '#ec4899',
-  };
-
   return (
     <div className="flex flex-col gap-1">
       <Card
@@ -659,7 +643,7 @@ const LeafCard: React.FC<LeafCardProps> = ({ leaf, notebookId, navigate, onCreat
                   <span
                     key={lt.tag.id}
                     className="inline-block w-2 h-2 rounded-full"
-                    style={{ backgroundColor: lt.tag.color || tagColors[lt.tag.name] || '#aa3bff' }}
+                    style={{ backgroundColor: getTagColorUtil(lt.tag.color, lt.tag.name) }}
                     title={lt.tag.name}
                   />
                 ))}

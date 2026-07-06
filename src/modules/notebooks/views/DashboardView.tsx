@@ -11,21 +11,13 @@ import { Button } from '../../../components/ui/Button.tsx';
 import { Modal } from '../../../components/ui/Modal.tsx';
 import { Input } from '../../../components/ui/Input.tsx';
 import { StudyProgressSummary } from '../../../modules/study/components/StudyProgressSummary.tsx';
-
-const COLORS = [
-  '#aa3bff', // Brand Purple
-  '#3b82f6', // Blue
-  '#10b981', // Teal
-  '#f59e0b', // Gold/Amber
-  '#ef4444', // Red
-  '#ec4899', // Pink
-];
+import { NOTEBOOK_COLORS } from '../../notebooks/constants';
 
 export const DashboardView: React.FC = () => {
   const { notebooks, isLoading, createNotebook } = useNotebooks();
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedColor, setSelectedColor] = useState(COLORS[0]);
+  const [selectedColor, setSelectedColor] = useState(NOTEBOOK_COLORS[0]);
   const [progressCollapsed, setProgressCollapsed] = useState(false);
 
   const {
@@ -38,7 +30,7 @@ export const DashboardView: React.FC = () => {
     defaultValues: {
       title: '',
       description: '',
-      color: COLORS[0],
+      color: NOTEBOOK_COLORS[0],
     },
   });
 
@@ -50,7 +42,7 @@ export const DashboardView: React.FC = () => {
       });
       setIsModalOpen(false);
       reset();
-      setSelectedColor(COLORS[0]);
+      setSelectedColor(NOTEBOOK_COLORS[0]);
     } catch (error) {
       console.error('Erro ao criar caderno:', error);
     }
@@ -235,7 +227,7 @@ export const DashboardView: React.FC = () => {
               Cor de Identificação
             </label>
             <div className="flex gap-3">
-              {COLORS.map((color) => (
+              {NOTEBOOK_COLORS.map((color) => (
                 <button
                   key={color}
                   type="button"

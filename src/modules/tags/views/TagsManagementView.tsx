@@ -5,9 +5,8 @@ import { Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
 import { Modal } from '../../../components/ui/Modal.tsx';
+import { TAG_COLORS_ARRAY, DEFAULT_TAG_COLOR } from '../constants';
 import type { Tag } from '../types';
-
-const TAG_COLORS = ['#ef4444', '#f59e0b', '#aa3bff', '#10b981', '#3b82f6', '#ec4899', '#6b7280', '#14b8a6'];
 
 export const TagsManagementView: React.FC = () => {
   const { data: tags = [], isLoading } = useTags();
@@ -19,14 +18,14 @@ export const TagsManagementView: React.FC = () => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
   const [newName, setNewName] = useState('');
-  const [newColor, setNewColor] = useState('#aa3bff');
+  const [newColor, setNewColor] = useState(DEFAULT_TAG_COLOR);
 
   const handleCreate = async () => {
     if (!newName.trim()) return;
     try {
       await createTag.mutateAsync({ name: newName.trim(), color: newColor });
       setNewName('');
-      setNewColor('#aa3bff');
+      setNewColor(DEFAULT_TAG_COLOR);
       setIsCreateOpen(false);
     } catch (err) {
       console.error('Erro ao criar tag:', err);
@@ -85,7 +84,7 @@ export const TagsManagementView: React.FC = () => {
         <Button
           onClick={() => {
             setNewName('');
-            setNewColor('#aa3bff');
+            setNewColor(DEFAULT_TAG_COLOR);
             setIsCreateOpen(true);
           }}
           leftIcon={<Plus className="h-4 w-4" />}
@@ -176,7 +175,7 @@ export const TagsManagementView: React.FC = () => {
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-slate-700 dark:text-dark-200">Cor</label>
             <div className="flex gap-3">
-              {TAG_COLORS.map((color) => (
+              {TAG_COLORS_ARRAY.map((color) => (
                 <button
                   key={color}
                   type="button"
@@ -222,7 +221,7 @@ export const TagsManagementView: React.FC = () => {
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-slate-700 dark:text-dark-200">Cor</label>
             <div className="flex gap-3">
-              {TAG_COLORS.map((color) => (
+              {TAG_COLORS_ARRAY.map((color) => (
                 <button
                   key={color}
                   type="button"

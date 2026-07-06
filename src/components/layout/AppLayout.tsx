@@ -2,6 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../modules/auth/hooks/useAuth';
 import { useUIStore } from '../../store/uiStore';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Brain,
   BookOpen,
@@ -25,6 +26,31 @@ export const AppLayout: React.FC = () => {
   const { theme, sidebarCollapsed, toggleTheme, toggleSidebar } = useUIStore();
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
+
+  // Extrai IDs da rota para breadcrumbs
+  const pathIds = useMemo(() => {
+    const path = location.pathname;
+    const nbMatch = path.match(/\/notebooks\/([^/]+)/);
+    const lfMatch = path.match(/\/notebooks\/([^/]+)\/leaves\/([^/]+)/);
+    return {
+      notebookId: nbMatch?.[1] || null,
+      leafId: lfMatch?.[2] || null,
+    };
+  }, [location.pathname]);
+
+  // Busca os nomes reais do cache do React Query
+  const notebookName = useMemo(() => {
+    if (!pathIds.notebookId) return null;
+    const cached = queryClient.getQueryData<{ title?: string }>(['notebooks', pathIds.notebookId]);
+    return cached?.title ?? null;
+  }, [pathIds.notebookId, queryClient]);
+
+  const leafName = useMemo(() => {
+    if (!pathIds.leafId) return null;
+    const cached = queryClient.getQueryData<{ title?: string }>(['leaves', pathIds.leafId]);
+    return cached?.title ?? null;
+  }, [pathIds.leafId, queryClient]);
 
   // Aplica o tema correto no elemento HTML ao carregar a página
   useEffect(() => {
@@ -40,7 +66,7 @@ export const AppLayout: React.FC = () => {
     navigate('/login');
   };
 
-  // ── Breadcrumb navigation ──
+  // ── Breadcrumb navigation com nomes reais ──
   const breadcrumbs = useMemo(() => {
     const path = location.pathname;
     const parts: { label: string; path: string }[] = [];
@@ -51,40 +77,44 @@ export const AppLayout: React.FC = () => {
 
     parts.push({ label: 'Dashboard', path: '/dashboard' });
 
-    // Parse notebook route
-    const notebookMatch = path.match(/\/notebooks\/([^/]+)/);
-    if (notebookMatch) {
-      parts.push({ label: 'Caderno', path: notebookMatch[0] });
+    // Notebook route — mostra o nome real
+    if (pathIds.notebookId) {
+      parts.push({
+        label: notebookName || 'Caderno',
+        path: `/notebooks/${pathIds.notebookId}`,
+      });
     }
 
-    // Parse leaf route
-    const leafMatch = path.match(/\/notebooks\/([^/]+)\/leaves\/([^/]+)/);
-    if (leafMatch) {
-      parts.push({ label: 'Folha', path: leafMatch[0] });
+    // Leaf route — mostra o nome real
+    if (pathIds.leafId) {
+      parts.push({
+        label: leafName || 'Folha',
+        path: `/notebooks/${pathIds.notebookId}/leaves/${pathIds.leafId}`,
+      });
     }
 
-    // Parse study route
+    // Study route
     if (path.includes('/study')) {
-      parts.push({ label: 'Estudar', path: path });
+      parts.push({ label: 'Estudar', path });
     }
 
-    // Parse tags management
+    // Tags management
     if (path.includes('/tags')) {
       parts.push({ label: 'Tags', path: '/tags' });
     }
 
-    // Parse bookmarks
+    // Bookmarks
     if (path.includes('/bookmarks')) {
       parts.push({ label: 'Marcadores', path: '/bookmarks' });
     }
 
-    // Parse trash
+    // Trash
     if (path.includes('/trash')) {
       parts.push({ label: 'Lixeira', path: '/trash' });
     }
 
     return parts;
-  }, [location.pathname]);
+  }, [location.pathname, pathIds, notebookName, leafName]);
 
   // ── Título dinâmico do header baseado na rota atual ──
   const pageTitle = useMemo(() => {

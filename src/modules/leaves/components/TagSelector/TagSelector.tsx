@@ -1,25 +1,17 @@
 import React, { useState } from 'react';
 import { useTags, useCreateTag, useLeafTags, useAddTagToLeaf, useRemoveTagFromLeaf } from '../../../tags/hooks/useTags';
 import { ChevronDown, Plus, X, Tag as TagIcon, Loader2 } from 'lucide-react';
+import { TAG_COLOR_MAP, TAG_COLORS_ARRAY, DEFAULT_TAG_COLOR, getTagColor } from '../../../tags/constants';
 import type { Tag } from '../../../tags/types';
 
 interface TagSelectorProps {
   leafId: string;
 }
 
-const TAG_COLORS: Record<string, string> = {
-  Importante: '#ef4444',
-  Prova: '#f59e0b',
-  ProvaFinal: '#aa3bff',
-  Exercicios: '#10b981',
-  Revisao: '#3b82f6',
-  Professor: '#ec4899',
-};
-
 export const TagSelector: React.FC<TagSelectorProps> = ({ leafId }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [newTagName, setNewTagName] = useState('');
-  const [selectedColor, setSelectedColor] = useState('#aa3bff');
+  const [selectedColor, setSelectedColor] = useState(DEFAULT_TAG_COLOR);
 
   const { data: tags = [] } = useTags();
   const { data: leafTags = [], isLoading: loadingLeafTags } = useLeafTags(leafId);
@@ -45,10 +37,6 @@ export const TagSelector: React.FC<TagSelectorProps> = ({ leafId }) => {
     } catch (err) {
       console.error('Erro ao criar tag:', err);
     }
-  };
-
-  const getTagColor = (tag: Tag) => {
-    return tag.color || TAG_COLORS[tag.name] || '#aa3bff';
   };
 
   return (
@@ -88,7 +76,7 @@ export const TagSelector: React.FC<TagSelectorProps> = ({ leafId }) => {
                         : 'text-slate-500 dark:text-dark-300 border-slate-200 dark:border-dark-700 hover:border-slate-300'
                     }`}
                     style={{
-                      backgroundColor: isActive ? getTagColor(tag) : 'transparent',
+                      backgroundColor: isActive ? getTagColor(tag.color, tag.name) : 'transparent',
                     }}
                   >
                     {isActive && <X className="h-3 w-3" />}
@@ -123,7 +111,7 @@ export const TagSelector: React.FC<TagSelectorProps> = ({ leafId }) => {
               </button>
             </div>
             <div className="flex gap-1.5 mt-2">
-              {['#ef4444', '#f59e0b', '#aa3bff', '#10b981', '#3b82f6', '#ec4899', '#6b7280', '#14b8a6'].map((color) => (
+              {TAG_COLORS_ARRAY.map((color) => (
                 <button
                   key={color}
                   type="button"

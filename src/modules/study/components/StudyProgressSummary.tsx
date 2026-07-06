@@ -1,7 +1,14 @@
-import React from 'react';
-import { Brain, BookCheck, Target, TrendingUp, Loader2, BarChart3 } from 'lucide-react';
-import { useStudyStats } from '../hooks/useStudyStats';
-import { Card } from '../../../components/ui/Card.tsx';
+import React from "react";
+import {
+  Brain,
+  BookCheck,
+  Target,
+  TrendingUp,
+  Loader2,
+  BarChart3,
+} from "lucide-react";
+import { useStudyStats } from "../hooks/useStudyStats";
+import { Card } from "../../../components/ui/Card.tsx";
 
 interface StatCardProps {
   icon: React.ReactNode;
@@ -53,10 +60,10 @@ const MiniProgressRing: React.FC<{ value: number; size?: number }> = ({
 
   const color =
     value >= 70
-      ? 'stroke-emerald-500'
+      ? "stroke-emerald-500"
       : value >= 40
-        ? 'stroke-amber-500'
-        : 'stroke-rose-500';
+        ? "stroke-amber-500"
+        : "stroke-rose-500";
 
   return (
     <svg width={size} height={size} className="-rotate-90 flex-shrink-0">
@@ -104,7 +111,8 @@ export const StudyProgressSummary: React.FC = () => {
               Nenhum estudo registrado ainda
             </p>
             <p className="text-xs text-slate-500 dark:text-dark-350 mt-0.5">
-              Gere flashcards em suas folhas de anotação para começar a estudar e acompanhar seu progresso aqui.
+              Gere flashcards em suas folhas de anotação para começar a estudar
+              e acompanhar seu progresso aqui.
             </p>
           </div>
         </div>
@@ -120,14 +128,6 @@ export const StudyProgressSummary: React.FC = () => {
   return (
     <div className="flex flex-col gap-4">
       {/* Header */}
-      <div className="flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-lg bg-brand-50 dark:bg-brand-950/20 flex items-center justify-center text-brand-500">
-          <TrendingUp className="h-4.5 w-4.5" />
-        </div>
-        <h2 className="text-lg font-heading font-bold text-slate-800 dark:text-dark-50 m-0">
-          Progresso dos Estudos
-        </h2>
-      </div>
 
       {/* Stat Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -147,7 +147,7 @@ export const StudyProgressSummary: React.FC = () => {
           sublabel={
             reviewedPct > 0
               ? `${reviewedPct}% do total`
-              : 'Nenhum card revisado hoje'
+              : "Nenhum card revisado hoje"
           }
           colorClass="text-emerald-500"
           iconBgClass="bg-emerald-50 dark:bg-emerald-950/20"
@@ -159,8 +159,8 @@ export const StudyProgressSummary: React.FC = () => {
           value={stats.dueForReview}
           sublabel={
             stats.dueForReview > 0
-              ? 'Cards atrasados ou pendentes'
-              : 'Tudo em dia!'
+              ? "Cards atrasados ou pendentes"
+              : "Tudo em dia!"
           }
           colorClass="text-amber-500"
           iconBgClass="bg-amber-50 dark:bg-amber-950/20"
