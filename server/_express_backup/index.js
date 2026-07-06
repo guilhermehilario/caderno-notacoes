@@ -40,31 +40,28 @@ app.use((req, res, next) => {
 });
 
 // ═══════════════════════════════════════════════════════════════
-//  Rotas da API
-// ═══════════════════════════════════════════════════════════════
-
-app.use('/api/auth', authRouter);
-app.use('/api/notebooks', notebookRouter);
-
-// ⚠️ Ordem importante: rotas específicas (/notebooks/:notebookId/leaves)
-//    devem vir ANTES de rotas genéricas (/leaves/:leafId) para evitar
-//    conflito de parâmetros. O leafRouter gerencia ambas.
-app.use('/api', leafRouter);
-
-app.use('/api', flashcardRouter);
-app.use('/api', studyRouter);
-
-// ═══════════════════════════════════════════════════════════════
-//  Rotas de Sistema
+//  Rotas de Sistema (públicas, ANTES dos routers auth-protegidos)
 // ═══════════════════════════════════════════════════════════════
 
 app.get('/', (_req, res) => {
   res.json({ message: 'API Revisa Aula está ativa!', status: 'OK' });
 });
 
+// Health check - NÃO requer autenticação
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
+
+// ═══════════════════════════════════════════════════════════════
+//  Rotas da API (protegidas por authMiddleware nos routers)
+// ═══════════════════════════════════════════════════════════════
+
+app.use('/api/auth', authRouter);
+app.use('/api/notebooks', notebookRouter);
+
+app.use('/api', leafRouter);
+app.use('/api', flashcardRouter);
+app.use('/api', studyRouter);
 
 // ═══════════════════════════════════════════════════════════════
 //  Tratamento de Erros (deve ser o ÚLTIMO middleware)

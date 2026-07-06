@@ -20,6 +20,16 @@ export const studyService = {
     return response.data;
   },
 
+  async createFlashcard(data: {
+    leafId: string;
+    notebookId: string;
+    front: string;
+    back: string;
+  }): Promise<Flashcard> {
+    const response = await api.post<Flashcard>('/flashcards', data);
+    return response.data;
+  },
+
   async updateFlashcard(
     cardId: string,
     data: { front?: string; back?: string }

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../modules/auth/hooks/useAuth';
 import { useUIStore } from '../../store/uiStore';
@@ -11,6 +11,8 @@ import {
   Menu,
   ChevronLeft,
   User as UserIcon,
+  GraduationCap,
+  LayoutDashboard,
 } from 'lucide-react';
 import { Button } from '../ui/Button.tsx';
 
@@ -34,8 +36,27 @@ export const AppLayout: React.FC = () => {
     navigate('/login');
   };
 
+  // ── Título dinâmico do header baseado na rota atual ──
+  const pageTitle = useMemo(() => {
+    const path = location.pathname;
+    if (path === '/dashboard' || path === '/') return 'Dashboard';
+    if (path.includes('/study')) return 'Estudar Flashcards';
+    if (path.includes('/leaves/')) return 'Editor de Anotação';
+    if (path.includes('/notebooks/')) return 'Caderno';
+    return 'Dashboard';
+  }, [location.pathname]);
+
+  // ── Ícone dinâmico do header baseado na rota atual ──
+  const PageIcon = useMemo(() => {
+    const path = location.pathname;
+    if (path === '/dashboard' || path === '/') return LayoutDashboard;
+    if (path.includes('/study')) return GraduationCap;
+    if (path.includes('/leaves/') || path.includes('/notebooks/')) return BookOpen;
+    return LayoutDashboard;
+  }, [location.pathname]);
+
   const navItems = [
-    { path: '/dashboard', label: 'Cadernos', icon: BookOpen },
+    { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   ];
 
   return (
@@ -155,9 +176,22 @@ export const AppLayout: React.FC = () => {
             >
               <Menu className="h-5 w-5" />
             </button>
-            <h2 className="text-xl font-heading font-bold text-slate-800 dark:text-dark-50">
-              Painel de Estudos
-            </h2>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-brand-50 dark:bg-brand-950/20 flex items-center justify-center text-brand-500">
+                <PageIcon className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-xl font-heading font-bold text-slate-800 dark:text-dark-50 leading-tight">
+                  {pageTitle}
+                </h2>
+                <p className="text-xs text-slate-400 dark:text-dark-400 leading-tight hidden sm:block">
+                  {location.pathname === '/dashboard' ? 'Visão geral dos seus estudos' :
+                   location.pathname.includes('/study') ? 'Revise seus flashcards com repetição espaçada' :
+                   location.pathname.includes('/leaves/') ? 'Edite suas anotações' :
+                   'Gerencie suas anotações e estudos'}
+                </p>
+              </div>
+            </div>
           </div>
         </header>
 

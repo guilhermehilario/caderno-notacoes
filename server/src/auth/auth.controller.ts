@@ -1,0 +1,79 @@
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Res,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import { Response, Request } from 'express';
+import { AuthService } from './auth.service';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
+
+@Controller('auth')
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
+
+  private readonly isSecure = process.env.NODE_ENV === 'production';
+
+  private setRefreshCookie(res: Response, refreshToken: string) {
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: this.isSecure,
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+  }
+
+  @Post('register')
+  async register(
+    @Body() dto: RegisterDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.register(dto.name, dto.email, dto.password);
+    this.setRefreshCookie(res, result.refreshToken);
+    return { user: result.user, accessToken: result.accessToken };
+  }
+
+  @Post('login')
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.login(dto.email, dto.password);
+    this.setRefreshCookie(res, result.refreshToken);
+    return { user: result.user, accessToken: result.accessToken };
+  }
+
+  @Post('logout')
+  logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: this.isSecure,
+      sameSite: 'lax',
+    });
+    return { message: 'Deslogado com sucesso' };
+  }
+
+  @Post('refresh')
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const refreshToken = req.cookies?.refreshToken;
+    if (!refreshToken) {
+      return res.status(401).json({ error: 'Refresh token ausente' });
+    }
+    return this.authService.refresh(refreshToken);
+  }
+
+  @Get('profile')
+  @UseGuards(JwtAuthGuard)
+  getProfile(@CurrentUser() user: any) {
+    return user;
+  }
+}

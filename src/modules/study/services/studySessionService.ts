@@ -35,24 +35,15 @@ export const studySessionService = {
    */
   async loadSession(notebookId: string): Promise<StudySessionData | null> {
     try {
+      // validateStatus aceita 404 como resposta válida (evita console noise)
       const response = await api.get<StudySessionData>(
         `/study-sessions/${notebookId}`,
+        { validateStatus: (status) => status < 500 },
       );
+      if (response.status === 404) return null;
       return response.data;
-    } catch (error: unknown) {
-      // 404 significa que não há sessão salva — não é erro
-      if (
-        error &&
-        typeof error === 'object' &&
-        'response' in error &&
-        error.response &&
-        typeof error.response === 'object' &&
-        'status' in error.response &&
-        error.response.status === 404
-      ) {
-        return null;
-      }
-      throw error;
+    } catch {
+      return null;
     }
   },
 

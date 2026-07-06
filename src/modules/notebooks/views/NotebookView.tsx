@@ -12,6 +12,8 @@ import {
   Calendar,
   Loader2,
   ChevronRight,
+  Sparkles,
+  Lightbulb,
 } from 'lucide-react';
 import { useNotebook } from '../hooks/useNotebooks';
 import { CreateNotebookSchema } from '../types';
@@ -19,6 +21,9 @@ import type { CreateNotebookInput } from '../types';
 import { useLeaves } from '../../leaves/hooks/useLeaves';
 import { CreateLeafSchema } from '../../leaves/types';
 import type { CreateLeafInput } from '../../leaves/types';
+import { useNotebookFlashcards } from '../../study/hooks/useFlashcards';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import studyService from '../../study/services/studyService';
 import { Card } from '../../../components/ui/Card.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
 import { Modal } from '../../../components/ui/Modal.tsx';
@@ -38,10 +43,13 @@ export const NotebookView: React.FC = () => {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isFlashcardModalOpen, setIsFlashcardModalOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState(COLORS[0]);
+  const [selectedLeafId, setSelectedLeafId] = useState('');
 
   const { notebook, isLoading: isLoadingNotebook, updateNotebook, deleteNotebook } = useNotebook(notebookId || '');
   const { leaves, isLoading: isLoadingLeaves, createLeaf } = useLeaves(notebookId || '');
+  const { data: flashcards = [], isLoading: isLoadingFlashcards } = useNotebookFlashcards(notebookId || '');
 
   const {
     register,
@@ -66,6 +74,41 @@ export const NotebookView: React.FC = () => {
   } = useForm<CreateNotebookInput>({
     resolver: zodResolver(CreateNotebookSchema),
   });
+
+  // ── Flashcard manual form ──
+  const {
+    register: registerFc,
+    handleSubmit: handleSubmitFc,
+    reset: resetFc,
+    formState: { errors: fcErrors },
+  } = useForm<{ front: string; back: string }>();
+
+  const queryClient = useQueryClient();
+
+  const createFlashcardMutation = useMutation({
+    mutationFn: (data: { leafId: string; notebookId: string; front: string; back: string }) =>
+      studyService.createFlashcard(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notebook-flashcards', notebookId] });
+      setIsFlashcardModalOpen(false);
+      resetFc();
+      setSelectedLeafId('');
+    },
+  });
+
+  const onFlashcardSubmit = async (data: { front: string; back: string }) => {
+    if (!notebookId || !selectedLeafId) return;
+    try {
+      await createFlashcardMutation.mutateAsync({
+        leafId: selectedLeafId,
+        notebookId,
+        front: data.front,
+        back: data.back,
+      });
+    } catch (error) {
+      console.error('Erro ao criar flashcard:', error);
+    }
+  };
 
   const onSubmit = async (data: CreateLeafInput) => {
     if (!notebookId) return;
@@ -280,6 +323,151 @@ export const NotebookView: React.FC = () => {
             error={errors.title?.message}
             {...register('title')}
           />
+        </div>
+      </Modal>
+
+      {/* ── Seção de Flashcards ── */}
+      <div className="flex flex-col gap-4 mt-6 pt-6 border-t border-slate-100 dark:border-dark-800">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-heading font-bold text-slate-800 dark:text-dark-100 m-0">
+            Flashcards ({flashcards.length})
+          </h2>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (leaves.length > 0) {
+                  setSelectedLeafId(leaves[0].id);
+                }
+                setIsFlashcardModalOpen(true);
+              }}
+              leftIcon={<Sparkles className="h-4 w-4" />}
+            >
+              Criar Flashcard
+            </Button>
+          </div>
+        </div>
+
+        {isLoadingFlashcards ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-brand-500" />
+          </div>
+        ) : flashcards.length === 0 ? (
+          <Card className="glass flex flex-col items-center justify-center text-center p-8 min-h-[20vh] border border-dashed border-slate-200 dark:border-dark-800">
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/20 flex items-center justify-center text-amber-500 mb-3">
+              <Lightbulb className="h-6 w-6" />
+            </div>
+            <h3 className="text-md font-heading font-bold text-slate-850 dark:text-dark-100">
+              Nenhum flashcard criado
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-dark-350 mt-1 max-w-md">
+              Crie flashcards manualmente ou gere automaticamente pela IA ao editar uma folha.
+            </p>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {flashcards.slice(0, 10).map((card) => (
+              <Card
+                key={card.id}
+                className="flex flex-col gap-2 p-4 border border-slate-100 dark:border-dark-800"
+              >
+                <p className="text-sm font-semibold text-slate-800 dark:text-dark-50 line-clamp-2">
+                  <span className="text-xs font-bold text-brand-500 mr-1.5">Q:</span>
+                  {card.front}
+                </p>
+                <p className="text-sm text-slate-500 dark:text-dark-350 line-clamp-2">
+                  <span className="text-xs font-bold text-emerald-500 mr-1.5">R:</span>
+                  {card.back}
+                </p>
+                <div className="flex gap-2 mt-1">
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-dark-800 text-slate-400 dark:text-dark-400">
+                    Repetições: {card.repetitions}
+                  </span>
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-dark-800 text-slate-400 dark:text-dark-400">
+                    EF: {card.easeFactor}
+                  </span>
+                </div>
+              </Card>
+            ))}
+            {flashcards.length > 10 && (
+              <p className="text-xs text-slate-400 dark:text-dark-400 text-center col-span-full pt-2">
+                + {flashcards.length - 10} flashcards ocultos. Estude-os na sessão de revisão.
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Modal Criar Flashcard Manual */}
+      <Modal
+        isOpen={isFlashcardModalOpen}
+        onClose={() => {
+          setIsFlashcardModalOpen(false);
+          resetFc();
+        }}
+        title="Criar Flashcard Manualmente"
+        footer={
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsFlashcardModalOpen(false);
+                resetFc();
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSubmitFc(onFlashcardSubmit)}
+              disabled={createFlashcardMutation.isPending}
+            >
+              {createFlashcardMutation.isPending ? 'Criando...' : 'Criar Flashcard'}
+            </Button>
+          </div>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          {/* Seletor de Folha */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-slate-700 dark:text-dark-200">
+              Vincular à Folha
+            </label>
+            <select
+              value={selectedLeafId}
+              onChange={(e) => setSelectedLeafId(e.target.value)}
+              className="w-full px-3.5 py-2.5 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-xl text-slate-900 dark:text-dark-50 focus:outline-none focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900/20 focus:border-brand-500 transition-all duration-200 cursor-pointer"
+            >
+              <option value="">Selecione uma folha...</option>
+              {leaves.map((leaf) => (
+                <option key={leaf.id} value={leaf.id}>
+                  {leaf.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <Input
+            label="Pergunta (Frente)"
+            placeholder="Ex: Qual a fórmula do teorema de Pitágoras?"
+            error={fcErrors.front?.message}
+            {...registerFc('front', { required: 'A pergunta é obrigatória' })}
+          />
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-slate-700 dark:text-dark-200">
+              Resposta (Verso)
+            </label>
+            <textarea
+              placeholder="Ex: a² + b² = c², onde c é a hipotenusa..."
+              rows={4}
+              className={`w-full px-3.5 py-2.5 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-xl text-slate-900 dark:text-dark-50 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900/20 focus:border-brand-500 transition-all duration-200 resize-none`}
+              {...registerFc('back', { required: 'A resposta é obrigatória' })}
+            />
+            {fcErrors.back?.message && (
+              <p className="text-xs text-rose-500 mt-1">{fcErrors.back.message}</p>
+            )}
+          </div>
         </div>
       </Modal>
 

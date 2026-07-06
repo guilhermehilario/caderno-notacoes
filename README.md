@@ -6,187 +6,174 @@ Plataforma inteligente para gerenciamento de estudos, criação de resumos e fla
 
 ## 📖 Visão Geral do Projeto
 
-O **Revisa Aula** é um aplicativo completo voltado para estudantes e entusiastas de estudos que desejam organizar seus cadernos acadêmicos, criar notas de aulas (chamadas de **Folhas / Leaves**), gerar resumos inteligentes e criar flashcards para revisar o conteúdo utilizando repetição espaçada.
+O **Revisa Aula** é um aplicativo completo voltado para estudantes que desejam organizar seus cadernos acadêmicos, criar notas de aulas (chamadas de **Folhas / Leaves**), gerar resumos inteligentes e criar flashcards para revisar o conteúdo utilizando repetição espaçada (algoritmo SM-2).
 
 ---
 
 ## 🛠️ Tecnologias Utilizadas
 
 ### Frontend
-- **React 19**: Biblioteca moderna para construção de interfaces de usuário com componentes declarativos.
-- **Vite 8**: Ferramenta de build rápida e moderna para o ecossistema frontend.
-- **TypeScript**: Superset de JavaScript com tipagem estática que previne erros de desenvolvimento.
-- **Tailwind CSS v4**: Engine de estilização de alta performance, utilizando a nova arquitetura baseada em CSS e paletas de cores premium definidas via modelo cromático **OKLCH**.
-- **Zustand 5**: Biblioteca leve e robusta para gerenciamento de estado global e persistência local (usada para armazenar preferências do usuário como o tema escuro e colapso da sidebar).
-- **TanStack React Query v5**: Gerenciador de estado assíncrono para cache de requisições, mutações e sincronização de dados com a API.
-- **React Router DOM v7**: Roteamento dinâmico no navegador com suporte a guards de autenticação (rotas públicas/privadas).
-- **React Hook Form & Zod**: Controle de formulários robusto com validação baseada em esquemas tipados.
-- **Lucide React**: Biblioteca rica de ícones vetoriais modernos.
+- **React 19**: Biblioteca moderna para construção de interfaces de usuário.
+- **Vite 8**: Ferramenta de build rápida e moderna.
+- **TypeScript**: Superset de JavaScript com tipagem estática.
+- **Tailwind CSS v4**: Engine de estilização de alta performance com tema OKLCH.
+- **Zustand 5**: Gerenciamento de estado global com persistência.
+- **TanStack React Query v5**: Gerenciador de estado assíncrono para cache de requisições.
+- **React Router DOM v7**: Roteamento dinâmico com guards de autenticação.
+- **React Hook Form & Zod**: Formulários com validação tipada.
+- **TipTap**: Editor de rich text para anotações.
+- **Lucide React**: Ícones vetoriais modernos.
 
-### Backend (API)
-- **Node.js**: Ambiente de execução para JavaScript do lado do servidor.
-- **Express**: Framework minimalista para criação de rotas HTTP e gerenciamento de middlewares.
-- **JSON Database**: Sistema leve de persistência local construído em cima de um arquivo JSON (`server/db.json`) auxiliado pelo wrapper de operações assíncronas `server/database.js`.
-- **JWT (JSON Web Token)**: Implementação de autenticação stateless baseada em token de acesso temporário (`accessToken` em memória) e token de atualização seguro (`refreshToken` persistido em cookie httpOnly).
-- **CORS & Cookie-Parser**: Middlewares para tratamento de requisições cruzadas e gerenciamento de cabeçalhos de cookies.
+### Backend (NestJS)
+- **NestJS 11**: Framework Node.js progressivo com injeção de dependência.
+- **TypeScript**: Código 100% tipado.
+- **Prisma ORM 7**: ORM moderno com driver adapter LibSQL para SQLite.
+- **SQLite**: Banco de dados leve e embutido (arquivo `dev.db`).
+- **Passport JWT**: Autenticação stateless com access token + refresh token em cookie HttpOnly.
+- **class-validator + class-transformer**: Validação de DTOs por decorators.
+- **@nestjs/config**: Gerenciamento de variáveis de ambiente.
 
 ---
 
-## 📁 Estrutura de Pastas do Projeto
+## 📁 Estrutura de Pastas
 
-O projeto é separado em **Frontend** (diretório raiz) e **Backend** (subdiretório `server/`). A árvore de diretórios principal é organizada da seguinte forma:
+```
+revisa-aula/
+├── dist/                          # Build de produção (Vite)
+├── public/                        # Assets públicos
+├── server/                        # Backend NestJS + Prisma
+│   ├── src/
+│   │   ├── main.ts                # Bootstrap NestJS
+│   │   ├── app.module.ts          # Root module
+│   │   ├── app.controller.ts      # Health check
+│   │   ├── prisma/                # PrismaService (SQLite)
+│   │   ├── common/                # Guards, decorators, filters
+│   │   ├── auth/                  # Autenticação (JWT Passport)
+│   │   ├── notebooks/             # CRUD cadernos
+│   │   ├── leaves/                # CRUD folhas + IA mock
+│   │   ├── flashcards/            # CRUD flashcards + SM-2
+│   │   └── study/                 # Sessões + estatísticas
+│   ├── prisma/
+│   │   ├── schema.prisma          # Modelos do banco
+│   │   ├── seed.ts                # Migração db.json → SQLite
+│   │   └── migrations/            # Migrações Prisma
+│   ├── prisma.config.ts           # Config Prisma v7
+│   ├── dev.db                     # Banco SQLite
+│   ├── .env                       # Variáveis de ambiente
+│   └── package.json               # Dependências
+├── src/                           # Frontend React
+│   ├── components/                # Componentes reutilizáveis
+│   ├── core/                      # Cliente HTTP (axios)
+│   ├── modules/                   # Módulos da aplicação
+│   │   ├── auth/                  # Login, registro, sessão
+│   │   ├── notebooks/             # Dashboard + cadernos
+│   │   ├── leaves/                # Editor TipTap + anotações
+│   │   └── study/                 # Flashcards + SM-2 + estatísticas
+│   ├── routes/                    # React Router
+│   ├── store/                     # Zustand stores
+│   ├── App.tsx                    # Componente raiz
+│   └── main.tsx                   # Entry point
+├── .env                           # VITE_API_URL
+├── AGENTS.md                      # Documentação técnica detalhada
+└── package.json                   # Dependências frontend
+```
+
+---
+
+## ⚙️ Funcionalidades Implementadas
+
+1. **Autenticação Completa (JWT + Refresh Token)**
+   - Registro com avatar automático (Dicebear API)
+   - Login com sessão persistente
+   - Renovação silenciosa de tokens via cookie HttpOnly
+   - Rotas públicas/privadas
+
+2. **Gerenciamento de Cadernos (Notebooks)**
+   - Dashboard em grid com cores de identificação
+   - CRUD completo com cascade delete
+   - Contagem automática de folhas
+
+3. **Editor de Notas (Leaves) com TipTap**
+   - Editor rich text com autosave (debounce 1.5s)
+   - Anotações de texto com destaque colorido
+   - Geração de resumo por IA (mockada)
+   - Geração automática de flashcards
+
+4. **Algoritmo SM-2 (Spaced Repetition)**
+   - Revisão com scores 0-5
+   - Cálculo automático do próximo intervalo (cap 365 dias)
+   - Sessão de estudo persistente via API
+
+5. **Estatísticas de Progresso**
+   - Total de cards, revisados hoje, a revisar
+   - Taxa de acerto com anel SVG
+   - Breakdown por caderno
+
+6. **Modo Escuro (Dark Mode)**
+   - Chaveamento via Zustand + Tailwind v4
+
+---
+
+## 🚀 Como Executar
+
+### 1. Backend (NestJS)
 
 ```bash
-revisa-aula/
-├── dist/                   # Build de produção gerado pelo Vite
-├── public/                 # Assets públicos acessíveis estaticamente
-├── server/                 # Backend Node.js + Express
-│   ├── authMiddleware.js   # Middleware de validação de token JWT
-│   ├── database.js         # Utilitário de persistência no db.json
-│   ├── db.json             # Nosso banco de dados em arquivo JSON
-│   ├── index.js            # Arquivo principal de inicialização da API
-│   ├── package.json        # Dependências e scripts do servidor Express
-│   └── routes.js           # Definição dos endpoints da API (Auth, Cadernos, Folhas, Cards)
-└── src/                    # Frontend React + TypeScript
-    ├── assets/             # Arquivos de imagens, logos, etc.
-    ├── components/         # Componentes compartilhados da aplicação
-    │   ├── layout/         # Componentes estruturais de layout (Sidebar, AppLayout)
-    │   └── ui/             # Componentes base e reutilizáveis (Button, Card, Input, Modal)
-    ├── core/               # Arquivos de infraestrutura geral (cliente HTTP, etc.)
-    ├── hooks/              # Custom React Hooks globais
-    ├── modules/            # Funcionalidades e regras de negócio separadas por módulos
-    │   ├── auth/           # Login, Cadastro, autenticação e sessão do usuário
-    │   ├── leaves/         # Editor de notas (Folhas/Aulas) e integração de resumos/cards
-    │   ├── notebooks/      # Dashboard e gerenciamento de cadernos acadêmicos
-    │   └── study/          # Motor de estudo de flashcards (estatísticas, notas, SM-2)
-    ├── routes/             # Configuração das rotas do React Router (PrivateRoute, PublicRoute)
-    ├── store/              # Lojas globais do Zustand (ex: uiStore)
-    ├── App.css             # Estilos auxiliares globais do App
-    ├── App.tsx             # Componente raiz com provedores do React Query e Router
-    ├── index.css           # CSS principal carregando o Tailwind CSS v4, tema OKLCH e variantes
-    └── main.tsx            # Ponto de entrada que monta o app no DOM
+cd server
+npm install
+npm run dev
+```
+
+O servidor estará em: **http://localhost:3000**
+
+### 2. Frontend (Vite + React)
+
+```bash
+# Na raiz do projeto
+npm install
+npm run dev
+```
+
+O frontend estará em: **http://localhost:5173**
+
+### 3. Migrar dados do db.json (se necessário)
+
+Caso exista um `db.json` com dados do sistema anterior:
+
+```bash
+cd server
+npx tsx prisma/seed.ts
 ```
 
 ---
 
-## ⚙️ O que foi Desenvolvido até Agora
+## 📋 Scripts Disponíveis
 
-1. **Sistema de Autenticação Completo**:
-   - Registro de novos usuários com seed de avatar gerado aleatoriamente (`Dicebear API`).
-   - Login por e-mail e senha com persistência de sessão e autenticação de rotas.
-   - Renovação silenciosa de tokens (`silent refresh`) baseada em Cookies seguros.
+### Backend (`server/package.json`)
+| Comando | Descrição |
+|---------|-----------|
+| `npm run dev` | Dev server com hot-reload (ts-node-dev) |
+| `npm run build` | Compilar TypeScript (nest build) |
+| `npm start` | Produção |
+| `npm test` | Testes unitários (Jest) |
 
-2. **Gerenciamento de Cadernos (Notebooks)**:
-   - Visualização em grade (Dashboard) dos cadernos do estudante.
-   - Criação e edição de cadernos com descrição e tags de cores customizadas.
-   - Exclusão em cascata (deletar um caderno apaga automaticamente todas as suas folhas e flashcards correspondentes).
-
-3. **Editor de Notas e Estudo Ativo (Leaves)**:
-   - Editor focado na escrita de anotações e conteúdos textuais.
-   - Criação inteligente de **Resumos automatizados** via simulação de IA.
-   - Geração automática de **Flashcards** baseados no conteúdo anotado para reforço de memória.
-
-4. **Algoritmo de Aprendizado Spaced Repetition (SuperMemo-2 / SM-2)**:
-   - Motor de estudos com controle de cards agendados para o dia de hoje.
-   - Tela interativa de revelação da resposta com avaliação da facilidade de lembrança (notas de 0 a 5).
-   - Recálculo inteligente na API da data da próxima revisão com base no número de repetições, fator de facilidade (Ease Factor) e intervalo, impedindo a curva de esquecimento.
-
-5. **Modo Escuro (Dark Mode) Integrado com Tailwind CSS v4**:
-   - Chaveamento rápido de temas via Zustand (`studynotes-ui` no LocalStorage).
-   - Estilização premium e harmoniosa nos modos claro e escuro, controlada na raiz pela classe `.dark` do Tailwind CSS.
-
-6. **Otimização de Renderização e Performance do Editor**:
-   - **Memoização estratégica**: Componentes do editor (`EditorToolbar`, `EditorBubbleMenu`, `AnnotationSidebar`) envolvidos em `React.memo` para evitar re-renders desnecessários.
-   - **Estabilização de dependências**: Extensões do TipTap estabilizadas via `useMemo` e callback `onUpdate` via `useCallback`.
-   - **Prevenção de loops de renderização**: Removido `setQueryData` do `onSuccess` da mutação de atualização para evitar que o cache do React Query dispare re-renders no editor durante o autosave.
-   - **Flag `isApplyingRemote`**: Mecanismo robusto com fallback explícito para evitar race conditions entre conteúdo remoto e edição do usuário.
-   - **Gerenciamento de estado de anotações**: Estado de popover de anotação alterado de objeto para string (`string | null`) com `useMemo` para estabilizar a referência e evitar disparar re-renders no `EditorToolbar`.
-   - **Cleanup de event listeners**: Tratamento adequado de `requestAnimationFrame` pendente com cancelamento no unmount, e verificação de `editor.isDestroyed` antes de acessar o editor.
-   - **Autosave otimizado**: Debounce de 1.5s, rastreamento do último estado salvo via ref para evitar saves duplicados.
-
-7. **Anotações de Texto (Annotation System)**:
-   - _Mark_ personalizado do TipTap para anotações, com suporte a `<span>` (atual) e `<mark>` (compatibilidade reversa).
-   - **AnnotationSidebar**: Painel lateral que lista todas as anotações do texto com navegação por clique.
-   - **HighlightPopover**: Seletor de cores de destaque (amarelo, dourado, turquesa, roxo).
-   - **AnnotationPopover**: Popover para criação e edição de anotações com suporte a atalho de teclado (⌘Enter).
-
-8. **Refatoração HMR e Estabilidade de Hot Reload (Vite 8 + React 19)**:
-   - **Componentes nomeados nas rotas**: Substituído todo JSX inline nas propriedades `element` do `createBrowserRouter` por componentes nomeados explícitos (`LoginPage`, `RegisterPage`, `AppRoot`, `DashboardPage`, `NotebookDetailPage`, `LeafEditorPage`, `StudyPage`, `DefaultRedirect`, `CatchAllRedirect`), garantindo referências estáveis durante o Fast Refresh.
-   - **`AppRoutes` como boundary público**: Criado componente `AppRoutes` que encapsula `<RouterProvider router={router} />`, eliminando a importação direta do `router` no `App.tsx` e isolando a instância do roteador como constante estática do módulo.
-   - **`server.hmr.overlay: true`**: Configurado no `vite.config.ts` para exibir erros de HMR com overlay visual no navegador, facilitando o diagnóstico de falhas de atualização.
-   - **Verificação antiloop**: Auditoria completa contra `window.location.reload()` em todo o código-fonte (0 ocorrências). Confirmado que `isApplyingRemote` no `EditorView.tsx` já utiliza `useRef` estável, e o `client.ts` já implementa fila de renovação de token sem redirecionamentos forçados.
+### Frontend (`package.json` raiz)
+| Comando | Descrição |
+|---------|-----------|
+| `npm run dev` | Dev server Vite |
+| `npm run build` | Build de produção |
+| `npm run preview` | Preview do build |
 
 ---
 
-## 🎯 Melhorias Planejadas & Próximos Passos
+## 🧪 Testes
 
-### 🔴 Críticas
-- [ ] **Testes automatizados**: Ausência de testes unitários e de integração para o editor, hooks e serviços.
-- [ ] **Validação de dados**: O `summaryMutation` usa `setQueryData` com tipagem `any` — substituir por tipo correto.
-- [ ] **`staleTime` no `useLeafFlashcards`**: Adicionar `staleTime` para evitar refetch desnecessário a cada montagem do componente.
+```bash
+# Backend
+cd server
+npm test                # Testes unitários
+npm run test:e2e        # Testes E2E
 
-### 🟡 Melhorias
-- [ ] **Estado de carregamento do editor**: Criar um Skeleton loader para o editor enquanto o conteúdo da folha é carregado.
-- [ ] **Persistência de cursor**: Salvar e restaurar a posição do cursor após autosave.
-- [ ] **Offline-first**: Implementar suporte a edição offline com sincronização ao reconectar.
-- [ ] **Atalhos de teclado**: Adicionar tooltips com atalhos no bubble menu (já existe na toolbar).
-- [ ] **Performance de listas de flashcards**: Virtualizar a lista de flashcards com `react-window` para coleções grandes.
-
-### 🟢 Desejáveis
-- [ ] **Exportar conteúdo**: Opções para exportar folhas em Markdown, PDF ou TXT.
-- [ ] **Múltiplos temas**: Além do claro/escuro, oferecer temas de cores alternativos.
-- [ ] **Histórico de versões**: Versionamento do conteúdo das folhas para permitir desfazer alterações salvas.
-- [ ] **Compartilhamento**: Compartilhar folhas ou cadernos com outros usuários.
-- [ ] **Suporte a imagens**: Upload e incorporação de imagens no editor.
-
----
-
-## 🚀 Como Executar o Projeto
-
-Para executar o projeto localmente, certifique-se de ter o **Node.js** instalado em sua máquina. Recomendamos o uso de um gerenciador como o **NVM** para selecionar a versão do Node desejada.
-
-### 1. Inicializando a API Backend 🖥️
-
-1. No terminal, navegue até a pasta do servidor:
-   ```bash
-   cd server
-   ```
-2. Instale as dependências da API:
-   ```bash
-   npm install
-   ```
-3. Execute o servidor de desenvolvimento:
-   ```bash
-   npm run dev
-   ```
-   *O backend estará rodando em: `http://localhost:3000/api`*
-
----
-
-### 2. Inicializando o Frontend (Vite + React) 🌐
-
-1. Em um segundo terminal (no diretório raiz do projeto), instale as dependências:
-   ```bash
-   npm install
-   ```
-2. Inicie o servidor local do Vite:
-   ```bash
-   npm run dev
-   ```
-   *O frontend estará disponível em: `http://localhost:5173/`*
-
----
-
-## 🌙 Correção e Funcionamento do Modo Escuro
-
-Na versão v4 do **Tailwind CSS**, a configuração padrão do modo escuro é baseada na media query de preferência do sistema operacional (`prefers-color-scheme`). Para que o chaveamento por classe (injetando `.dark` na tag `<html>` ou `<body>`) funcione de maneira correta no Tailwind v4, é necessário declarar a diretiva de variante customizada diretamente no arquivo CSS de entrada.
-
-A correção foi feita no arquivo [`src/index.css`](file:///home/guilherme/Documentos/Projetos/revisa-aula/src/index.css) adicionando a seguinte diretiva após o carregamento do Tailwind:
-
-```css
-@import "tailwindcss";
-
-@custom-variant dark (&:where(.dark, .dark *));
+# Frontend
+npm test
 ```
-
-Dessa forma, a classe `.dark` manipulada pelo Zustand no `uiStore.ts` e pelo React no `AppLayout.tsx` passa a ativar as classes utilitárias prefixadas com `dark:` (ex: `dark:bg-dark-900`, `dark:text-dark-50`) em toda a árvore de componentes da aplicação.

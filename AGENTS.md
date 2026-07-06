@@ -2,242 +2,207 @@
 
 ## Contexto do projeto
 
-Este repositório é o frontend/backend de um app de estudos chamado Revisa Aula / StudyNotes Flash.
+Este repositório é o frontend/backend de um app de estudos chamado **Revisa Aula**.
 
-- Frontend: React 19 + Vite 8 + TypeScript
-- Backend: Node.js + Express
-- Estado de servidor: React Query
-- Estado local/UI: Zustand
-- Editor de folhas: TipTap
-- Autenticação: JWT + refresh token em cookie HttpOnly
+### Stack Atual
 
-## Objetivo principal do app
+| Camada | Tecnologia |
+|--------|-----------|
+| **Frontend** | React 19 + Vite 8 + TypeScript |
+| **Backend** | NestJS 11 + TypeScript |
+| **Banco** | SQLite via Prisma ORM 7 (driver adapter LibSQL) |
+| **Estado servidor** | TanStack React Query v5 |
+| **Estado local/UI** | Zustand 5 (com persistência) |
+| **Editor de folhas** | TipTap |
+| **Autenticação** | JWT + Passport + refresh token em cookie HttpOnly |
+| **Validação** | class-validator + class-transformer (backend), Zod (frontend) |
+| **Config** | @nestjs/config (backend) |
 
-O usuário cria cadernos, folhas de anotação, gera resumos e flashcards por IA e revisa os cards em uma sessão de estudo.
-
-## Status atual do desenvolvimento
-
-O fluxo principal já está implementado e funcional:
-
-- autenticação
-- CRUD de notebooks
-- CRUD de leaves
-- auto-save no editor
-- geração de resumo e flashcards por IA (mockada no backend)
-- fluxo de estudo com flashcards
-
-## ⚡ Últimas alterações (Julho 2026)
-
-### Problema resolvido: Loop de renderização e screen recreation no salvamento
-
-**Causa raiz:** O efeito de sincronização servidor→editor em `EditorView.tsx` dependia de `[leaf?.id, leaf?.content]` e executava `editor.commands.setContent()` a cada re-render. Isso disparava `onUpdate` → `handleEditorUpdate`, que podia re-escrever o estado local e forçar um novo save, criando um ciclo. Além disso, a troca de `saveStatus` entre "saving" e "saved" causava re-render que re-executava o sync effect, sobrescrevendo o conteúdo do editor com dados antigos do servidor.
-
-**Correção aplicada:**
-
-1. **`EditorView.tsx`** — Substituído o sync effect por uma sincronização única controlada por `initialSyncDoneRef`. Agora o conteúdo do servidor só é carregado no editor UMA VEZ (no primeiro mount). Depois disso, o editor é a fonte da verdade local e nenhum re-render subsequente sobrescreve o conteúdo. O auto-save continua funcionando mas sem causar loop. Adicionada animação de dots pulsantes no indicador de "Salvando..." no canto superior direito.
-
-2. **`studyStore.ts`** — Adicionados `sessionActive`, `flashcards`, `completedCardIds`, `scores` ao estado da sessão. Os flashcards agora são armazenados na Zustand Store (não em `useState` local), garantindo que sobrevivam a remounts do StudyView sem perder o progresso do usuário (currentIndex, reviewedCount, showAnswer).
-
-3. **`StudyView.tsx`** — Migrado de `useState(frozenFlashcards)` para `useStudyStore().sessions[nbId].flashcards`. Adicionado indicador de salvamento discreto (animação de dots) ao submeter scores. Adicionado `useCallback` no `handleScoreSelect` com cleanup de timeout. Adicionados `saveStatusTimerRef` para evitar memory leaks.
-
-4. **`server/routes.js`** — Adicionado endpoint `PUT /flashcards/:cardId` para atualizar front/back de flashcards com verificação de ownership via cadeia de notebooks.
-
-5. **`src/modules/study/services/studyService.ts`** — Adicionado método `updateFlashcard(cardId, { front?, back? })` para consumir o novo endpoint.
-
-### ⚡ Segunda rodada: Persistência de sessão de estudo no backend (Julho 2026)
-
-**Problema:** O progresso da sessão de estudo (currentIndex, reviewedCount, flashcards congelados, scores) era armazenado apenas na memória (Zustand store). Ao recarregar a página ou fechar o navegador, todo o progresso era perdido e o usuário precisava recomeçar.
-
-**Solução:** Adicionada persistência opaca via API REST, sincronizando automaticamente o estado da sessão com o backend.
-
-**Detalhes:**
-
-1. **`server/routes.js`** — 3 novos endpoints:
-   - `PUT /study-sessions/:notebookId` — Salva/atualiza sessão (com ownership check)
-   - `GET /study-sessions/:notebookId` — Carrega sessão salva (retorna 404 se não existe)
-   - `DELETE /study-sessions/:notebookId` — Remove sessão ao finalizar/resetar
-
-2. **`server/db.json`** — Adicionada coleção `studySessions`
-
-3. **`src/modules/study/services/studySessionService.ts`** — Serviço frontend com `saveSession`, `loadSession` (com tratamento de 404 → null), `deleteSession`
-
-4. **`src/modules/study/studyStore.ts`** — Nova ação `loadSession(notebookId, data)` que restaura todo o estado da sessão a partir de dados do backend
-
-5. **`src/modules/study/hooks/useStudySessionPersistence.ts`** — Hook que:
-   - Restaura sessão automaticamente ao montar o componente (apenas se não houver sessão ativa na store)
-   - Persiste automaticamente com debounce de 2s quando o progresso muda
-   - Expõe `clearPersistedSession()` para limpeza ao resetar
-   - Usa `startTransition` e `isRestoringRef` para evitar race conditions
-
-6. **`src/modules/study/views/StudyView.tsx`** — Hook integrado; `clearPersistedSession()` chamado ao clicar "Estudar Novamente"
-
-### Arquivos alterados (rodada 1):
-
-| Arquivo | Alteração |
-|---------|-----------|
-| `src/modules/leaves/views/EditorView.tsx` | Sincronização única, animação de dots no saveStatus |
-| `src/modules/study/studyStore.ts` | Flashcards e scores persistidos na store |
-| `src/modules/study/views/StudyView.tsx` | Store persistente, saveStatus, useCallback, timeout cleanup |
-| `src/modules/study/services/studyService.ts` | Novo método updateFlashcard |
-| `server/routes.js` | Novo endpoint PUT /flashcards/:cardId |
-
-### Arquivos alterados (rodada 2):
-
-| Arquivo | Alteração |
-|---------|-----------|
-| `server/db.json` | Coleção `studySessions` adicionada |
-| `server/routes.js` | 3 endpoints de sessão de estudo (GET/PUT/DELETE) |
-| `src/modules/study/services/studySessionService.ts` | **Novo** serviço de persistência de sessão |
-| `src/modules/study/studyStore.ts` | Ação `loadSession` adicionada |
-| `src/modules/study/hooks/useStudySessionPersistence.ts` | **Novo** hook auto-save + auto-restore |
-| `src/modules/study/views/StudyView.tsx` | Hook integrado, limpeza ao resetar |
-| `AGENTS.md` | Documentação atualizada |
-
-### ⚡ Terceira rodada: Resumo visual de progresso no Dashboard (Julho 2026)
-
-**Problema:** Não havia visibilidade do progresso geral dos estudos — quantos cards foram revisados hoje, quantos estão pendentes e a taxa de acerto.
-
-**Solução:** Adicionado componente `StudyProgressSummary` no topo do Dashboard com cards visuais e gráficos.
-
-**Detalhes:**
-
-1. **`server/routes.js`** — Novo endpoint `GET /study/stats`:
-   - Retorna `totalCards`, `reviewedToday`, `dueForReview`, `accuracyRate`, `avgEaseFactor`
-   - Inclui breakdown `perNotebook` com progresso individual
-   - Corrigido para contar cards com score < 3 como "revisados hoje" (quando repetitions=0 mas updatedAt é de hoje e createdAt não é de hoje)
-   - Verifica ownership dos flashcards via cadeia de notebooks do usuário
-
-2. **`src/modules/study/services/studyService.ts`** — Método `getStats()` e type `StudyStats` adicionados dentro do objeto `studyService`
-
-3. **`src/modules/study/hooks/useStudyStats.ts`** — Hook React Query com staleTime de 2 minutos
-
-4. **`src/modules/study/components/StudyProgressSummary.tsx`** — Componente visual:
-   - 4 cards de estatística (Total de Cards, Revisados Hoje, A Revisar, Taxa de Acerto com anel SVG)
-   - Breakdown por caderno com barras de progresso
-   - Estado de loading (spinner) e empty state
-   - Cores dinâmicas na taxa de acerto (verde ≥70%, âmbar ≥40%, vermelho <40%)
-
-5. **`src/modules/notebooks/views/DashboardView.tsx`** — Componente integrado acima da welcome bar
-
-### Arquivos alterados (rodada 3):
-
-| Arquivo | Alteração |
-|---------|-----------|
-| `server/routes.js` | Endpoint GET /study/stats |
-| `src/modules/study/services/studyService.ts` | Método getStats + type StudyStats |
-| `src/modules/study/hooks/useStudyStats.ts` | **Novo** hook de estatísticas |
-| `src/modules/study/components/StudyProgressSummary.tsx` | **Novo** componente de progresso |
-| `src/modules/notebooks/views/DashboardView.tsx` | Componente integrado |
-| `AGENTS.md` | Documentação atualizada |
-
-### ⚡ Quarta rodada: Refatoração completa da API (Julho 2026)
-
-**O que foi feito:** Reestruturação completa do backend Express, antes monolítico em `server/routes.js` (~900 linhas), agora modularizado em 5 módulos de rota + 1 middleware de validação.
-
-#### 🏗️ Nova estrutura do backend:
+### Estrutura do Backend (NestJS)
 
 ```
 server/
-├── index.js              → Entry point refatorado com:
-│                           • Middleware globais (CORS, JSON, cookie-parser)
-│                           • Logger estruturado com duração das requisições
-│                           • Montagem modular das rotas
-│                           • Tratamento de erros específicos (JSON malformado, payload grande)
-│                           • Endpoint /api/health
-├── database.js            → Refatorado:
-│                           • DEFAULT_COLLECTIONS com studySessions incluída
-│                           • Migração automática para coleções faltantes
-├── authMiddleware.js      → Mantido (JWT_SECRET validation + user injection)
-├── middleware/
-│   └── validate.js        → NOVO: validateBody, validateStudyScore, sendError, sendSuccess
-├── routes/
-│   ├── auth.js            → Autenticação: register, login, logout, refresh, profile
-│   ├── notebooks.js       → CRUD notebooks com ownership check + cascade delete
-│   ├── leaves.js          → CRUD folhas + geração IA + flashcards da folha
-│   ├── flashcards.js      → Flashcards CRUD + SM-2 com CAP de 365 dias
-│   └── study.js           → Sessão de estudo persistente + estatísticas
-└── server/
-    ├── db.json
-    └── package.json
+├── src/
+│   ├── main.ts                         → Bootstrap NestJS
+│   ├── app.module.ts                   → Root module (ValidationPipe, ExceptionFilter)
+│   ├── app.controller.ts               → Health check + status
+│   ├── prisma/
+│   │   ├── prisma.service.ts           → PrismaClient + LibSQL adapter (SQLite)
+│   │   └── prisma.module.ts            → @Global() module
+│   ├── common/
+│   │   ├── guards/jwt-auth.guard.ts    → Passport JWT Guard
+│   │   ├── decorators/current-user.decorator.ts → @CurrentUser()
+│   │   └── filters/http-exception.filter.ts     → AllExceptionsFilter
+│   ├── auth/
+│   │   ├── auth.module.ts              → JWT via ConfigService
+│   │   ├── auth.controller.ts          → register, login, logout, refresh, profile
+│   │   ├── auth.service.ts             → Lógica de autenticação
+│   │   ├── jwt.strategy.ts             → Passport JWT Strategy
+│   │   └── dto/                        → RegisterDto, LoginDto
+│   ├── notebooks/
+│   │   ├── notebooks.module.ts
+│   │   ├── notebooks.controller.ts     → CRUD /notebooks
+│   │   ├── notebooks.service.ts        → CRUD + cascade delete via Prisma
+│   │   └── dto/                        → CreateNotebookDto, UpdateNotebookDto
+│   ├── leaves/
+│   │   ├── leaves.module.ts
+│   │   ├── leaves.controller.ts        → CRUD /notebooks/:nbId/leaves + /leaves/:id
+│   │   ├── leaves.service.ts           → CRUD + IA mock (summary, flashcards)
+│   │   └── dto/                        → CreateLeafDto, UpdateLeafDto
+│   ├── flashcards/
+│   │   ├── flashcards.module.ts
+│   │   ├── flashcards.controller.ts    → GET/PUT flashcards + POST review
+│   │   ├── flashcards.service.ts       → SM-2 com CAP 365 dias
+│   │   └── dto/                        → ReviewFlashcardDto, UpdateFlashcardDto
+│   └── study/
+│       ├── study.module.ts
+│       ├── study.controller.ts         → Sessões + stats
+│       ├── study.service.ts            → Persistência sessão + getStats
+│       └── dto/                        → SaveSessionDto
+├── prisma/
+│   ├── schema.prisma                   → Modelos: User, Notebook, Leaf, Flashcard, StudySession
+│   ├── seed.ts                         → Script de migração db.json → SQLite
+│   └── migrations/                     → Migration inicial
+├── prisma.config.ts                    → Config Prisma v7
+├── dev.db                              → Banco SQLite
+└── .env                                → PORT, JWT_SECRET, DATABASE_URL, etc.
 ```
 
-#### 🔒 Melhorias de segurança:
+## Objetivo principal do app
 
-1. **Validação de entrada** — Middleware `validateBody()` para campos obrigatórios em TODOS os endpoints
-2. **Validação de email** — Regex no registro
-3. **Validação de score** — `validateStudyScore()` garante inteiro 0-5
-4. **Limite de payload** — `express.json({ limit: '1mb' })`
-5. **Tratamento de erros** — JSON malformado e payload grande têm respostas específicas
-6. **Ownership chain** — Preservada em todos os endpoints (leaf → notebook → userId)
+O usuário cria cadernos, folhas de anotação, gera resumos e flashcards por IA e revisa os cards em uma sessão de estudo com repetição espaçada (SM-2).
 
-#### 🛡️ Correção crítica: SM-2 overflow
+## Status atual do desenvolvimento
 
-**Problema:** O algoritmo SM-2 original permitia que `interval * easeFactor` crescesse exponencialmente sem limite. No `db.json`, um card tinha `interval: 9942399` e `nextReviewDate: "+029247-..."` (ano 29.247!).
+- ✅ Autenticação (register, login, logout, refresh, profile)
+- ✅ CRUD de notebooks
+- ✅ CRUD de leaves + auto-save no editor TipTap
+- ✅ Geração de resumo e flashcards por IA (mockada)
+- ✅ Algoritmo SM-2 com CAP de 365 dias
+- ✅ Sessão de estudo persistente (backend via API)
+- ✅ Estatísticas de progresso (StudyProgressSummary)
+- ✅ Refatoração completa para NestJS 11 + Prisma ORM 7 + SQLite
+- ✅ Limpeza de arquivos legados do Express
 
-**Correção:** Adicionado `MAX_INTERVAL_DAYS = 365` (cap de 1 ano) + `MIN_EASE_FACTOR = 1.3` + arredondamento do easeFactor para 2 casas.
+## ⚡ Últimas alterações (Julho 2026)
 
-```javascript
-// Antes (sem proteção):
-interval = Math.round(interval * easeFactor);  // Cresce sem limite!
+### Migração Express → NestJS + Prisma + SQLite
 
-// Depois (com cap):
-interval = Math.round(interval * easeFactor);
-if (interval > MAX_INTERVAL_DAYS) {
-  interval = MAX_INTERVAL_DAYS;  // Cap de 1 ano
-}
-```
+**O que foi feito:** Substituição completa do backend Express (JavaScript, db.json) por NestJS (TypeScript, Prisma ORM, SQLite).
 
-#### 📦 Módulos e caminhos:
+#### Mudanças na arquitetura
 
-| Módulo | Montado em | Rotas |
-|--------|-----------|-------|
-| `authRouter` | `/api/auth` | register, login, logout, refresh, profile |
-| `notebookRouter` | `/api/notebooks` | CRUD completo |
-| `leafRouter` | `/api` | Leaves CRUD + IA + flashcards da folha |
-| `flashcardRouter` | `/api` | Flashcards CRUD + SM-2 review |
-| `studyRouter` | `/api` | Sessão persistente + stats |
+| Aspecto | Antes (Express) | Depois (NestJS) |
+|---------|-----------------|-----------------|
+| **Linguagem** | JavaScript (`.js`) | TypeScript (`.ts`) |
+| **Framework** | Express | NestJS 11 |
+| **Banco** | `db.json` (arquivo JSON) | SQLite via Prisma ORM 7 |
+| **Validação** | `validateBody()` manual | `class-validator` decorators |
+| **Auth** | `authMiddleware.js` manual | Passport JWT Strategy |
+| **DI** | Import direto de módulos | Injeção de dependência |
+| **Erros** | try/catch manual | ExceptionFilter global |
+| **Config** | `process.env` direto | ConfigModule + ConfigService |
+| **ORM** | N/A | Prisma 7 (driver adapter LibSQL) |
 
-#### Arquivos alterados/criados (rodada 4):
+#### Correções aplicadas (nesta sessão)
+
+1. **`server/src/main.ts`** — cookie-parser corrigido: `import * as cookieParser` → `import cookieParser from 'cookie-parser'`, removendo ternary frágil
+2. **`server/prisma.config.ts`** — `dotenv` adicionado como dependência direta para comandos Prisma CLI
+3. **Porta 3000** — Processo antigo do Express finalizado (PID 53201 e 59635)
+4. **Arquivos legados** — `server/index.js`, `database.js`, `authMiddleware.js`, `routes/`, `middleware/` movidos para `server/_express_backup/`
+5. **`package.json`** — `express` instalado como dependência (peer do `@nestjs/platform-express`)
+
+#### Arquivos alterados/criados
 
 | Arquivo | Ação |
 |---------|------|
-| `server/index.js` | **Reescrito** — modular, logger, error handling |
-| `server/database.js` | **Reescrito** — DEFAULT_COLLECTIONS, migração automática |
-| `server/routes/auth.js` | **Novo** — rotas de auth extraídas |
-| `server/routes/notebooks.js` | **Novo** — CRUD notebooks extraído |
-| `server/routes/leaves.js` | **Novo** — CRUD leaves + IA extraído |
-| `server/routes/flashcards.js` | **Novo** — flashcards + SM-2 com CAP |
-| `server/routes/study.js` | **Novo** — sessão + stats extraído |
-| `server/middleware/validate.js` | **Novo** — validações reutilizáveis |
-| `server/routes.js` | **Removido** — substituído pelos módulos |
+| `server/prisma/schema.prisma` | **Criado** — 5 modelos com relações e cascade delete |
+| `server/prisma/seed.ts` | **Criado** — Migração db.json → SQLite |
+| `server/prisma.config.ts` | **Criado** — Config Prisma v7 |
+| `server/src/prisma/prisma.service.ts` | **Criado** — PrismaClient + LibSQL adapter |
+| `server/src/prisma/prisma.module.ts` | **Criado** — Módulo @Global |
+| `server/src/auth/*` | **Reescritos** — NestJS com Passport JWT |
+| `server/src/notebooks/*` | **Reescrito** — CRUD com Prisma |
+| `server/src/leaves/*` | **Reescrito** — CRUD + IA mock |
+| `server/src/flashcards/*` | **Reescrito** — SM-2 com CAP |
+| `server/src/study/*` | **Reescrito** — Sessões + stats |
+| `server/src/common/*` | **Criado** — Guards, decorators, filters |
+| `server/src/main.ts` | **Criado** — Bootstrap NestJS |
+| `server/src/app.module.ts` | **Criado** — Root module |
+| `server/src/app.controller.ts` | **Criado** — Health check |
+| `server/tsconfig.json` | **Criado** — Config TypeScript |
+| `server/nest-cli.json` | **Criado** — Config NestJS CLI |
+| `server/.env` | **Atualizado** — JWT_SECRET, DATABASE_URL, etc. |
+| `server/package.json` | **Atualizado** — Dependências NestJS + Prisma |
+| `server/_express_backup/` | **Criado** — Backup dos arquivos Express antigos |
 
-## Arquivos relevantes para o contexto
+## Rotas da API
 
-- [src/main.tsx](src/main.tsx)
-- [src/modules/leaves/hooks/useLeaves.ts](src/modules/leaves/hooks/useLeaves.ts)
-- [src/modules/leaves/views/EditorView.tsx](src/modules/leaves/views/EditorView.tsx)
-- [src/modules/study/hooks/useFlashcards.ts](src/modules/study/hooks/useFlashcards.ts)
-- [src/modules/study/studyStore.ts](src/modules/study/studyStore.ts)
-- [src/modules/study/views/StudyView.tsx](src/modules/study/views/StudyView.tsx)
-- [src/core/api/client.ts](src/core/api/client.ts)
-- [server/routes.js](server/routes.js)
+### Auth (`/api/auth`)
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| POST | `/auth/register` | Registrar novo usuário |
+| POST | `/auth/login` | Login |
+| POST | `/auth/logout` | Logout (limpa cookie) |
+| POST | `/auth/refresh` | Renovar access token |
+| GET | `/auth/profile` | Perfil do usuário (auth) |
+
+### Notebooks (`/api/notebooks`, auth required)
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/notebooks` | Listar cadernos |
+| GET | `/notebooks/:id` | Detalhes do caderno |
+| POST | `/notebooks` | Criar caderno |
+| PUT | `/notebooks/:id` | Atualizar caderno |
+| DELETE | `/notebooks/:id` | Excluir caderno (cascade) |
+
+### Leaves (auth required)
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/notebooks/:id/leaves` | Listar folhas |
+| POST | `/notebooks/:id/leaves` | Criar folha |
+| GET | `/leaves/:id` | Detalhes da folha |
+| PUT | `/leaves/:id` | Atualizar folha |
+| DELETE | `/leaves/:id` | Excluir folha |
+| POST | `/leaves/:id/summary` | Gerar resumo (IA mock) |
+| POST | `/leaves/:id/flashcards` | Gerar flashcards (IA mock) |
+| GET | `/leaves/:id/flashcards` | Listar flashcards da folha |
+
+### Flashcards (auth required)
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/notebooks/:id/flashcards` | Listar flashcards do caderno |
+| PUT | `/flashcards/:id` | Atualizar front/back |
+| POST | `/flashcards/:id/review` | Revisar (score 0-5, SM-2) |
+
+### Study (auth required)
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/study-sessions/:notebookId` | Carregar sessão |
+| PUT | `/study-sessions/:notebookId` | Salvar sessão |
+| DELETE | `/study-sessions/:notebookId` | Remover sessão |
+| GET | `/study/stats` | Estatísticas de progresso |
 
 ## Regras importantes para futuras alterações
 
-- Não reintroduzir refetches agressivos em rotas de edição sem necessidade.
-- Evitar invalidar queries inteiras quando o objetivo for apenas atualizar um item específico.
-- Preservar o estado local do editor sempre que possível (usar refs de controle como `initialSyncDoneRef`).
-- Manter as atualizações de cache idempotentes: se o valor já estiver correto, não sobrescrever.
-- Para estado de sessão de estudo, SEMPRE usar a Zustand Store (`studyStore`) em vez de `useState` local, para garantir persistência entre remounts.
-- Limpar timeouts e timers em `useEffect` de cleanup para evitar memory leaks.
-- Se a mudança for relacionada a render, validar primeiro o fluxo de estados locais, cache do React Query e sincronização com o TipTap.
+- Não reintroduzir refetches agressivos em rotas de edição sem necessidade
+- Evitar invalidar queries inteiras quando o objetivo for apenas atualizar um item específico
+- Preservar o estado local do editor sempre que possível (usar refs de controle como `initialSyncDoneRef`)
+- Manter as atualizações de cache idempotentes: se o valor já estiver correto, não sobrescrever
+- Para estado de sessão de estudo, SEMPRE usar a Zustand Store (`studyStore`) em vez de `useState` local
+- Limpar timeouts e timers em `useEffect` de cleanup para evitar memory leaks
+- Ao adicionar novos módulos NestJS, importar `AuthModule` para disponibilizar o `JwtAuthGuard`
+- Dependências Prisma: o `prisma.config.ts` é necessário para comandos CLI do Prisma v7
 
-## Verificação feita
+## Para rodar o projeto
 
-A build do projeto foi validada com sucesso após os ajustes:
+```bash
+# Backend (NestJS)
+cd server
+npm install
+npm run dev           # http://localhost:3000
 
-- comando executado: npm run build
-
-## Observação para agentes de IA
-
-Se você for trabalhar em render, autosave, editor, flashcards, resumo ou cache de dados, comece por esses arquivos antes de mexer em outros pontos do app.
+# Frontend (Vite)
+npm install
+npm run dev           # http://localhost:5173
+```
