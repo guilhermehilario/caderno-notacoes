@@ -18,6 +18,8 @@ model User {
 
   notebooks      Notebook[]
   studySessions  StudySession[]
+  tags           Tag[]
+  bookmarks      Bookmark[]
 }
 
 /// Cadernos de anotação (disciplinas/matérias)
@@ -34,6 +36,7 @@ model Notebook {
   leaves         Leaf[]
   flashcards     Flashcard[]
   studySessions  StudySession[]
+  bookmarks      Bookmark[]
 }
 
 /// Folhas de anotação (aulas individuais dentro de um caderno)
@@ -44,11 +47,56 @@ model Leaf {
   content    String   @default("")
   rawText    String   @default("")
   summary    String?
+  parentId   String?  // Para sub-folhas (árvore hierárquica)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   notebook   Notebook     @relation(fields: [notebookId], references: [id], onDelete: Cascade)
   flashcards Flashcard[]
+  parent     Leaf?        @relation("LeafChildren", fields: [parentId], references: [id], onDelete: SetNull)
+  children   Leaf[]       @relation("LeafChildren")
+  tags       LeafTag[]
+  bookmarks  Bookmark[]
+}
+
+/// Tags para classificação de folhas
+model Tag {
+  id        String   @id @default(uuid())
+  userId    String
+  name      String
+  color     String   @default("#aa3bff")
+  createdAt DateTime @default(now())
+
+  user   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leaves LeafTag[]
+
+  @@unique([userId, name])
+}
+
+/// Relação N:N entre Leaf e Tag
+model LeafTag {
+  leafId String
+  tagId  String
+
+  leaf Leaf @relation(fields: [leafId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([leafId, tagId])
+}
+
+/// Marcadores de páginas (bookmarks)
+model Bookmark {
+  id        String   @id @default(uuid())
+  userId    String
+  leafId    String?
+  notebookId String?
+  title     String
+  path      String   // URL path para navegação
+  createdAt DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leaf     Leaf?    @relation(fields: [leafId], references: [id], onDelete: SetNull)
+  notebook Notebook? @relation(fields: [notebookId], references: [id], onDelete: SetNull)
 }
 
 /// Flashcards gerados por IA com parâmetros do algoritmo SM-2

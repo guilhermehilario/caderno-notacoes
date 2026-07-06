@@ -1,9 +1,9 @@
-import { IsString, IsOptional, MaxLength, MinLength } from 'class-validator';
+import { IsString, IsOptional, MinLength, MaxLength, IsUUID } from 'class-validator';
 
 export class CreateLeafDto {
   @IsString()
-  @MinLength(1, { message: 'O título da folha é obrigatório' })
-  @MaxLength(100, { message: 'Título muito longo (máx. 100 caracteres)' })
+  @MinLength(1)
+  @MaxLength(100)
   title: string;
 
   @IsOptional()
@@ -13,4 +13,9 @@ export class CreateLeafDto {
   @IsOptional()
   @IsString()
   rawText?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsUUID()
+  parentId?: string;
 }

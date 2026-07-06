@@ -13,6 +13,15 @@ const adapter = new PrismaLibSql({
 });
 const prisma = new PrismaClient({ adapter });
 
+const DEFAULT_TAGS = [
+  { name: 'Importante', color: '#ef4444' },
+  { name: 'Prova', color: '#f59e0b' },
+  { name: 'ProvaFinal', color: '#aa3bff' },
+  { name: 'Exercicios', color: '#10b981' },
+  { name: 'Revisao', color: '#3b82f6' },
+  { name: 'Professor', color: '#ec4899' },
+];
+
 async function main() {
   const dbJsonPath = path.join(process.cwd(), 'db.json');
 
@@ -23,6 +32,26 @@ async function main() {
 
   const content = fs.readFileSync(dbJsonPath, 'utf8');
   const data = JSON.parse(content);
+
+  // ── 0. Seed default tags for each user ──
+  if (data.users?.length > 0) {
+    for (const user of data.users) {
+      for (const tag of DEFAULT_TAGS) {
+        await prisma.tag.upsert({
+          where: {
+            userId_name: { userId: user.id, name: tag.name },
+          },
+          update: { color: tag.color },
+          create: {
+            userId: user.id,
+            name: tag.name,
+            color: tag.color,
+          },
+        });
+      }
+    }
+    console.log(`✅ Tags padrão criadas para ${data.users.length} usuários`);
+  }
 
   // ── 1. Migrar Users ──
   if (data.users?.length > 0) {

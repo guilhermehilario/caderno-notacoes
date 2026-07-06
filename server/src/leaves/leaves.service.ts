@@ -32,8 +32,21 @@ export class LeavesService {
     if (!notebook) throw new NotFoundException('Caderno não encontrado');
 
     return this.prisma.leaf.findMany({
-      where: { notebookId },
+      where: { notebookId, parentId: null },
       orderBy: { createdAt: 'desc' },
+      include: {
+        children: {
+          orderBy: { createdAt: 'desc' },
+          include: {
+            children: {
+              orderBy: { createdAt: 'desc' },
+            },
+          },
+        },
+        tags: {
+          include: { tag: true },
+        },
+      },
     });
   }
 
@@ -43,13 +56,33 @@ export class LeavesService {
       if (error === 'Acesso negado') throw new ForbiddenException(error);
       throw new NotFoundException(error);
     }
-    return leaf!;
+
+    // Include parent info for breadcrumb navigation
+    const leafWithParents = await this.prisma.leaf.findUnique({
+      where: { id: leafId },
+      include: {
+        notebook: true,
+        parent: {
+          include: {
+            parent: true,
+          },
+        },
+        children: {
+          orderBy: { createdAt: 'desc' },
+        },
+        tags: {
+          include: { tag: true },
+        },
+      },
+    });
+
+    return leafWithParents;
   }
 
   async create(
     notebookId: string,
     userId: string,
-    data: { title: string; content?: string; rawText?: string },
+    data: { title: string; content?: string; rawText?: string; parentId?: string },
   ) {
     const notebook = await this.prisma.notebook.findFirst({
       where: { id: notebookId, userId },
@@ -60,12 +93,21 @@ export class LeavesService {
       throw new BadRequestException('Título muito longo (máx. 100 caracteres)');
     }
 
+    // If parentId is provided, verify it belongs to the same notebook
+    if (data.parentId) {
+      const parentLeaf = await this.prisma.leaf.findFirst({
+        where: { id: data.parentId, notebookId },
+      });
+      if (!parentLeaf) throw new NotFoundException('Folha pai não encontrada');
+    }
+
     return this.prisma.leaf.create({
       data: {
         notebookId,
         title: data.title,
         content: data.content || '',
         rawText: data.rawText || '',
+        parentId: data.parentId || null,
       },
     });
   }
@@ -78,6 +120,7 @@ export class LeavesService {
       content?: string;
       rawText?: string;
       summary?: string | null;
+      parentId?: string | null;
     },
   ) {
     const { leaf, error } = await this.verifyLeafOwnership(leafId, userId);
@@ -93,6 +136,7 @@ export class LeavesService {
         ...(data.content !== undefined && { content: data.content }),
         ...(data.rawText !== undefined && { rawText: data.rawText }),
         ...(data.summary !== undefined && { summary: data.summary }),
+        ...(data.parentId !== undefined && { parentId: data.parentId }),
       },
     });
   }
@@ -172,7 +216,6 @@ export class LeavesService {
       },
     ];
 
-    // Usa createMany se suportado, ou create em loop
     for (const card of mockCards) {
       await this.prisma.flashcard.create({ data: card });
     }
@@ -192,4 +235,42 @@ export class LeavesService {
       orderBy: { createdAt: 'desc' },
     });
   }
+
+  async getLeafHierarchy(notebookId: string, userId: string) {
+    const notebook = await this.prisma.notebook.findFirst({
+      where: { id: notebookId, userId },
+    });
+    if (!notebook) throw new NotFoundException('Caderno não encontrado');
+
+    const allLeaves = await this.prisma.leaf.findMany({
+      where: { notebookId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        tags: {
+          include: { tag: true },
+        },
+      },
+    });
+
+    return buildTree(allLeaves);
+  }
+}
+
+function buildTree(leaves: any[]): any[] {
+  const map = new Map<string, any>();
+  const roots: any[] = [];
+
+  leaves.forEach((leaf) => {
+    map.set(leaf.id, { ...leaf, children: [] });
+  });
+
+  leaves.forEach((leaf) => {
+    if (leaf.parentId && map.has(leaf.parentId)) {
+      map.get(leaf.parentId).children.push(map.get(leaf.id));
+    } else if (!leaf.parentId) {
+      roots.push(map.get(leaf.id));
+    }
+  });
+
+  return roots;
 }

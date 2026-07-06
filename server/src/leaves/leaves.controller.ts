@@ -39,6 +39,14 @@ export class LeavesController {
     return this.leavesService.create(notebookId, userId, dto);
   }
 
+  @Get('notebooks/:notebookId/leaves/hierarchy')
+  getLeafHierarchy(
+    @Param('notebookId') notebookId: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.leavesService.getLeafHierarchy(notebookId, userId);
+  }
+
   // ── Individual leaf operations ──
   @Get('leaves/:leafId')
   findOne(@Param('leafId') leafId: string, @CurrentUser('id') userId: string) {

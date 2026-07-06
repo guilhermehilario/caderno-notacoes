@@ -7,6 +7,8 @@ import { NotebooksModule } from './notebooks/notebooks.module';
 import { LeavesModule } from './leaves/leaves.module';
 import { FlashcardsModule } from './flashcards/flashcards.module';
 import { StudyModule } from './study/study.module';
+import { TagsModule } from './tags/tags.module';
+import { BookmarksModule } from './bookmarks/bookmarks.module';
 import { AppController } from './app.controller';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
@@ -22,6 +24,8 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     LeavesModule,
     FlashcardsModule,
     StudyModule,
+    TagsModule,
+    BookmarksModule,
   ],
   controllers: [AppController],
   providers: [
