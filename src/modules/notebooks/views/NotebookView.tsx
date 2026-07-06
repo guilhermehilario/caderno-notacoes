@@ -10,10 +10,14 @@ import {
   Trash2,
   Edit2,
   Calendar,
+  Clock,
   Loader2,
   ChevronRight,
   Sparkles,
   Lightbulb,
+  BookmarkIcon,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { useNotebook } from '../hooks/useNotebooks';
 import { CreateNotebookSchema } from '../types';
@@ -24,6 +28,9 @@ import type { CreateLeafInput } from '../../leaves/types';
 import { useNotebookFlashcards } from '../../study/hooks/useFlashcards';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import studyService from '../../study/services/studyService';
+import { useBookmarks } from '../../bookmarks/hooks/useBookmarks';
+import { useCreateBookmark, useDeleteBookmark } from '../../bookmarks/hooks/useBookmarks';
+import { useSoftDeleteNotebook } from '../../trash/hooks/useTrash';
 import { Card } from '../../../components/ui/Card.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
 import { Modal } from '../../../components/ui/Modal.tsx';
@@ -46,10 +53,33 @@ export const NotebookView: React.FC = () => {
   const [isFlashcardModalOpen, setIsFlashcardModalOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState(COLORS[0]);
   const [selectedLeafId, setSelectedLeafId] = useState('');
+  const [parentLeafId, setParentLeafId] = useState<string | undefined>(undefined);
 
-  const { notebook, isLoading: isLoadingNotebook, updateNotebook, deleteNotebook } = useNotebook(notebookId || '');
+  const { notebook, isLoading: isLoadingNotebook, updateNotebook } = useNotebook(notebookId || '');
   const { leaves, isLoading: isLoadingLeaves, createLeaf } = useLeaves(notebookId || '');
   const { data: flashcards = [], isLoading: isLoadingFlashcards } = useNotebookFlashcards(notebookId || '');
+  const { data: allBookmarks = [] } = useBookmarks();
+  const createBookmark = useCreateBookmark();
+  const deleteBookmark = useDeleteBookmark();
+  const softDeleteNotebook = useSoftDeleteNotebook();
+  const queryClient = useQueryClient();
+
+  // Check if notebook is bookmarked
+  const isBookmarked = allBookmarks.some((b) => b.notebookId === notebookId);
+  const toggleBookmark = async () => {
+    if (!notebook || !notebookId) return;
+    if (isBookmarked) {
+      const existing = allBookmarks.find((b) => b.notebookId === notebookId);
+      if (existing) await deleteBookmark.mutateAsync(existing.id);
+    } else {
+      await createBookmark.mutateAsync({
+        notebookId,
+        title: notebook.title,
+        path: `/notebooks/${notebookId}`,
+      });
+    }
+    queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
+  };
 
   const {
     register,
@@ -83,8 +113,6 @@ export const NotebookView: React.FC = () => {
     formState: { errors: fcErrors },
   } = useForm<{ front: string; back: string }>();
 
-  const queryClient = useQueryClient();
-
   const createFlashcardMutation = useMutation({
     mutationFn: (data: { leafId: string; notebookId: string; front: string; back: string }) =>
       studyService.createFlashcard(data),
@@ -113,9 +141,13 @@ export const NotebookView: React.FC = () => {
   const onSubmit = async (data: CreateLeafInput) => {
     if (!notebookId) return;
     try {
-      const newLeaf = await createLeaf(data);
+      const newLeaf = await createLeaf({
+        ...data,
+        parentId: parentLeafId,
+      });
       setIsModalOpen(false);
       reset();
+      setParentLeafId(undefined);
       // Redireciona diretamente para a tela de edição da nova folha
       navigate(`/notebooks/${notebookId}/leaves/${newLeaf.id}`);
     } catch (error) {
@@ -145,12 +177,12 @@ export const NotebookView: React.FC = () => {
   };
 
   const handleDeleteNotebook = async () => {
-    if (window.confirm('Tem certeza que deseja excluir este caderno e todas as suas folhas? Esta ação não pode ser desfeita.')) {
+    if (window.confirm('Mover este caderno para a lixeira? Ele ficará lá por 15 dias antes de ser excluído permanentemente.')) {
       try {
-        await deleteNotebook();
+        await softDeleteNotebook.mutateAsync(notebookId || '');
         navigate('/dashboard');
       } catch (error) {
-        console.error('Erro ao excluir caderno:', error);
+        console.error('Erro ao mover para lixeira:', error);
       }
     }
   };
@@ -199,9 +231,27 @@ export const NotebookView: React.FC = () => {
           <p className="text-slate-550 dark:text-dark-300 text-sm max-w-xl">
             {notebook.description || 'Nenhuma descrição adicionada.'}
           </p>
+          <p className="text-xs text-slate-400 dark:text-dark-400 flex items-center gap-1.5 pl-4">
+            <Clock className="h-3 w-3" />
+            Última alteração: {new Date(notebook.updatedAt).toLocaleString('pt-BR')}
+          </p>
         </div>
 
-        <div className="flex items-center gap-3 self-end md:self-auto pl-4">
+        <div className="flex items-center gap-2 self-end md:self-auto pl-4">
+          {/* Bookmark button */}
+          <button
+            type="button"
+            onClick={toggleBookmark}
+            className={`p-2 rounded-lg transition-colors cursor-pointer ${
+              isBookmarked
+                ? 'text-amber-500 bg-amber-50 dark:bg-amber-950/20'
+                : 'text-slate-400 hover:text-amber-500 hover:bg-slate-100 dark:hover:bg-dark-800'
+            }`}
+            title={isBookmarked ? 'Remover marcador' : 'Adicionar marcador'}
+          >
+            <BookmarkIcon className={`h-5 w-5 ${isBookmarked ? 'fill-amber-500' : ''}`} />
+          </button>
+
           <Button
             variant="outline"
             onClick={handleOpenEditModal}
@@ -235,14 +285,19 @@ export const NotebookView: React.FC = () => {
           <h2 className="text-xl font-heading font-bold text-slate-800 dark:text-dark-100 m-0">
             Folhas de Anotação ({leaves.length})
           </h2>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsModalOpen(true)}
-            leftIcon={<Plus className="h-4 w-4" />}
-          >
-            Nova Folha
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setParentLeafId(undefined);
+                setIsModalOpen(true);
+              }}
+              leftIcon={<Plus className="h-4 w-4" />}
+            >
+              Nova Folha
+            </Button>
+          </div>
         </div>
 
         {leaves.length === 0 ? (
@@ -258,7 +313,10 @@ export const NotebookView: React.FC = () => {
             </p>
             <Button
               variant="ghost"
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => {
+                setParentLeafId(undefined);
+                setIsModalOpen(true);
+              }}
               leftIcon={<Plus className="h-4 w-4" />}
               className="mt-4 text-brand-500"
             >
@@ -268,63 +326,20 @@ export const NotebookView: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {leaves.map((leaf) => (
-              <Card
+              <LeafCard
                 key={leaf.id}
-                hoverable
-                onClick={() => navigate(`/notebooks/${notebookId}/leaves/${leaf.id}`)}
-                className="flex items-center gap-4 border border-slate-100 dark:border-dark-800"
-              >
-                <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-dark-800 flex items-center justify-center text-slate-500 dark:text-dark-300">
-                  <FileText className="h-5 w-5" />
-                </div>
-                <div className="flex-grow min-w-0">
-                  <h4 className="font-heading font-bold truncate text-slate-800 dark:text-dark-50 m-0 group-hover:text-brand-500">
-                    {leaf.title}
-                  </h4>
-                  <p className="text-xs text-slate-400 dark:text-dark-400 mt-1 flex items-center gap-1.5">
-                    <Calendar className="h-3.5 w-3.5" />
-                    Atualizado em {new Date(leaf.updatedAt).toLocaleDateString('pt-BR')}
-                  </p>
-                </div>
-                <ChevronRight className="h-5 w-5 text-slate-400 dark:text-dark-500 flex-shrink-0" />
-              </Card>
+                leaf={leaf}
+                notebookId={notebookId || ''}
+                navigate={navigate}
+                onCreateSubLeaf={() => {
+                  setParentLeafId(leaf.id);
+                  setIsModalOpen(true);
+                }}
+              />
             ))}
           </div>
         )}
       </div>
-
-      {/* Modal Criar Folha */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          reset();
-        }}
-        title="Criar Nova Folha"
-        footer={
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsModalOpen(false);
-                reset();
-              }}
-            >
-              Cancelar
-            </Button>
-            <Button onClick={handleSubmit(onSubmit)}>Criar e Editar</Button>
-          </div>
-        }
-      >
-        <div>
-          <Input
-            label="Título da Folha"
-            placeholder="Ex: Aula 01 - Introdução ao Protocolo HTTP"
-            error={errors.title?.message}
-            {...register('title')}
-          />
-        </div>
-      </Modal>
 
       {/* ── Seção de Flashcards ── */}
       <div className="flex flex-col gap-4 mt-6 pt-6 border-t border-slate-100 dark:border-dark-800">
@@ -398,6 +413,67 @@ export const NotebookView: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Modal Criar Folha (com suporte a sub-folha) */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          reset();
+          setParentLeafId(undefined);
+        }}
+        title={parentLeafId ? 'Criar Sub-folha' : 'Criar Nova Folha'}
+        footer={
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsModalOpen(false);
+                reset();
+                setParentLeafId(undefined);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={handleSubmit(onSubmit)}>Criar e Editar</Button>
+          </div>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          <Input
+            label="Título da Folha"
+            placeholder="Ex: Aula 01 - Introdução ao Protocolo HTTP"
+            error={errors.title?.message}
+            {...register('title')}
+          />
+
+          {/* Parent leaf selector (only when creating sub-leaf) */}
+          {!parentLeafId && leaves.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-slate-700 dark:text-dark-200">
+                Folha Pai (opcional - cria sub-folha)
+              </label>
+              <select
+                value={parentLeafId || ''}
+                onChange={(e) => setParentLeafId(e.target.value || undefined)}
+                className="w-full px-3.5 py-2.5 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-xl text-slate-500 dark:text-dark-400 text-sm focus:outline-none focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900/20 focus:border-brand-500 transition-all duration-200 cursor-pointer"
+              >
+                <option value="">Sem pai (folha raiz)</option>
+                {leaves.map((leaf) => (
+                  <option key={leaf.id} value={leaf.id}>
+                    {leaf.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          {parentLeafId && (
+            <p className="text-xs text-brand-500 font-semibold">
+              Esta será uma sub-folha de: {leaves.find((l) => l.id === parentLeafId)?.title || '...'}
+            </p>
+          )}
+        </div>
+      </Modal>
 
       {/* Modal Criar Flashcard Manual */}
       <Modal
@@ -539,4 +615,123 @@ export const NotebookView: React.FC = () => {
     </div>
   );
 };
+
+// ── Leaf Card with sub-leaf support ──
+interface LeafCardProps {
+  leaf: any;
+  notebookId: string;
+  navigate: ReturnType<typeof useNavigate>;
+  onCreateSubLeaf: () => void;
+}
+
+const LeafCard: React.FC<LeafCardProps> = ({ leaf, notebookId, navigate, onCreateSubLeaf }) => {
+  const [expanded, setExpanded] = useState(false);
+  const hasChildren = leaf.children && leaf.children.length > 0;
+
+  const tagColors: Record<string, string> = {
+    Importante: '#ef4444',
+    Prova: '#f59e0b',
+    ProvaFinal: '#aa3bff',
+    Exercicios: '#10b981',
+    Revisao: '#3b82f6',
+    Professor: '#ec4899',
+  };
+
+  return (
+    <div className="flex flex-col gap-1">
+      <Card
+        hoverable
+        onClick={() => navigate(`/notebooks/${notebookId}/leaves/${leaf.id}`)}
+        className="flex items-center gap-4 p-4 border border-slate-100 dark:border-dark-800"
+      >
+        <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-dark-800 flex items-center justify-center text-slate-500 dark:text-dark-300 flex-shrink-0">
+          <FileText className="h-5 w-5" />
+        </div>
+        <div className="flex-grow min-w-0">
+          <div className="flex items-center gap-2">
+            <h4 className="font-heading font-bold truncate text-slate-800 dark:text-dark-50">
+              {leaf.title}
+            </h4>
+            {/* Tags */}
+            {leaf.tags && leaf.tags.length > 0 && (
+              <div className="flex gap-1 flex-shrink-0">
+                {leaf.tags.slice(0, 3).map((lt: any) => (
+                  <span
+                    key={lt.tag.id}
+                    className="inline-block w-2 h-2 rounded-full"
+                    style={{ backgroundColor: lt.tag.color || tagColors[lt.tag.name] || '#aa3bff' }}
+                    title={lt.tag.name}
+                  />
+                ))}
+                {leaf.tags.length > 3 && (
+                  <span className="text-[10px] text-slate-400">+{leaf.tags.length - 3}</span>
+                )}
+              </div>
+            )}
+          </div>
+          <p className="text-xs text-slate-400 dark:text-dark-400 mt-1 flex items-center gap-1.5">
+            <Calendar className="h-3.5 w-3.5" />
+            Atualizado em {new Date(leaf.updatedAt).toLocaleDateString('pt-BR')}
+            {hasChildren && (
+              <span className="text-brand-500 ml-1">
+                · {leaf.children.length} sub-folha(s)
+              </span>
+            )}
+          </p>
+        </div>
+        <div className="flex items-center gap-1">
+          {hasChildren && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setExpanded(!expanded);
+              }}
+              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 text-slate-400 cursor-pointer"
+            >
+              {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onCreateSubLeaf();
+            }}
+            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 text-slate-400 hover:text-brand-500 cursor-pointer"
+            title="Criar sub-folha"
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </button>
+          <ChevronRight className="h-5 w-5 text-slate-400 dark:text-dark-500 flex-shrink-0" />
+        </div>
+      </Card>
+
+      {/* Sub-folhas (children) */}
+      {hasChildren && expanded && (
+        <div className="ml-6 flex flex-col gap-1 pl-4 border-l-2 border-slate-100 dark:border-dark-800">
+          {leaf.children.map((child: any) => (
+            <Card
+              key={child.id}
+              hoverable
+              onClick={() => navigate(`/notebooks/${notebookId}/leaves/${child.id}`)}
+              className="flex items-center gap-3 p-3 border border-slate-100 dark:border-dark-800"
+            >
+              <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-dark-800 flex items-center justify-center text-slate-400 dark:text-dark-300 flex-shrink-0">
+                <FileText className="h-4 w-4" />
+              </div>
+              <div className="flex-grow min-w-0">
+                <h5 className="font-heading font-semibold text-sm truncate text-slate-700 dark:text-dark-100">
+                  {child.title}
+                </h5>
+              </div>
+              <ChevronRight className="h-4 w-4 text-slate-400 dark:text-dark-500 flex-shrink-0" />
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default NotebookView;

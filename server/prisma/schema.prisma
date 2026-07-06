@@ -20,36 +20,40 @@ model User {
   studySessions  StudySession[]
   tags           Tag[]
   bookmarks      Bookmark[]
+  editHistory    EditHistory[]
 }
 
 /// Cadernos de anotação (disciplinas/matérias)
 model Notebook {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   userId      String
   title       String
   description String?
   color       String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime? // Soft-delete: nulo = ativo, preenchido = na lixeira
 
   user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   leaves         Leaf[]
   flashcards     Flashcard[]
   studySessions  StudySession[]
   bookmarks      Bookmark[]
+  editHistory    EditHistory[]
 }
 
 /// Folhas de anotação (aulas individuais dentro de um caderno)
 model Leaf {
-  id         String   @id @default(uuid())
+  id         String    @id @default(uuid())
   notebookId String
   title      String
-  content    String   @default("")
-  rawText    String   @default("")
+  content    String    @default("")
+  rawText    String    @default("")
   summary    String?
-  parentId   String?  // Para sub-folhas (árvore hierárquica)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  parentId   String?   // Para sub-folhas (árvore hierárquica)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime? // Soft-delete: nulo = ativo, preenchido = na lixeira
 
   notebook   Notebook     @relation(fields: [notebookId], references: [id], onDelete: Cascade)
   flashcards Flashcard[]
@@ -57,6 +61,24 @@ model Leaf {
   children   Leaf[]       @relation("LeafChildren")
   tags       LeafTag[]
   bookmarks  Bookmark[]
+  editHistory EditHistory[]
+}
+
+/// Histórico de edições de folhas e cadernos
+model EditHistory {
+  id         String   @id @default(uuid())
+  userId     String
+  leafId     String?
+  notebookId String?
+  action     String   // "created", "updated", "deleted", "restored"
+  fieldName  String?  // "title", "content", "summary", etc.
+  oldValue   String?
+  newValue   String?
+  createdAt  DateTime @default(now())
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leaf     Leaf?     @relation(fields: [leafId], references: [id], onDelete: Cascade)
+  notebook Notebook? @relation(fields: [notebookId], references: [id], onDelete: Cascade)
 }
 
 /// Tags para classificação de folhas
@@ -91,7 +113,7 @@ model Bookmark {
   leafId    String?
   notebookId String?
   title     String
-  path      String   // URL path para navegação
+  path      String
   createdAt DateTime @default(now())
 
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)

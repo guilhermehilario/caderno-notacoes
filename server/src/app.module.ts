@@ -9,6 +9,7 @@ import { FlashcardsModule } from './flashcards/flashcards.module';
 import { StudyModule } from './study/study.module';
 import { TagsModule } from './tags/tags.module';
 import { BookmarksModule } from './bookmarks/bookmarks.module';
+import { TrashModule } from './trash/trash.module';
 import { AppController } from './app.controller';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
@@ -26,6 +27,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     StudyModule,
     TagsModule,
     BookmarksModule,
+    TrashModule,
   ],
   controllers: [AppController],
   providers: [

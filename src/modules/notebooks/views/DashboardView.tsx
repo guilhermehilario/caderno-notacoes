@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, BookOpen, ChevronRight, Loader2 } from 'lucide-react';
+import { Plus, BookOpen, ChevronRight, Loader2, ChevronUp, ChevronDown, TrendingUp } from 'lucide-react';
 import { useNotebooks } from '../hooks/useNotebooks';
 import { CreateNotebookSchema } from '../types';
 import type { CreateNotebookInput } from '../types';
@@ -26,6 +26,7 @@ export const DashboardView: React.FC = () => {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState(COLORS[0]);
+  const [progressCollapsed, setProgressCollapsed] = useState(false);
 
   const {
     register,
@@ -65,8 +66,45 @@ export const DashboardView: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto flex flex-col gap-8">
-      {/* Study Progress Summary */}
-      <StudyProgressSummary />
+      {/* Study Progress Summary - Collapsible */}
+      <div className="flex flex-col bg-white dark:bg-dark-900 rounded-3xl border border-slate-100 dark:border-dark-800 overflow-hidden transition-all duration-300">
+        {/* Collapse Header */}
+        <button
+          type="button"
+          onClick={() => setProgressCollapsed(!progressCollapsed)}
+          className="flex items-center justify-between px-6 py-4 hover:bg-slate-50 dark:hover:bg-dark-800/50 transition-colors cursor-pointer"
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-brand-50 dark:bg-brand-950/20 flex items-center justify-center text-brand-500">
+              <TrendingUp className="h-4.5 w-4.5" />
+            </div>
+            <h2 className="text-lg font-heading font-bold text-slate-800 dark:text-dark-50 m-0">
+              Progresso dos Estudos
+            </h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400 dark:text-dark-400">
+              {progressCollapsed ? 'Expandir' : 'Minimizar'}
+            </span>
+            {progressCollapsed ? (
+              <ChevronDown className="h-4 w-4 text-slate-400 transition-transform duration-300" />
+            ) : (
+              <ChevronUp className="h-4 w-4 text-slate-400 transition-transform duration-300" />
+            )}
+          </div>
+        </button>
+
+        {/* Progress Content with animation */}
+        <div
+          className={`transition-all duration-300 ease-in-out overflow-hidden ${
+            progressCollapsed ? 'max-h-0 opacity-0' : 'max-h-[2000px] opacity-100'
+          }`}
+        >
+          <div className="px-6 pb-6">
+            <StudyProgressSummary />
+          </div>
+        </div>
+      </div>
 
       {/* Top Welcome Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

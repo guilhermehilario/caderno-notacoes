@@ -16,6 +16,9 @@ import {
   Play,
   Check,
   AlertTriangle,
+  BookmarkIcon,
+  Plus,
+  Clock,
 } from "lucide-react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -25,12 +28,19 @@ import { Annotation } from "../extensions/Annotation";
 import { useLeaf } from "../hooks/useLeaves";
 import { useLeafFlashcards } from "../../study/hooks/useFlashcards";
 import { useDebounce } from "../../../hooks/useDebounce";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import studyService from "../../study/services/studyService";
+import { useCreateBookmark, useDeleteBookmark, useBookmarks } from "../../bookmarks/hooks/useBookmarks";
+import { TagSelector } from "../components/TagSelector/TagSelector";
 import { Card } from "../../../components/ui/Card.tsx";
 import { Button } from "../../../components/ui/Button.tsx";
+import { Modal } from "../../../components/ui/Modal.tsx";
+import { Input } from "../../../components/ui/Input.tsx";
 import { EditorToolbar } from "../components/EditorToolbar";
 import { EditorBubbleMenu } from "../components/EditorBubbleMenu";
 import { AnnotationSidebar } from "../components/AnnotationSidebar";
 import { EditorSkeleton } from "../components/EditorSkeleton";
+import type { Leaf } from "../types";
 
 const EditorView: React.FC = () => {
   const { notebookId, leafId } = useParams<{
@@ -50,6 +60,59 @@ const EditorView: React.FC = () => {
   } = useLeaf(leafId || "");
 
   const { data: flashcards = [] } = useLeafFlashcards(leafId || "");
+  const { data: allBookmarks = [] } = useBookmarks();
+  const createBookmark = useCreateBookmark();
+  const deleteBookmark = useDeleteBookmark();
+  const queryClient = useQueryClient();
+
+  // Check if current page is bookmarked
+  const isBookmarked = allBookmarks.some((b) => b.leafId === leafId);
+
+  const toggleBookmark = async () => {
+    if (!leaf || !leafId) return;
+    if (isBookmarked) {
+      const existing = allBookmarks.find((b) => b.leafId === leafId);
+      if (existing) await deleteBookmark.mutateAsync(existing.id);
+    } else {
+      await createBookmark.mutateAsync({
+        leafId,
+        title: leaf.title,
+        path: `/notebooks/${notebookId}/leaves/${leafId}`,
+      });
+    }
+    queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
+  };
+
+  // ── Flashcard manual form ──
+  const [isFlashcardModalOpen, setIsFlashcardModalOpen] = useState(false);
+  const [manualFront, setManualFront] = useState("");
+  const [manualBack, setManualBack] = useState("");
+
+  const createFlashcardMutation = useMutation({
+    mutationFn: (data: { leafId: string; notebookId: string; front: string; back: string }) =>
+      studyService.createFlashcard(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leaves", leafId, "flashcards"] });
+      queryClient.invalidateQueries({ queryKey: ["notebook-flashcards", notebookId] });
+      setIsFlashcardModalOpen(false);
+      setManualFront("");
+      setManualBack("");
+    },
+  });
+
+  const handleCreateManualFlashcard = async () => {
+    if (!leafId || !notebookId || !manualFront.trim() || !manualBack.trim()) return;
+    try {
+      await createFlashcardMutation.mutateAsync({
+        leafId,
+        notebookId,
+        front: manualFront.trim(),
+        back: manualBack.trim(),
+      });
+    } catch (err) {
+      console.error("Erro ao criar flashcard manual:", err);
+    }
+  };
 
   // Estados locais para inputs editáveis do usuário
   const [localTitle, setLocalTitle] = useState("");
@@ -62,21 +125,12 @@ const EditorView: React.FC = () => {
     "summary" | "flashcards" | "annotations"
   >("summary");
 
-  // Ref que garante que a sincronização servidor→editor ocorra APENAS UMA VEZ
-  // (no carregamento inicial da folha). Depois disso, o editor é a fonte da
-  // verdade local e nenhum re-render subsequente sobrescreve o conteúdo.
   const initialSyncDoneRef = useRef(false);
-  // Ref para rastrear o conteúdo que veio do servidor (usado para
-  // distinguir atualizações do servidor de edições do usuário)
   const serverContentRef = useRef("");
-  // Rastreia o último estado salvo no servidor para evitar saves duplicados
   const lastSavedRef = useRef({ title: "", content: "" });
-  // Garante que o autosave seja serializado e não force re-renderes em cascata
   const saveInFlightRef = useRef(false);
-  // Controla se o conteúdo já foi sincronizado com o editor
   const [contentReady, setContentReady] = useState(false);
 
-  // Dispara abertura do AnnotationPopover para editar anotação existente
   const [annotationText, setAnnotationText] = useState<string | null>(null);
   const annotationTrigger = useMemo(
     () => (annotationText ? { text: annotationText } : null),
@@ -84,13 +138,10 @@ const EditorView: React.FC = () => {
   );
   const pendingRAF = useRef<number | null>(null);
 
-  // Estabiliza a lista de extensões
   const extensions = useMemo(
     () => [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
-        // TipTap v3 StarterKit já inclui 'link' e 'underline' — desabilitamos
-        // para evitar o erro "Duplicate extension names found: ['link', 'underline']"
         link: false,
         underline: false,
       }),
@@ -103,13 +154,9 @@ const EditorView: React.FC = () => {
     [],
   );
 
-  // Callback de atualização do editor: só atualiza estados LOCAIS
-  // se a mudança veio do USUÁRIO (não do servidor)
   const handleEditorUpdate = useCallback(
     ({ editor: ed }: { editor: Editor }) => {
       const currentHtml = ed.getHTML();
-      // Se o conteúdo atual do editor é IGUAL ao último conteúdo recebido do servidor,
-      // significa que foi o próprio sync effect que disparou este update — ignoramos.
       if (currentHtml === serverContentRef.current) return;
 
       setLocalContent(currentHtml);
@@ -118,7 +165,6 @@ const EditorView: React.FC = () => {
     [],
   );
 
-  // Editor TipTap
   const editor = useEditor({
     extensions,
     content: "",
@@ -126,7 +172,7 @@ const EditorView: React.FC = () => {
     immediatelyRender: false,
   });
 
-  // Detecta clique em texto anotado e abre o popover para edição
+  // Click handler for annotations
   useEffect(() => {
     if (!editor) return;
     const editorDom = editor.view?.dom as HTMLElement | undefined;
@@ -161,14 +207,7 @@ const EditorView: React.FC = () => {
     };
   }, [editor]);
 
-  // ═══════════════════════════════════════════════════════════════
-  //  Sincronização ÚNICA: servidor → editor (apenas no 1º load)
-  // ═══════════════════════════════════════════════════════════════
-  // Este efeito executa UMA VEZ quando a leaf carrega e o editor
-  // está pronto. Depois disso, `initialSyncDoneRef` é setado para
-  // `true` e NUNCA MAIS o conteúdo do servidor sobrescreve o editor,
-  // eliminando o loop de renderização que causava "Maximum update
-  // depth exceeded" e o flicker de tela.
+  // Single sync effect
   useEffect(() => {
     if (!leaf || !editor || initialSyncDoneRef.current) return;
 
@@ -176,7 +215,6 @@ const EditorView: React.FC = () => {
     serverContentRef.current = serverContent;
     lastSavedRef.current = { title: leaf.title, content: serverContent };
 
-    // Aplica o conteúdo do servidor no editor TipTap
     editor.commands.setContent(serverContent);
 
     startTransition(() => {
@@ -189,12 +227,11 @@ const EditorView: React.FC = () => {
     initialSyncDoneRef.current = true;
   }, [leaf, editor]);
 
-  // Debounce para autosave
   const debouncedTitle = useDebounce(localTitle, 1500);
   const debouncedContent = useDebounce(localContent, 1500);
   const debouncedRawText = useDebounce(localRawText, 1500);
 
-  // Efeito de auto-salvamento — discreto, sem bloquear a UI
+  // Auto-save effect
   useEffect(() => {
     if (!initialSyncDoneRef.current) return;
 
@@ -253,8 +290,6 @@ const EditorView: React.FC = () => {
     }
   };
 
-  // Exibe o skeleton enquanto carrega OU até o conteúdo estar sincronizado no editor
-  // `leaf && !contentReady`: só espera o sync se a leaf existe (se for 404, cai no "not found")
   if (isLoadingLeaf || (leaf && !contentReady)) {
     return <EditorSkeleton />;
   }
@@ -277,12 +312,41 @@ const EditorView: React.FC = () => {
     <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
       {/* Top Header */}
       <div className="flex items-center justify-between border-b border-slate-150 dark:border-dark-800 pb-3 flex-shrink-0">
-        <RouterLink
-          to={`/notebooks/${notebookId}`}
-          className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-dark-300 hover:text-brand-500 transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" /> Voltar para o Caderno
-        </RouterLink>
+        <div className="flex items-center gap-3">
+          <RouterLink
+            to={`/notebooks/${notebookId}`}
+            className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-dark-300 hover:text-brand-500 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" /> Voltar para o Caderno
+          </RouterLink>
+
+          {/* Tag Selector */}
+          {leafId && <TagSelector leafId={leafId} />}
+
+          {/* Bookmark Button */}
+          <button
+            type="button"
+            onClick={toggleBookmark}
+            className={`flex items-center gap-1.5 text-xs font-semibold transition-colors py-1 px-2 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 cursor-pointer ${
+              isBookmarked
+                ? "text-amber-500"
+                : "text-slate-500 dark:text-dark-300 hover:text-amber-500"
+            }`}
+            title={isBookmarked ? "Remover marcador" : "Adicionar marcador"}
+          >
+            <BookmarkIcon
+              className={`h-3.5 w-3.5 ${isBookmarked ? "fill-amber-500" : ""}`}
+            />
+            {isBookmarked ? "Marcado" : "Marcar"}
+          </button>
+        </div>
+
+        {leaf && (
+          <span className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-dark-400">
+            <Clock className="h-3 w-3" />
+            {new Date(leaf.updatedAt).toLocaleString('pt-BR')}
+          </span>
+        )}
 
         {/* ── Indicador de salvamento discreto e animado ── */}
         <div className="flex items-center gap-2 text-xs font-semibold select-none">
@@ -438,6 +502,17 @@ const EditorView: React.FC = () => {
 
             {activeTab === "flashcards" && (
               <div className="flex flex-col h-full gap-4">
+                {/* Botão para criar flashcard manual */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsFlashcardModalOpen(true)}
+                  leftIcon={<Plus className="h-3.5 w-3.5" />}
+                  className="w-full"
+                >
+                  Criar Flashcard Manual
+                </Button>
+
                 {flashcards.length === 0 ? (
                   <div className="flex-grow flex flex-col items-center justify-center text-center p-6 gap-4">
                     <div className="w-12 h-12 rounded-2xl bg-brand-50 dark:bg-brand-950/20 flex items-center justify-center text-brand-500">
@@ -445,11 +520,10 @@ const EditorView: React.FC = () => {
                     </div>
                     <div>
                       <h4 className="font-heading font-bold text-slate-800 dark:text-dark-100">
-                        Nenhum flashcard gerado
+                        Nenhum flashcard
                       </h4>
                       <p className="text-xs text-slate-500 dark:text-dark-350 mt-1 max-w-xs">
-                        Deixe que a inteligência artificial formule perguntas e
-                        respostas de fixação baseadas nos seus textos.
+                        Crie flashcards manualmente ou gere por IA.
                       </p>
                     </div>
                     <Button
@@ -516,6 +590,61 @@ const EditorView: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal: Criar Flashcard Manual */}
+      <Modal
+        isOpen={isFlashcardModalOpen}
+        onClose={() => {
+          setIsFlashcardModalOpen(false);
+          setManualFront("");
+          setManualBack("");
+        }}
+        title="Criar Flashcard Manual"
+        footer={
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsFlashcardModalOpen(false);
+                setManualFront("");
+                setManualBack("");
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleCreateManualFlashcard}
+              disabled={
+                !manualFront.trim() || !manualBack.trim() || createFlashcardMutation.isPending
+              }
+            >
+              {createFlashcardMutation.isPending ? "Criando..." : "Criar Flashcard"}
+            </Button>
+          </div>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          <Input
+            label="Pergunta (Frente)"
+            placeholder="Ex: Qual a fórmula do teorema de Pitágoras?"
+            value={manualFront}
+            onChange={(e) => setManualFront(e.target.value)}
+          />
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-slate-700 dark:text-dark-200">
+              Resposta (Verso)
+            </label>
+            <textarea
+              placeholder="Ex: a² + b² = c², onde c é a hipotenusa..."
+              rows={4}
+              value={manualBack}
+              onChange={(e) => setManualBack(e.target.value)}
+              className="w-full px-3.5 py-2.5 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-xl text-slate-900 dark:text-dark-50 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900/20 focus:border-brand-500 transition-all duration-200 resize-none"
+            />
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

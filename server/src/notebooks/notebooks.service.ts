@@ -1,20 +1,24 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { EditHistoryService } from '../trash/edit-history.service';
 
 @Injectable()
 export class NotebooksService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly editHistory: EditHistoryService,
+  ) {}
 
   async findAll(userId: string) {
     const notebooks = await this.prisma.notebook.findMany({
-      where: { userId },
+      where: { userId, deletedAt: null },
       orderBy: { createdAt: 'desc' },
     });
 
     const enriched = await Promise.all(
       notebooks.map(async (nb) => {
         const leavesCount = await this.prisma.leaf.count({
-          where: { notebookId: nb.id },
+          where: { notebookId: nb.id, deletedAt: null },
         });
         return { ...nb, leavesCount };
       }),
@@ -25,13 +29,13 @@ export class NotebooksService {
 
   async findOne(id: string, userId: string) {
     const notebook = await this.prisma.notebook.findFirst({
-      where: { id, userId },
+      where: { id, userId, deletedAt: null },
     });
 
     if (!notebook) throw new NotFoundException('Caderno não encontrado');
 
     const leavesCount = await this.prisma.leaf.count({
-      where: { notebookId: id },
+      where: { notebookId: id, deletedAt: null },
     });
 
     return { ...notebook, leavesCount };
@@ -48,6 +52,13 @@ export class NotebooksService {
         description: data.description ?? null,
         color: data.color,
       },
+    });
+
+    await this.editHistory.record(userId, {
+      notebookId: notebook.id,
+      action: 'created',
+      fieldName: 'title',
+      newValue: data.title,
     });
 
     return { ...notebook, leavesCount: 0 };
@@ -73,21 +84,20 @@ export class NotebooksService {
       },
     });
 
+    if (data.title !== undefined && data.title !== notebook.title) {
+      await this.editHistory.record(userId, {
+        notebookId: id,
+        action: 'updated',
+        fieldName: 'title',
+        oldValue: notebook.title,
+        newValue: data.title,
+      });
+    }
+
     const leavesCount = await this.prisma.leaf.count({
-      where: { notebookId: id },
+      where: { notebookId: id, deletedAt: null },
     });
 
     return { ...updated, leavesCount };
-  }
-
-  async remove(id: string, userId: string): Promise<void> {
-    const notebook = await this.prisma.notebook.findFirst({
-      where: { id, userId },
-    });
-
-    if (!notebook) throw new NotFoundException('Caderno não encontrado');
-
-    // Cascade delete via Prisma relations (onDelete: Cascade)
-    await this.prisma.notebook.delete({ where: { id } });
   }
 }

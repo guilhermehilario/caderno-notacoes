@@ -13,7 +13,6 @@ export function useNotebooks() {
   const createMutation = useMutation({
     mutationFn: (data: CreateNotebookInput) => notebookService.createNotebook(data),
     onSuccess: (newNotebook) => {
-      // ⚡ Adiciona o novo caderno ao cache cirurgicamente — sem refetch
       queryClient.setQueryData<Notebook[]>(['notebooks'], (old) => [...(old || []), newNotebook]);
     },
   });
@@ -39,22 +38,10 @@ export function useNotebook(id: string) {
   const updateMutation = useMutation({
     mutationFn: (data: UpdateNotebookInput) => notebookService.updateNotebook(id, data),
     onSuccess: (updatedNotebook) => {
-      // ⚡ Atualiza o cache individual + substitui na lista — sem refetch
       queryClient.setQueryData(['notebooks', id], updatedNotebook);
       queryClient.setQueryData<Notebook[]>(['notebooks'], (old) =>
         old?.map((n) => (n.id === id ? updatedNotebook : n)) ?? old,
       );
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: () => notebookService.deleteNotebook(id),
-    onSuccess: () => {
-      // ⚡ Remove o caderno do cache + limpa cache individual — sem refetch
-      queryClient.setQueryData<Notebook[]>(['notebooks'], (old) =>
-        old?.filter((n) => n.id !== id) ?? old,
-      );
-      queryClient.removeQueries({ queryKey: ['notebooks', id] });
     },
   });
 
@@ -64,7 +51,5 @@ export function useNotebook(id: string) {
     error: notebookQuery.error,
     updateNotebook: updateMutation.mutateAsync,
     isUpdating: updateMutation.isPending,
-    deleteNotebook: deleteMutation.mutateAsync,
-    isDeleting: deleteMutation.isPending,
   };
 }

@@ -6,10 +6,14 @@ import {
 } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
+import { EditHistoryService } from '../trash/edit-history.service';
 
 @Injectable()
 export class LeavesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly editHistory: EditHistoryService,
+  ) {}
 
   private async verifyLeafOwnership(leafId: string, userId: string) {
     const leaf = await this.prisma.leaf.findUnique({
@@ -27,18 +31,20 @@ export class LeavesService {
 
   async findByNotebook(notebookId: string, userId: string) {
     const notebook = await this.prisma.notebook.findFirst({
-      where: { id: notebookId, userId },
+      where: { id: notebookId, userId, deletedAt: null },
     });
     if (!notebook) throw new NotFoundException('Caderno não encontrado');
 
     return this.prisma.leaf.findMany({
-      where: { notebookId, parentId: null },
+      where: { notebookId, parentId: null, deletedAt: null },
       orderBy: { createdAt: 'desc' },
       include: {
         children: {
+          where: { deletedAt: null },
           orderBy: { createdAt: 'desc' },
           include: {
             children: {
+              where: { deletedAt: null },
               orderBy: { createdAt: 'desc' },
             },
           },
@@ -57,7 +63,6 @@ export class LeavesService {
       throw new NotFoundException(error);
     }
 
-    // Include parent info for breadcrumb navigation
     const leafWithParents = await this.prisma.leaf.findUnique({
       where: { id: leafId },
       include: {
@@ -68,6 +73,7 @@ export class LeavesService {
           },
         },
         children: {
+          where: { deletedAt: null },
           orderBy: { createdAt: 'desc' },
         },
         tags: {
@@ -93,7 +99,6 @@ export class LeavesService {
       throw new BadRequestException('Título muito longo (máx. 100 caracteres)');
     }
 
-    // If parentId is provided, verify it belongs to the same notebook
     if (data.parentId) {
       const parentLeaf = await this.prisma.leaf.findFirst({
         where: { id: data.parentId, notebookId },
@@ -101,7 +106,7 @@ export class LeavesService {
       if (!parentLeaf) throw new NotFoundException('Folha pai não encontrada');
     }
 
-    return this.prisma.leaf.create({
+    const leaf = await this.prisma.leaf.create({
       data: {
         notebookId,
         title: data.title,
@@ -110,6 +115,16 @@ export class LeavesService {
         parentId: data.parentId || null,
       },
     });
+
+    await this.editHistory.record(userId, {
+      leafId: leaf.id,
+      notebookId,
+      action: 'created',
+      fieldName: 'title',
+      newValue: data.title,
+    });
+
+    return leaf;
   }
 
   async update(
@@ -129,7 +144,7 @@ export class LeavesService {
       throw new NotFoundException(error);
     }
 
-    return this.prisma.leaf.update({
+    const updated = await this.prisma.leaf.update({
       where: { id: leafId },
       data: {
         ...(data.title !== undefined && { title: data.title }),
@@ -139,17 +154,19 @@ export class LeavesService {
         ...(data.parentId !== undefined && { parentId: data.parentId }),
       },
     });
-  }
 
-  async remove(leafId: string, userId: string): Promise<void> {
-    const { leaf, error } = await this.verifyLeafOwnership(leafId, userId);
-    if (error) {
-      if (error === 'Acesso negado') throw new ForbiddenException(error);
-      throw new NotFoundException(error);
+    if (data.title !== undefined && data.title !== leaf?.title) {
+      await this.editHistory.record(userId, {
+        leafId,
+        notebookId: leaf!.notebookId,
+        action: 'updated',
+        fieldName: 'title',
+        oldValue: leaf?.title,
+        newValue: data.title,
+      });
     }
 
-    // Cascade delete via Prisma relations (onDelete: Cascade)
-    await this.prisma.leaf.delete({ where: { id: leafId } });
+    return updated;
   }
 
   async generateSummary(leafId: string, userId: string) {
@@ -167,6 +184,14 @@ export class LeavesService {
     const updated = await this.prisma.leaf.update({
       where: { id: leafId },
       data: { summary: summaryText },
+    });
+
+    await this.editHistory.record(userId, {
+      leafId,
+      notebookId: leaf!.notebookId,
+      action: 'updated',
+      fieldName: 'summary',
+      newValue: summaryText,
     });
 
     return { summary: updated.summary! };
@@ -220,6 +245,14 @@ export class LeavesService {
       await this.prisma.flashcard.create({ data: card });
     }
 
+    await this.editHistory.record(userId, {
+      leafId,
+      notebookId: leaf!.notebookId,
+      action: 'created',
+      fieldName: 'flashcards',
+      newValue: `${mockCards.length} flashcards gerados por IA`,
+    });
+
     return mockCards;
   }
 
@@ -243,7 +276,7 @@ export class LeavesService {
     if (!notebook) throw new NotFoundException('Caderno não encontrado');
 
     const allLeaves = await this.prisma.leaf.findMany({
-      where: { notebookId },
+      where: { notebookId, deletedAt: null },
       orderBy: { createdAt: 'desc' },
       include: {
         tags: {

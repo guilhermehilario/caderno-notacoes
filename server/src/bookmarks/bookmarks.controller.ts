@@ -48,12 +48,5 @@ export class BookmarksController {
     return this.bookmarksService.remove(id, userId);
   }
 
-  @Get('bookmarks/check/:leafId?/:notebookId?')
-  checkBookmark(
-    @Param('leafId') leafId: string | undefined,
-    @Param('notebookId') notebookId: string | undefined,
-    @CurrentUser('id') userId: string,
-  ) {
-    return this.bookmarksService.isBookmarked(userId, leafId, notebookId);
-  }
+
 }

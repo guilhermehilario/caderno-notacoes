@@ -3,12 +3,9 @@ import {
   Get,
   Post,
   Put,
-  Delete,
   Body,
   Param,
   UseGuards,
-  HttpCode,
-  HttpStatus,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -21,7 +18,6 @@ import { UpdateLeafDto } from './dto/update-leaf.dto';
 export class LeavesController {
   constructor(private readonly leavesService: LeavesService) {}
 
-  // ── Leaves scoped to a notebook ──
   @Get('notebooks/:notebookId/leaves')
   findByNotebook(
     @Param('notebookId') notebookId: string,
@@ -47,7 +43,6 @@ export class LeavesController {
     return this.leavesService.getLeafHierarchy(notebookId, userId);
   }
 
-  // ── Individual leaf operations ──
   @Get('leaves/:leafId')
   findOne(@Param('leafId') leafId: string, @CurrentUser('id') userId: string) {
     return this.leavesService.findOne(leafId, userId);
@@ -62,13 +57,6 @@ export class LeavesController {
     return this.leavesService.update(leafId, userId, dto);
   }
 
-  @Delete('leaves/:leafId')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('leafId') leafId: string, @CurrentUser('id') userId: string) {
-    return this.leavesService.remove(leafId, userId);
-  }
-
-  // ── AI features ──
   @Post('leaves/:leafId/summary')
   generateSummary(
     @Param('leafId') leafId: string,

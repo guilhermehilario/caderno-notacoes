@@ -13,6 +13,10 @@ import {
   User as UserIcon,
   GraduationCap,
   LayoutDashboard,
+  BookmarkIcon,
+  ArrowLeft,
+  Tags,
+  Trash2,
 } from 'lucide-react';
 import { Button } from '../ui/Button.tsx';
 
@@ -36,6 +40,52 @@ export const AppLayout: React.FC = () => {
     navigate('/login');
   };
 
+  // ── Breadcrumb navigation ──
+  const breadcrumbs = useMemo(() => {
+    const path = location.pathname;
+    const parts: { label: string; path: string }[] = [];
+
+    if (path === '/dashboard' || path === '/') {
+      return [];
+    }
+
+    parts.push({ label: 'Dashboard', path: '/dashboard' });
+
+    // Parse notebook route
+    const notebookMatch = path.match(/\/notebooks\/([^/]+)/);
+    if (notebookMatch) {
+      parts.push({ label: 'Caderno', path: notebookMatch[0] });
+    }
+
+    // Parse leaf route
+    const leafMatch = path.match(/\/notebooks\/([^/]+)\/leaves\/([^/]+)/);
+    if (leafMatch) {
+      parts.push({ label: 'Folha', path: leafMatch[0] });
+    }
+
+    // Parse study route
+    if (path.includes('/study')) {
+      parts.push({ label: 'Estudar', path: path });
+    }
+
+    // Parse tags management
+    if (path.includes('/tags')) {
+      parts.push({ label: 'Tags', path: '/tags' });
+    }
+
+    // Parse bookmarks
+    if (path.includes('/bookmarks')) {
+      parts.push({ label: 'Marcadores', path: '/bookmarks' });
+    }
+
+    // Parse trash
+    if (path.includes('/trash')) {
+      parts.push({ label: 'Lixeira', path: '/trash' });
+    }
+
+    return parts;
+  }, [location.pathname]);
+
   // ── Título dinâmico do header baseado na rota atual ──
   const pageTitle = useMemo(() => {
     const path = location.pathname;
@@ -43,6 +93,9 @@ export const AppLayout: React.FC = () => {
     if (path.includes('/study')) return 'Estudar Flashcards';
     if (path.includes('/leaves/')) return 'Editor de Anotação';
     if (path.includes('/notebooks/')) return 'Caderno';
+    if (path.includes('/tags')) return 'Gerenciar Tags';
+    if (path.includes('/bookmarks')) return 'Páginas Marcadas';
+    if (path.includes('/trash')) return 'Lixeira';
     return 'Dashboard';
   }, [location.pathname]);
 
@@ -52,12 +105,21 @@ export const AppLayout: React.FC = () => {
     if (path === '/dashboard' || path === '/') return LayoutDashboard;
     if (path.includes('/study')) return GraduationCap;
     if (path.includes('/leaves/') || path.includes('/notebooks/')) return BookOpen;
+    if (path.includes('/tags')) return Tags;
+    if (path.includes('/bookmarks')) return BookmarkIcon;
+    if (path.includes('/trash')) return Trash2;
     return LayoutDashboard;
   }, [location.pathname]);
 
+  // Nav items: Dashboard, Lixeira (entre), Marcadores
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/trash', label: 'Lixeira', icon: Trash2 },
+    { path: '/bookmarks', label: 'Marcadores', icon: BookmarkIcon },
   ];
+
+  // Determine if we should show back button
+  const showBackButton = breadcrumbs.length > 0;
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-50 text-slate-900 dark:bg-dark-950 dark:text-dark-50 transition-colors duration-200">
@@ -176,6 +238,15 @@ export const AppLayout: React.FC = () => {
             >
               <Menu className="h-5 w-5" />
             </button>
+            {showBackButton && (
+              <button
+                onClick={() => navigate(-1)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 text-slate-600 dark:text-dark-200 transition-colors cursor-pointer"
+                title="Voltar"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+            )}
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-brand-50 dark:bg-brand-950/20 flex items-center justify-center text-brand-500">
                 <PageIcon className="h-5 w-5" />
@@ -184,12 +255,33 @@ export const AppLayout: React.FC = () => {
                 <h2 className="text-xl font-heading font-bold text-slate-800 dark:text-dark-50 leading-tight">
                   {pageTitle}
                 </h2>
-                <p className="text-xs text-slate-400 dark:text-dark-400 leading-tight hidden sm:block">
-                  {location.pathname === '/dashboard' ? 'Visão geral dos seus estudos' :
-                   location.pathname.includes('/study') ? 'Revise seus flashcards com repetição espaçada' :
-                   location.pathname.includes('/leaves/') ? 'Edite suas anotações' :
-                   'Gerencie suas anotações e estudos'}
-                </p>
+                {/* Breadcrumbs */}
+                {breadcrumbs.length > 0 && (
+                  <nav className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-dark-400">
+                    {breadcrumbs.map((crumb, idx) => (
+                      <React.Fragment key={crumb.path}>
+                        {idx > 0 && <span className="text-slate-300 dark:text-dark-600">/</span>}
+                        <Link
+                          to={crumb.path}
+                          className="hover:text-brand-500 transition-colors truncate max-w-[120px]"
+                        >
+                          {crumb.label}
+                        </Link>
+                      </React.Fragment>
+                    ))}
+                  </nav>
+                )}
+                {breadcrumbs.length === 0 && (
+                  <p className="text-xs text-slate-400 dark:text-dark-400 leading-tight hidden sm:block">
+                    {location.pathname === '/dashboard' ? 'Visão geral dos seus estudos' :
+                     location.pathname.includes('/study') ? 'Revise seus flashcards com repetição espaçada' :
+                     location.pathname.includes('/leaves/') ? 'Edite suas anotações' :
+                     location.pathname.includes('/tags') ? 'Gerencie suas tags' :
+                     location.pathname.includes('/bookmarks') ? 'Acesse suas páginas favoritas' :
+                     location.pathname.includes('/trash') ? 'Itens excluídos aparecem aqui por 15 dias' :
+                     'Gerencie suas anotações e estudos'}
+                  </p>
+                )}
               </div>
             </div>
           </div>

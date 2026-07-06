@@ -3,12 +3,9 @@ import {
   Get,
   Post,
   Put,
-  Delete,
   Body,
   Param,
   UseGuards,
-  HttpCode,
-  HttpStatus,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -46,11 +43,5 @@ export class NotebooksController {
     @Body() dto: UpdateNotebookDto,
   ) {
     return this.notebooksService.update(id, userId, dto);
-  }
-
-  @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id') id: string, @CurrentUser('id') userId: string) {
-    return this.notebooksService.remove(id, userId);
   }
 }

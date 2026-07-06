@@ -9,8 +9,9 @@ import DashboardView from '../modules/notebooks/views/DashboardView.tsx';
 import NotebookView from '../modules/notebooks/views/NotebookView.tsx';
 import EditorView from '../modules/leaves/views/EditorView.tsx';
 import StudyView from '../modules/study/views/StudyView.tsx';
-
-/* ─── Componentes nomeados para cada rota ─────────────────────────── */
+import TagsManagementView from '../modules/tags/views/TagsManagementView.tsx';
+import BookmarksView from '../modules/bookmarks/views/BookmarksView.tsx';
+import TrashView from '../modules/trash/views/TrashView.tsx';
 
 /* ─── Componentes nomeados e memoizados para cada rota ────────────── */
 
@@ -52,6 +53,18 @@ const LeafEditorPage = memo(function LeafEditorPage() {
 
 const StudyPage = memo(function StudyPage() {
   return <StudyView />;
+});
+
+const TagsPage = memo(function TagsPage() {
+  return <TagsManagementView />;
+});
+
+const BookmarksPage = memo(function BookmarksPage() {
+  return <BookmarksView />;
+});
+
+const TrashPage = memo(function TrashPage() {
+  return <TrashView />;
 });
 
 const DefaultRedirect = memo(function DefaultRedirect() {
@@ -96,6 +109,18 @@ const router = createBrowserRouter([
       {
         path: 'notebooks/:notebookId/study',
         element: <StudyPage />,
+      },
+      {
+        path: 'tags',
+        element: <TagsPage />,
+      },
+      {
+        path: 'bookmarks',
+        element: <BookmarksPage />,
+      },
+      {
+        path: 'trash',
+        element: <TrashPage />,
       },
     ],
   },
