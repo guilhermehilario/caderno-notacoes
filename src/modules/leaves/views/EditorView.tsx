@@ -159,6 +159,7 @@ const EditorView: React.FC = () => {
 
       setLocalContent(currentHtml);
       setLocalRawText(ed.getText());
+      editorStatus.setSaveStatus("saving");
     },
     [],
   );
@@ -250,6 +251,7 @@ const EditorView: React.FC = () => {
       saveInFlightRef.current = true;
       startTransition(() => {
         setSaveStatus("saving");
+        editorStatus.setSaveStatus("saving");
       });
 
       void updateLeaf({
@@ -355,6 +357,7 @@ const EditorView: React.FC = () => {
             onChange={(e) => {
               setLocalTitle(e.target.value);
               setSaveStatus("saving");
+              editorStatus.setSaveStatus("saving");
             }}
             placeholder="Título da folha..."
             className="w-full text-2xl font-heading font-extrabold tracking-tight bg-transparent text-slate-900 dark:text-dark-50 placeholder-slate-350 focus:outline-none mb-6 border-b border-transparent focus:border-slate-100 dark:focus:border-dark-800 pb-2 transition-all"

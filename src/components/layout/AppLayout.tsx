@@ -145,12 +145,13 @@ export const AppLayout: React.FC = () => {
     return LayoutDashboard;
   }, [location.pathname]);
 
-  // Nav items: Dashboard, Lixeira (entre), Marcadores
+  // Nav items: Dashboard, Marcadores
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/trash', label: 'Lixeira', icon: Trash2 },
     { path: '/bookmarks', label: 'Marcadores', icon: BookmarkIcon },
   ];
+
+  const isTrashActive = location.pathname.startsWith('/trash');
 
   // ── Editor status info (saveStatus + lastUpdate) ──
   const editorStatus = useEditorStatusStore();
@@ -163,7 +164,7 @@ export const AppLayout: React.FC = () => {
           }`}
       >
         {/* Header da Sidebar */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-slate-50 dark:border-dark-800/60">
+        <div className="h-16 flex items-center justify-between px-3 border-b border-slate-50 dark:border-dark-800/60">
           <Link to="/dashboard" className="flex items-center gap-3 overflow-hidden select-none">
             <div className="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center shadow-md shadow-brand-500/20 flex-shrink-0">
               <Brain className="h-6 w-6 text-white" />
@@ -198,14 +199,26 @@ export const AppLayout: React.FC = () => {
           })}
         </nav>
 
-        {/* Footer da Sidebar (Configurações / Modo Escuro / Usuário) */}
+        {/* Footer da Sidebar (Lixeira / Configurações / Modo Escuro / Usuário) */}
         <div className="p-3 border-t border-slate-50 dark:border-dark-800/60 flex flex-col gap-2">
+          {/* Botão Lixeira */}
+          <Link
+            to="/trash"
+            className={`flex items-center gap-3.5 px-3.5 py-3 rounded-xl font-medium transition-all duration-200 select-none ${isTrashActive
+                ? 'bg-brand-500 text-white shadow-md shadow-brand-500/10'
+                : 'text-slate-650 hover:bg-slate-100 dark:text-dark-300 dark:hover:bg-dark-800/60'
+              }`}
+          >
+            <Trash2 className="h-5 w-5 flex-shrink-0" />
+            {!sidebarCollapsed && <span className="truncate">Lixeira</span>}
+          </Link>
+
           {/* Botão de alternar tema */}
           <Button
             variant="ghost"
             size="sm"
             onClick={toggleTheme}
-            className="w-full justify-start py-2.5"
+            className="w-full justify-start py-2.5 px-3.5 gap-3.5"
             leftIcon={theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           >
             {!sidebarCollapsed && (theme === 'dark' ? 'Modo Claro' : 'Modo Escuro')}
@@ -241,7 +254,7 @@ export const AppLayout: React.FC = () => {
             variant="ghost"
             size="sm"
             onClick={handleLogout}
-            className="w-full justify-start text-rose-500 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 py-2.5"
+            className="w-full justify-start text-rose-500 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 py-2.5 px-3.5 gap-3.5"
             leftIcon={<LogOut className="h-5 w-5" />}
           >
             {!sidebarCollapsed && 'Sair da conta'}
