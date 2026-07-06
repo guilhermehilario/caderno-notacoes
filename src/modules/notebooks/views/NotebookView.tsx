@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
-  ArrowLeft,
   Plus,
   FileText,
   Play,
@@ -35,6 +34,7 @@ import { Card } from '../../../components/ui/Card.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
 import { Modal } from '../../../components/ui/Modal.tsx';
 import { Input } from '../../../components/ui/Input.tsx';
+import { useEditorStatusStore } from '../../../store/editorStatusStore';
 import { NOTEBOOK_COLORS, DEFAULT_NOTEBOOK_COLOR } from '../../notebooks/constants';
 import { TAG_COLOR_MAP, getTagColor as getTagColorUtil } from '../../tags/constants';
 
@@ -56,6 +56,18 @@ export const NotebookView: React.FC = () => {
   const deleteBookmark = useDeleteBookmark();
   const softDeleteNotebook = useSoftDeleteNotebook();
   const queryClient = useQueryClient();
+  const editorStatus = useEditorStatusStore();
+
+  // Update editor status store when notebook loads
+  useEffect(() => {
+    if (notebook) {
+      editorStatus.show();
+      editorStatus.setLastUpdate(notebook.updatedAt.toString());
+    }
+    return () => {
+      editorStatus.hide();
+    };
+  }, [notebook?.id, notebook?.updatedAt]);
 
   // Check if notebook is bookmarked
   const isBookmarked = allBookmarks.some((b) => b.notebookId === notebookId);
@@ -201,14 +213,6 @@ export const NotebookView: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto flex flex-col gap-6">
-      {/* Voltar */}
-      <Link
-        to="/dashboard"
-        className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-dark-300 hover:text-brand-500 transition-colors self-start"
-      >
-        <ArrowLeft className="h-4 w-4" /> Voltar para os Cadernos
-      </Link>
-
       {/* Cabeçalho do Caderno */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 p-6 rounded-3xl bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 relative overflow-hidden">
         {/* Faixa lateral colorida */}

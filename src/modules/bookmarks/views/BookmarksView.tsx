@@ -1,7 +1,7 @@
 import React from 'react';
 import { useBookmarks, useDeleteBookmark } from '../hooks/useBookmarks';
-import { BookmarkIcon, Trash2, Loader2, ArrowLeft, BookOpen, FileText } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { BookmarkIcon, Trash2, Loader2, BookOpen, FileText } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
 
@@ -29,13 +29,6 @@ export const BookmarksView: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto flex flex-col gap-6">
-      <Link
-        to="/dashboard"
-        className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-dark-300 hover:text-brand-500 transition-colors self-start"
-      >
-        <ArrowLeft className="h-4 w-4" /> Voltar ao Dashboard
-      </Link>
-
       <div>
         <h1 className="text-3xl font-heading font-extrabold tracking-tight text-slate-900 dark:text-dark-50">
           Páginas Marcadas

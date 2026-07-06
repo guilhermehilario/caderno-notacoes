@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTrash, useRestoreNotebook, useRestoreLeaf, usePermanentDeleteNotebook, usePermanentDeleteLeaf, useCleanTrash } from '../hooks/useTrash';
-import { Trash2, RotateCcw, Loader2, ArrowLeft, BookOpen, FileText, AlertTriangle, Clock, XCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Trash2, RotateCcw, Loader2, BookOpen, FileText, AlertTriangle, Clock, XCircle } from 'lucide-react';
 import { Card } from '../../../components/ui/Card.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
 import type { TrashItem } from '../services/trashService';
@@ -75,13 +74,6 @@ export const TrashView: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto flex flex-col gap-6">
-      <Link
-        to="/dashboard"
-        className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-dark-300 hover:text-brand-500 transition-colors self-start"
-      >
-        <ArrowLeft className="h-4 w-4" /> Voltar ao Dashboard
-      </Link>
-
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-heading font-extrabold tracking-tight text-slate-900 dark:text-dark-50 flex items-center gap-3">

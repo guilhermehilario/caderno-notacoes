@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useTags, useCreateTag, useUpdateTag, useDeleteTag } from '../hooks/useTags';
-import { Plus, Edit2, Trash2, Loader2, ArrowLeft, TagIcon } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Plus, Edit2, Trash2, Loader2, TagIcon } from 'lucide-react';
 import { Card } from '../../../components/ui/Card.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
 import { Modal } from '../../../components/ui/Modal.tsx';
@@ -65,13 +64,6 @@ export const TagsManagementView: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto flex flex-col gap-6">
-      <Link
-        to="/dashboard"
-        className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-dark-300 hover:text-brand-500 transition-colors self-start"
-      >
-        <ArrowLeft className="h-4 w-4" /> Voltar ao Dashboard
-      </Link>
-
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-heading font-extrabold tracking-tight text-slate-900 dark:text-dark-50">

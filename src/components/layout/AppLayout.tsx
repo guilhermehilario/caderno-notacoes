@@ -2,6 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../modules/auth/hooks/useAuth';
 import { useUIStore } from '../../store/uiStore';
+import { useEditorStatusStore } from '../../store/editorStatusStore';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Brain,
@@ -18,6 +19,9 @@ import {
   ArrowLeft,
   Tags,
   Trash2,
+  Clock,
+  Check,
+  AlertTriangle,
 } from 'lucide-react';
 import { Button } from '../ui/Button.tsx';
 
@@ -148,8 +152,8 @@ export const AppLayout: React.FC = () => {
     { path: '/bookmarks', label: 'Marcadores', icon: BookmarkIcon },
   ];
 
-  // Determine if we should show back button
-  const showBackButton = breadcrumbs.length > 0;
+  // ── Editor status info (saveStatus + lastUpdate) ──
+  const editorStatus = useEditorStatusStore();
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-50 text-slate-900 dark:bg-dark-950 dark:text-dark-50 transition-colors duration-200">
@@ -268,7 +272,7 @@ export const AppLayout: React.FC = () => {
             >
               <Menu className="h-5 w-5" />
             </button>
-            {showBackButton && (
+            {breadcrumbs.length > 0 && (
               <button
                 onClick={() => navigate(-1)}
                 className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 text-slate-600 dark:text-dark-200 transition-colors cursor-pointer"
@@ -315,6 +319,46 @@ export const AppLayout: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Editor Status Info (save + last update) */}
+          {editorStatus.visible && (
+            <div className="flex items-center gap-3 text-xs font-semibold">
+              {/* Last update timestamp */}
+              {editorStatus.lastUpdate && (
+                <span className="flex items-center gap-1.5 text-slate-400 dark:text-dark-400">
+                  <Clock className="h-3.5 w-3.5" />
+                  {new Date(editorStatus.lastUpdate).toLocaleString('pt-BR')}
+                </span>
+              )}
+
+              {/* Save status */}
+              {editorStatus.saveStatus === 'saving' && (
+                <span className="flex items-center gap-1.5 text-brand-500">
+                  <span className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-brand-500 animate-pulse" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-brand-400 animate-pulse [animation-delay:150ms]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-brand-300 animate-pulse [animation-delay:300ms]" />
+                  </span>
+                  Salvando
+                </span>
+              )}
+              {editorStatus.saveStatus === 'saved' && (
+                <span className="flex items-center gap-1 text-emerald-500 animate-in fade-in duration-300">
+                  <Check className="h-3.5 w-3.5" /> Salvo
+                </span>
+              )}
+              {editorStatus.saveStatus === 'error' && (
+                <span className="flex items-center gap-1 text-rose-500 animate-in fade-in duration-300">
+                  <AlertTriangle className="h-3.5 w-3.5" /> Falha ao salvar
+                </span>
+              )}
+              {editorStatus.saveStatus === 'idle' && editorStatus.lastUpdate && (
+                <span className="flex items-center gap-1 text-emerald-500">
+                  <Check className="h-3.5 w-3.5" /> Salvo
+                </span>
+              )}
+            </div>
+          )}
         </header>
 
         {/* Content Outlet */}

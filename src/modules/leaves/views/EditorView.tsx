@@ -10,12 +10,9 @@ import {
 import type { Editor } from "@tiptap/react";
 import { useParams, useNavigate, Link as RouterLink } from "react-router-dom";
 import {
-  ArrowLeft,
   Sparkles,
   HelpCircle,
   Play,
-  Check,
-  AlertTriangle,
   BookmarkIcon,
   Plus,
   Clock,
@@ -32,6 +29,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import studyService from "../../study/services/studyService";
 import { useCreateBookmark, useDeleteBookmark, useBookmarks } from "../../bookmarks/hooks/useBookmarks";
 import { TagSelector } from "../components/TagSelector/TagSelector";
+import { useEditorStatusStore } from "../../../store/editorStatusStore";
 import { Card } from "../../../components/ui/Card.tsx";
 import { Button } from "../../../components/ui/Button.tsx";
 import { Modal } from "../../../components/ui/Modal.tsx";
@@ -64,6 +62,7 @@ const EditorView: React.FC = () => {
   const createBookmark = useCreateBookmark();
   const deleteBookmark = useDeleteBookmark();
   const queryClient = useQueryClient();
+  const editorStatus = useEditorStatusStore();
 
   // Check if current page is bookmarked
   const isBookmarked = allBookmarks.some((b) => b.leafId === leafId);
@@ -225,6 +224,13 @@ const EditorView: React.FC = () => {
     });
 
     initialSyncDoneRef.current = true;
+    // Atualiza o store para exibir info na barra superior
+    editorStatus.show();
+    editorStatus.setLastUpdate(
+      typeof leaf.updatedAt === 'string'
+        ? leaf.updatedAt
+        : leaf.updatedAt.toISOString()
+    );
   }, [leaf, editor]);
 
   const debouncedTitle = useDebounce(localTitle, 1500);
@@ -257,13 +263,16 @@ const EditorView: React.FC = () => {
             title: debouncedTitle,
             content: debouncedContent,
           };
+          editorStatus.setLastUpdate(new Date().toISOString());
           startTransition(() => {
             setSaveStatus("saved");
+            editorStatus.setSaveStatus("saved");
           });
         })
         .catch(() => {
           startTransition(() => {
             setSaveStatus("error");
+            editorStatus.setSaveStatus("error");
           });
         })
         .finally(() => {
@@ -313,13 +322,6 @@ const EditorView: React.FC = () => {
       {/* Top Header */}
       <div className="flex items-center justify-between border-b border-slate-150 dark:border-dark-800 pb-3 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <RouterLink
-            to={`/notebooks/${notebookId}`}
-            className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-dark-300 hover:text-brand-500 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" /> Voltar para o Caderno
-          </RouterLink>
-
           {/* Tag Selector */}
           {leafId && <TagSelector leafId={leafId} />}
 
@@ -347,40 +349,6 @@ const EditorView: React.FC = () => {
             {new Date(leaf.updatedAt).toLocaleString('pt-BR')}
           </span>
         )}
-
-        {/* ── Indicador de salvamento discreto e animado ── */}
-        <div className="flex items-center gap-2 text-xs font-semibold select-none">
-          {saveStatus === "saved" && (
-            <span
-              key="saved"
-              className="flex items-center gap-1 text-emerald-500 animate-in fade-in duration-300"
-            >
-              <Check className="h-3.5 w-3.5" />
-              <span>Salvo</span>
-            </span>
-          )}
-          {saveStatus === "saving" && (
-            <span
-              key="saving"
-              className="flex items-center gap-1.5 text-brand-500"
-            >
-              <span className="flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-brand-500 animate-pulse" />
-                <span className="h-1.5 w-1.5 rounded-full bg-brand-400 animate-pulse [animation-delay:150ms]" />
-                <span className="h-1.5 w-1.5 rounded-full bg-brand-300 animate-pulse [animation-delay:300ms]" />
-              </span>
-              Salvando
-            </span>
-          )}
-          {saveStatus === "error" && (
-            <span
-              key="error"
-              className="flex items-center gap-1 text-rose-500 animate-in fade-in duration-300"
-            >
-              <AlertTriangle className="h-3.5 w-3.5" /> Falha ao salvar
-            </span>
-          )}
-        </div>
       </div>
 
       {/* Split Pane Editor / IA */}
