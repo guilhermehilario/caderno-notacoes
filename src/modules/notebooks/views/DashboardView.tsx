@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, BookOpen, ChevronRight, Loader2, ChevronUp, ChevronDown, TrendingUp } from 'lucide-react';
+import { Plus, BookOpen, BarChart3 } from 'lucide-react';
 import { useNotebooks } from '../hooks/useNotebooks';
 import { CreateNotebookSchema } from '../types';
 import type { CreateNotebookInput } from '../types';
-import { Card } from '../../../components/ui/Card.tsx';
+import { NotebookCard } from '../components/NotebookCard.tsx';
+import { StudyProgressSummaryModal } from '../../../modules/study/components/StudyProgressSummaryModal.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
 import { Modal } from '../../../components/ui/Modal.tsx';
 import { Input } from '../../../components/ui/Input.tsx';
@@ -14,15 +14,13 @@ import { TextArea } from '../../../components/ui/TextArea.tsx';
 import { ColorPicker } from '../../../components/ui/ColorPicker.tsx';
 import { EmptyState } from '../../../components/ui/EmptyState.tsx';
 import { LoadingScreen } from '../../../components/ui/LoadingScreen.tsx';
-import { StudyProgressSummary } from '../../../modules/study/components/StudyProgressSummary.tsx';
 import { NOTEBOOK_COLORS } from '../../notebooks/constants';
 
 export const DashboardView: React.FC = () => {
   const { notebooks, isLoading, createNotebook } = useNotebooks();
-  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState(NOTEBOOK_COLORS[0]);
-  const [progressCollapsed, setProgressCollapsed] = useState(false);
+  const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
 
   const {
     register,
@@ -58,45 +56,11 @@ export const DashboardView: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto flex flex-col gap-8">
-      {/* Study Progress Summary - Collapsible */}
-      <div className="flex flex-col bg-white dark:bg-dark-900 rounded-3xl border border-slate-100 dark:border-dark-800 overflow-hidden transition-all duration-300">
-        {/* Collapse Header */}
-        <button
-          type="button"
-          onClick={() => setProgressCollapsed(!progressCollapsed)}
-          className="flex items-center justify-between px-6 py-4 hover:bg-slate-50 dark:hover:bg-dark-800/50 transition-colors cursor-pointer"
-        >
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-brand-50 dark:bg-brand-950/20 flex items-center justify-center text-brand-500">
-              <TrendingUp className="h-4.5 w-4.5" />
-            </div>
-            <h2 className="text-lg font-heading font-bold text-slate-800 dark:text-dark-50 m-0">
-              Progresso dos Estudos
-            </h2>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400 dark:text-dark-400">
-              {progressCollapsed ? 'Expandir' : 'Minimizar'}
-            </span>
-            {progressCollapsed ? (
-              <ChevronDown className="h-4 w-4 text-slate-400 transition-transform duration-300" />
-            ) : (
-              <ChevronUp className="h-4 w-4 text-slate-400 transition-transform duration-300" />
-            )}
-          </div>
-        </button>
-
-        {/* Progress Content with animation */}
-        <div
-          className={`transition-all duration-300 ease-in-out overflow-hidden ${
-            progressCollapsed ? 'max-h-0 opacity-0' : 'max-h-[2000px] opacity-100'
-          }`}
-        >
-          <div className="px-6 pb-6">
-            <StudyProgressSummary />
-          </div>
-        </div>
-      </div>
+      {/* Progresso dos Estudos Modal */}
+      <StudyProgressSummaryModal
+        isOpen={isProgressModalOpen}
+        onClose={() => setIsProgressModalOpen(false)}
+      />
 
       {/* Top Welcome Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -108,13 +72,22 @@ export const DashboardView: React.FC = () => {
             Gerencie seus materiais universitários e crie resumos de forma organizada
           </p>
         </div>
-        <Button
-          onClick={() => setIsModalOpen(true)}
-          leftIcon={<Plus className="h-5 w-5" />}
-          className="shadow-md shadow-brand-500/10 self-start md:self-auto"
-        >
-          Novo Caderno
-        </Button>
+        <div className="flex items-center gap-3 self-start md:self-auto">
+          <Button
+            variant="outline"
+            onClick={() => setIsProgressModalOpen(true)}
+            leftIcon={<BarChart3 className="h-4 w-4" />}
+          >
+            Progresso
+          </Button>
+          <Button
+            onClick={() => setIsModalOpen(true)}
+            leftIcon={<Plus className="h-5 w-5" />}
+            className="shadow-md shadow-brand-500/10"
+          >
+            Novo Caderno
+          </Button>
+        </div>
       </div>
 
       {/* Notebook Grid */}
@@ -136,40 +109,7 @@ export const DashboardView: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {notebooks.map((notebook) => (
-            <Card
-              key={notebook.id}
-              hoverable
-              onClick={() => navigate(`/notebooks/${notebook.id}`)}
-              className="flex flex-col justify-between group h-52 relative overflow-hidden border border-slate-100 dark:border-dark-800"
-            >
-              {/* Color Tag Bar */}
-              <div
-                className="absolute top-0 left-0 right-0 h-2"
-                style={{ backgroundColor: notebook.color }}
-              />
-
-              <div className="mt-2 flex flex-col gap-2">
-                <div className="flex items-center gap-2.5">
-                  <div
-                    className="w-3.5 h-3.5 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: notebook.color }}
-                  />
-                  <h3 className="text-lg font-heading font-bold truncate text-slate-800 dark:text-dark-50 group-hover:text-brand-500 transition-colors">
-                    {notebook.title}
-                  </h3>
-                </div>
-                <p className="text-sm text-slate-500 dark:text-dark-350 line-clamp-3">
-                  {notebook.description || 'Nenhuma descrição adicionada.'}
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between border-t border-slate-50 dark:border-dark-800/60 pt-4 text-xs font-semibold text-slate-400 dark:text-dark-400">
-                <span>{notebook.leavesCount} folhas anotadas</span>
-                <span className="flex items-center gap-1 text-brand-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  Acessar <ChevronRight className="h-3.5 w-3.5" />
-                </span>
-              </div>
-            </Card>
+            <NotebookCard key={notebook.id} notebook={notebook} />
           ))}
         </div>
       )}
