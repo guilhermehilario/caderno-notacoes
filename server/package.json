@@ -4,9 +4,10 @@
   "description": "API NestJS do Revisa Aula",
   "main": "dist/main.js",
   "scripts": {
+    "postinstall": "prisma generate",
     "build": "nest build",
     "start": "node dist/main.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/main.ts",
+    "dev": "prisma generate && ts-node-dev --respawn --transpile-only src/main.ts",
     "start:dev": "nest build --watch",
     "start:prod": "node dist/main.js",
     "test": "jest",

@@ -7,6 +7,7 @@ import {
 import * as crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { EditHistoryService } from '../trash/edit-history.service';
+import { buildTree } from '../prisma/utils/build-tree.util';
 
 @Injectable()
 export class LeavesService {
@@ -289,21 +290,3 @@ export class LeavesService {
   }
 }
 
-function buildTree(leaves: any[]): any[] {
-  const map = new Map<string, any>();
-  const roots: any[] = [];
-
-  leaves.forEach((leaf) => {
-    map.set(leaf.id, { ...leaf, children: [] });
-  });
-
-  leaves.forEach((leaf) => {
-    if (leaf.parentId && map.has(leaf.parentId)) {
-      map.get(leaf.parentId).children.push(map.get(leaf.id));
-    } else if (!leaf.parentId) {
-      roots.push(map.get(leaf.id));
-    }
-  });
-
-  return roots;
-}
