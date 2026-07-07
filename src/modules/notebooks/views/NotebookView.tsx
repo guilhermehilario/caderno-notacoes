@@ -30,6 +30,7 @@ import { NOTEBOOK_COLORS } from '../../notebooks/constants';
 import { LeafCard } from '../components/LeafCard';
 import { NotebookHeader } from '../components/NotebookHeader';
 import { FlashcardsSection } from '../components/FlashcardsSection';
+import { ConfirmDialog } from '../../../components/ui/ConfirmDialog.tsx';
 
 export const NotebookView: React.FC = () => {
   const { notebookId } = useParams<{ notebookId: string }>();
@@ -159,14 +160,15 @@ export const NotebookView: React.FC = () => {
     }
   };
 
-  const handleDeleteNotebook = async () => {
-    if (window.confirm('Mover este caderno para a lixeira? Ele ficará lá por 15 dias antes de ser excluído permanentemente.')) {
-      try {
-        await softDeleteNotebook.mutateAsync(notebookId || '');
-        navigate('/dashboard');
-      } catch (error) {
-        console.error('Erro ao mover para lixeira:', error);
-      }
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+
+  const handleDeleteNotebookConfirm = async () => {
+    try {
+      await softDeleteNotebook.mutateAsync(notebookId || '');
+      setConfirmDeleteOpen(false);
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Erro ao mover para lixeira:', error);
     }
   };
 
@@ -197,7 +199,7 @@ export const NotebookView: React.FC = () => {
         isBookmarked={isBookmarked}
         onToggleBookmark={toggleBookmark}
         onOpenEditModal={handleOpenEditModal}
-        onDelete={handleDeleteNotebook}
+        onDelete={() => setConfirmDeleteOpen(true)}
       />
 
       {/* Listagem de Folhas */}
@@ -446,7 +448,19 @@ export const NotebookView: React.FC = () => {
       </Modal>
     </div>
   );
-};
 
+      {/* Confirmar exclusão */}
+      <ConfirmDialog
+        isOpen={confirmDeleteOpen}
+        onClose={() => setConfirmDeleteOpen(false)}
+        onConfirm={handleDeleteNotebookConfirm}
+        title="Mover para lixeira?"
+        message="Mover este caderno para a lixeira? Ele ficará lá por 15 dias antes de ser excluído permanentemente."
+        confirmLabel="Mover para Lixeira"
+        variant="danger"
+      />
+    </div>
+  );
+};
 
 export default NotebookView;

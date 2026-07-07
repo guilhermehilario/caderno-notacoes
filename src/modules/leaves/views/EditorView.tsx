@@ -18,7 +18,6 @@ import { useLeaf } from "../hooks/useLeaves";
 import { useLeafFlashcards } from "../../study/hooks/useFlashcards";
 import { useDebounce } from "../../../hooks/useDebounce";
 import { useQueryClient } from "@tanstack/react-query";
-import leafService from "../services/leafService";
 import { useToggleBookmark } from "../../bookmarks/hooks/useToggleBookmark";
 import { useSoftDeleteLeaf } from "../../trash/hooks/useTrash";
 import { useEditorStatusStore } from "../../../store/editorStatusStore";
@@ -29,6 +28,7 @@ import { EditorSkeleton } from "../components/EditorSkeleton";
 import { EditorHeader } from "../components/EditorHeader";
 import { SubLeavesSection } from "../components/SubLeavesSection";
 import { ManualFlashcardModal } from "../components/ManualFlashcardModal";
+import { ConfirmDialog } from "../../../components/ui/ConfirmDialog.tsx";
 import type { Leaf } from "../types";
 
 const EditorView: React.FC = () => {
@@ -90,15 +90,16 @@ const EditorView: React.FC = () => {
     }
   };
 
-  const handleDelete = async () => {
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+
+  const handleDeleteConfirm = async () => {
     if (!leafId) return;
-    if (window.confirm(`Mover "${leaf?.title}" para a lixeira?`)) {
-      try {
-        await softDeleteLeaf.mutateAsync(leafId);
-        navigate(`/notebooks/${notebookId}`);
-      } catch (err) {
-        console.error("Erro ao excluir folha:", err);
-      }
+    try {
+      await softDeleteLeaf.mutateAsync(leafId);
+      setConfirmDeleteOpen(false);
+      navigate(`/notebooks/${notebookId}`);
+    } catch (err) {
+      console.error("Erro ao excluir folha:", err);
     }
   };
 
@@ -312,7 +313,7 @@ const EditorView: React.FC = () => {
         editorExpanded={editorExpanded}
         onToggleBookmark={toggleBookmark}
         onArchiveToggle={handleArchiveToggle}
-        onDelete={handleDelete}
+        onDelete={() => setConfirmDeleteOpen(true)}
         onToggleAiSidebar={() => setAiSidebarOpen(!aiSidebarOpen)}
         onToggleExpand={handleExpandToggle}
       />
@@ -380,6 +381,17 @@ const EditorView: React.FC = () => {
         onClose={() => setIsFlashcardModalOpen(false)}
         leafId={leafId || ""}
         notebookId={notebookId || ""}
+      />
+
+      {/* Confirmar exclusão */}
+      <ConfirmDialog
+        isOpen={confirmDeleteOpen}
+        onClose={() => setConfirmDeleteOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Mover para lixeira?"
+        message={`Mover "${leaf?.title}" para a lixeira?`}
+        confirmLabel="Mover para Lixeira"
+        variant="danger"
       />
     </div>
   );

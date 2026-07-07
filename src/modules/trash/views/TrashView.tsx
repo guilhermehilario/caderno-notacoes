@@ -4,6 +4,7 @@ import { useTrash, useRestoreNotebook, useRestoreLeaf, usePermanentDeleteNoteboo
 import { Trash2, RotateCcw, Loader2, BookOpen, FileText, AlertTriangle, Clock, XCircle } from 'lucide-react';
 import { Card } from '../../../components/ui/Card.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
+import { ConfirmDialog } from '../../../components/ui/ConfirmDialog.tsx';
 import type { TrashItem } from '../services/trashService';
 
 export const TrashView: React.FC = () => {
@@ -34,23 +35,27 @@ export const TrashView: React.FC = () => {
     }
   };
 
-  const handlePermanentDelete = async (item: TrashItem) => {
-    if (!window.confirm(`Excluir permanentemente "${item.title}"? Esta ação não pode ser desfeita.`)) return;
+  const [confirmDeleteItem, setConfirmDeleteItem] = useState<TrashItem | null>(null);
+  const [confirmCleanOpen, setConfirmCleanOpen] = useState(false);
+
+  const handlePermanentDeleteConfirm = async () => {
+    if (!confirmDeleteItem) return;
     try {
-      if (item.type === 'notebook') {
-        await permanentDeleteNotebook.mutateAsync(item.id);
+      if (confirmDeleteItem.type === 'notebook') {
+        await permanentDeleteNotebook.mutateAsync(confirmDeleteItem.id);
       } else {
-        await permanentDeleteLeaf.mutateAsync(item.id);
+        await permanentDeleteLeaf.mutateAsync(confirmDeleteItem.id);
       }
+      setConfirmDeleteItem(null);
     } catch (err) {
       console.error('Erro ao excluir permanentemente:', err);
     }
   };
 
-  const handleCleanTrash = async () => {
-    if (!window.confirm('Excluir permanentemente todos os itens com mais de 15 dias na lixeira?')) return;
+  const handleCleanTrashConfirm = async () => {
     try {
       await cleanTrash.mutateAsync();
+      setConfirmCleanOpen(false);
     } catch (err) {
       console.error('Erro ao limpar lixeira:', err);
     }
@@ -87,7 +92,7 @@ export const TrashView: React.FC = () => {
         {allItems.length > 0 && (
           <Button
             variant="outline"
-            onClick={handleCleanTrash}
+            onClick={() => setConfirmCleanOpen(true)}
             disabled={cleanTrash.isPending}
             className="text-rose-500 border-rose-200 hover:bg-rose-50"
           >
@@ -161,7 +166,7 @@ export const TrashView: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => handlePermanentDelete(item)}
+                    onClick={() => setConfirmDeleteItem(item)}
                     className="p-2 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors cursor-pointer"
                     title="Excluir permanentemente"
                   >
@@ -173,6 +178,28 @@ export const TrashView: React.FC = () => {
           })}
         </div>
       )}
+
+      {/* Confirmar exclusão permanente */}
+      <ConfirmDialog
+        isOpen={confirmDeleteItem !== null}
+        onClose={() => setConfirmDeleteItem(null)}
+        onConfirm={handlePermanentDeleteConfirm}
+        title="Excluir permanentemente?"
+        message={confirmDeleteItem ? `Excluir permanentemente "${confirmDeleteItem.title}"? Esta ação não pode ser desfeita.` : ''}
+        confirmLabel="Excluir Permanentemente"
+        variant="danger"
+      />
+
+      {/* Confirmar limpeza da lixeira */}
+      <ConfirmDialog
+        isOpen={confirmCleanOpen}
+        onClose={() => setConfirmCleanOpen(false)}
+        onConfirm={handleCleanTrashConfirm}
+        title="Limpar lixeira?"
+        message="Excluir permanentemente todos os itens com mais de 15 dias na lixeira?"
+        confirmLabel="Limpar Lixeira"
+        variant="danger"
+      />
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import { useState, memo } from "react";
+import { useState, memo, useId } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Editor } from "@tiptap/react";
 import {
@@ -7,10 +7,12 @@ import {
   Play,
   Plus,
   Upload,
+  MessageSquareText,
 } from "lucide-react";
 import { AnnotationSidebar } from "./AnnotationSidebar";
 import { Card } from "../../../components/ui/Card.tsx";
 import { Button } from "../../../components/ui/Button.tsx";
+import { EmptyState } from "../../../components/ui/EmptyState.tsx";
 import type { Flashcard } from "../../study/types";
 
 interface AISidebarProps {
@@ -49,10 +51,11 @@ const AISidebarComponent: React.FC<AISidebarProps> = ({
 }) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<AiTab>("summary");
+  const uploadId = useId();
 
   return (
     <div className="w-full lg:w-[450px] flex flex-col bg-white dark:bg-dark-900 border border-slate-150 dark:border-dark-800 rounded-3xl overflow-hidden flex-shrink-0 min-h-0">
-      {/* Abas - ordenadas alfabeticamente */}
+      {/* Abas */}
       <div className="flex border-b border-slate-100 dark:border-dark-800/60 flex-shrink-0 bg-slate-50 dark:bg-dark-950/20">
         {AI_TABS.map((tab) => (
           <button
@@ -97,28 +100,21 @@ const AISidebarComponent: React.FC<AISidebarProps> = ({
                 </Button>
               </div>
             ) : (
-              <div className="flex-grow flex flex-col items-center justify-center text-center p-6 gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-brand-50 dark:bg-brand-950/20 flex items-center justify-center text-brand-500">
-                  <Sparkles className="h-6 w-6" />
-                </div>
-                <div>
-                  <h4 className="font-heading font-bold text-slate-800 dark:text-dark-100">
-                    Nenhum resumo gerado
-                  </h4>
-                  <p className="text-xs text-slate-500 dark:text-dark-350 mt-1 max-w-xs">
-                    Escreva suas anotações no editor e clique abaixo para
-                    gerar um resumo inteligente.
-                  </p>
-                </div>
-                <Button
-                  onClick={onGenerateSummary}
-                  isLoading={isGeneratingSummary}
-                  leftIcon={<Sparkles className="h-4.5 w-4.5" />}
-                  disabled={!localRawText.trim()}
-                >
-                  Gerar Resumo por IA
-                </Button>
-              </div>
+              <EmptyState
+                icon={<Sparkles className="h-6 w-6" />}
+                title="Nenhum resumo gerado"
+                description="Escreva suas anotações no editor e clique abaixo para gerar um resumo inteligente."
+                action={
+                  <Button
+                    onClick={onGenerateSummary}
+                    isLoading={isGeneratingSummary}
+                    leftIcon={<Sparkles className="h-4.5 w-4.5" />}
+                    disabled={!localRawText.trim()}
+                  >
+                    Gerar Resumo por IA
+                  </Button>
+                }
+              />
             )}
           </div>
         )}
@@ -136,27 +132,21 @@ const AISidebarComponent: React.FC<AISidebarProps> = ({
             </Button>
 
             {flashcards.length === 0 ? (
-              <div className="flex-grow flex flex-col items-center justify-center text-center p-6 gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-brand-50 dark:bg-brand-950/20 flex items-center justify-center text-brand-500">
-                  <HelpCircle className="h-6 w-6" />
-                </div>
-                <div>
-                  <h4 className="font-heading font-bold text-slate-800 dark:text-dark-100">
-                    Nenhum flashcard
-                  </h4>
-                  <p className="text-xs text-slate-500 dark:text-dark-350 mt-1 max-w-xs">
-                    Crie flashcards manualmente ou gere por IA.
-                  </p>
-                </div>
-                <Button
-                  onClick={onGenerateFlashcards}
-                  isLoading={isGeneratingFlashcards}
-                  leftIcon={<Sparkles className="h-4.5 w-4.5" />}
-                  disabled={!localRawText.trim()}
-                >
-                  Gerar Flashcards por IA
-                </Button>
-              </div>
+              <EmptyState
+                icon={<HelpCircle className="h-6 w-6" />}
+                title="Nenhum flashcard"
+                description="Crie flashcards manualmente ou gere por IA."
+                action={
+                  <Button
+                    onClick={onGenerateFlashcards}
+                    isLoading={isGeneratingFlashcards}
+                    leftIcon={<Sparkles className="h-4.5 w-4.5" />}
+                    disabled={!localRawText.trim()}
+                  >
+                    Gerar Flashcards por IA
+                  </Button>
+                }
+              />
             ) : (
               <div className="flex flex-col gap-4">
                 <div className="flex justify-between items-center">
@@ -211,32 +201,20 @@ const AISidebarComponent: React.FC<AISidebarProps> = ({
         )}
 
         {activeTab === "arquivos" && (
-          <div className="flex flex-col h-full gap-4">
-            <div className="flex-grow flex flex-col items-center justify-center text-center p-6 gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-brand-50 dark:bg-brand-950/20 flex items-center justify-center text-brand-500">
-                <Upload className="h-6 w-6" />
-              </div>
-              <div>
-                <h4 className="font-heading font-bold text-slate-800 dark:text-dark-100">
-                  Anexar Arquivos
-                </h4>
-                <p className="text-xs text-slate-500 dark:text-dark-350 mt-1 max-w-xs">
-                  Arraste arquivos ou clique para fazer upload de imagens,
-                  PDFs e documentos para esta folha.
-                </p>
-              </div>
-              <label className="cursor-pointer">
+          <EmptyState
+            icon={<Upload className="h-6 w-6" />}
+            title="Anexar Arquivos"
+            description="Arraste arquivos ou clique para fazer upload de imagens, PDFs e documentos para esta folha."
+            action={
+              <label htmlFor={uploadId} className="cursor-pointer">
                 <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-slate-300 dark:border-dark-700 text-sm font-semibold text-slate-500 dark:text-dark-300 hover:border-brand-400 hover:text-brand-500 transition-all">
                   <Upload className="h-4 w-4" />
                   Selecionar Arquivos
                 </div>
-                <input type="file" multiple className="hidden" />
+                <input id={uploadId} type="file" multiple className="hidden" />
               </label>
-              <p className="text-[10px] text-slate-400 dark:text-dark-500">
-                Upload de imagens, PDF e documentos (max 10MB)
-              </p>
-            </div>
-          </div>
+            }
+          />
         )}
       </div>
     </div>

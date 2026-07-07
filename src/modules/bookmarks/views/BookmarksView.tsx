@@ -1,19 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useBookmarks, useDeleteBookmark } from '../hooks/useBookmarks';
 import { BookmarkIcon, Trash2, Loader2, BookOpen, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
+import { ConfirmDialog } from '../../../components/ui/ConfirmDialog.tsx';
 
 export const BookmarksView: React.FC = () => {
   const { data: bookmarks = [], isLoading } = useBookmarks();
   const deleteBookmark = useDeleteBookmark();
   const navigate = useNavigate();
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Remover este marcador?')) return;
+  const handleDeleteConfirm = async () => {
+    if (!confirmDeleteId) return;
     try {
-      await deleteBookmark.mutateAsync(id);
+      await deleteBookmark.mutateAsync(confirmDeleteId);
+      setConfirmDeleteId(null);
     } catch (err) {
       console.error('Erro ao remover marcador:', err);
     }
@@ -74,7 +77,7 @@ export const BookmarksView: React.FC = () => {
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleDelete(bookmark.id);
+                  setConfirmDeleteId(bookmark.id);
                 }}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors cursor-pointer"
               >
@@ -84,6 +87,17 @@ export const BookmarksView: React.FC = () => {
           ))}
         </div>
       )}
+
+      {/* Confirmar exclusão */}
+      <ConfirmDialog
+        isOpen={confirmDeleteId !== null}
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={handleDeleteConfirm}
+        title="Remover marcador?"
+        message="Tem certeza que deseja remover este marcador?"
+        confirmLabel="Remover"
+        variant="danger"
+      />
     </div>
   );
 };

@@ -114,16 +114,3 @@ export function getAvatarUrl(style: string, seed: string): string {
   return `${AVATAR_BASE_URL}/${style}/svg?seed=${encodeURIComponent(seed)}`;
 }
 
-export function parseAvatarId(avatarId: string): { style: string; seed: string } | null {
-  if (!avatarId) return null;
-  // avatarId format: "style::seed"
-  const parts = avatarId.split('::');
-  if (parts.length === 2) {
-    return { style: parts[0], seed: parts[1] };
-  }
-  return null;
-}
-
-export function makeAvatarId(style: string, seed: string): string {
-  return `${style}::${seed}`;
-}

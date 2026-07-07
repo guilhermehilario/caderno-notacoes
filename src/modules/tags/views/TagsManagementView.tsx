@@ -4,6 +4,7 @@ import { Plus, Edit2, Trash2, Loader2, TagIcon } from 'lucide-react';
 import { Card } from '../../../components/ui/Card.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
 import { Modal } from '../../../components/ui/Modal.tsx';
+import { ConfirmDialog } from '../../../components/ui/ConfirmDialog.tsx';
 import { TAG_COLORS_ARRAY, DEFAULT_TAG_COLOR } from '../constants';
 import type { Tag } from '../types';
 
@@ -45,10 +46,13 @@ export const TagsManagementView: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir esta tag?')) return;
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  const handleDeleteConfirm = async () => {
+    if (!confirmDeleteId) return;
     try {
-      await deleteTag.mutateAsync(id);
+      await deleteTag.mutateAsync(confirmDeleteId);
+      setConfirmDeleteId(null);
     } catch (err) {
       console.error('Erro ao excluir tag:', err);
     }
@@ -126,7 +130,7 @@ export const TagsManagementView: React.FC = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleDelete(tag.id)}
+                  onClick={() => setConfirmDeleteId(tag.id)}
                   className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors cursor-pointer"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -228,6 +232,17 @@ export const TagsManagementView: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Confirmar exclusão */}
+      <ConfirmDialog
+        isOpen={confirmDeleteId !== null}
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={handleDeleteConfirm}
+        title="Excluir tag?"
+        message="Tem certeza que deseja excluir esta tag? Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        variant="danger"
+      />
     </div>
   );
 };

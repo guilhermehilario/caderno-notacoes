@@ -17,16 +17,3 @@ export const CreateTagSchema = z.object({
 
 export type CreateTagInput = z.infer<typeof CreateTagSchema>;
 
-// Re-exportado de constants.ts para manter compatibilidade
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { DEFAULT_TAGS as _DEFAULT_TAGS } from './constants';
-
-/** @deprecated Use DEFAULT_TAGS from './constants' instead */
-export const DEFAULT_TAGS_LIST = [
-  { name: 'Importante', color: '#ef4444' },
-  { name: 'Prova', color: '#f59e0b' },
-  { name: 'ProvaFinal', color: '#aa3bff' },
-  { name: 'Exercicios', color: '#10b981' },
-  { name: 'Revisao', color: '#3b82f6' },
-  { name: 'Professor', color: '#ec4899' },
-] as const;

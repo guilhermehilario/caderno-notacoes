@@ -10,89 +10,14 @@ import {
 } from "lucide-react";
 import { useStudyStats } from "../hooks/useStudyStats";
 import { Card } from "../../../components/ui/Card.tsx";
-
-interface StatCardProps {
-  icon: React.ReactNode;
-  label: string;
-  value: string | number;
-  sublabel?: string;
-  colorClass: string;
-  iconBgClass: string;
-}
-
-const StatCard: React.FC<StatCardProps> = ({
-  icon,
-  label,
-  value,
-  sublabel,
-  colorClass,
-  iconBgClass,
-}) => (
-  <div className="flex items-center gap-3.5 p-4 bg-white dark:bg-dark-900 rounded-2xl border border-slate-100 dark:border-dark-800 shadow-sm transition-all duration-200 hover:shadow-md hover:border-slate-200 dark:hover:border-dark-700">
-    <div
-      className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${iconBgClass}`}
-    >
-      <div className={colorClass}>{icon}</div>
-    </div>
-    <div className="min-w-0 flex-1">
-      <p className="text-xs font-medium text-slate-400 dark:text-dark-400 uppercase tracking-wide truncate">
-        {label}
-      </p>
-      <p className="text-xl font-heading font-extrabold text-slate-800 dark:text-dark-50 mt-0.5">
-        {value}
-      </p>
-      {sublabel && (
-        <p className="text-[11px] text-slate-400 dark:text-dark-500 mt-0.5 truncate">
-          {sublabel}
-        </p>
-      )}
-    </div>
-  </div>
-);
-
-const MiniProgressRing: React.FC<{ value: number; size?: number }> = ({
-  value,
-  size = 44,
-}) => {
-  const strokeWidth = 4;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (value / 100) * circumference;
-
-  const color =
-    value >= 70
-      ? "stroke-emerald-500"
-      : value >= 40
-        ? "stroke-amber-500"
-        : "stroke-rose-500";
-
-  return (
-    <svg width={size} height={size} className="-rotate-90 flex-shrink-0">
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        strokeWidth={strokeWidth}
-        className="fill-none stroke-slate-100 dark:stroke-dark-800"
-      />
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        strokeWidth={strokeWidth}
-        strokeDasharray={circumference}
-        strokeDashoffset={offset}
-        strokeLinecap="round"
-        className={`fill-none ${color} transition-all duration-700 ease-out`}
-      />
-    </svg>
-  );
-};
+import { EmptyState } from "../../../components/ui/EmptyState.tsx";
+import { StatCard } from "../../../components/ui/StatCard.tsx";
+import { MiniProgressRing } from "../../../components/ui/MiniProgressRing.tsx";
+import { ProgressBar } from "../../../components/ui/ProgressBar.tsx";
 
 export const StudyProgressSummary: React.FC = () => {
   const { data: stats, isLoading, isFetching, refetch } = useStudyStats();
 
-  // Refresh manual com feedback visual
   const handleRefresh = useCallback(() => {
     refetch();
   }, [refetch]);
@@ -108,20 +33,11 @@ export const StudyProgressSummary: React.FC = () => {
   if (!stats || stats.totalCards === 0) {
     return (
       <Card className="p-5 bg-gradient-to-br from-slate-50 to-white dark:from-dark-900 dark:to-dark-950 border border-slate-100 dark:border-dark-800">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-brand-50 dark:bg-brand-950/20 flex items-center justify-center text-brand-500 flex-shrink-0">
-            <BarChart3 className="h-6 w-6" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-slate-800 dark:text-dark-100">
-              Nenhum estudo registrado ainda
-            </p>
-            <p className="text-xs text-slate-500 dark:text-dark-350 mt-0.5">
-              Gere flashcards em suas folhas de anotação para começar a estudar
-              e acompanhar seu progresso aqui.
-            </p>
-          </div>
-        </div>
+        <EmptyState
+          icon={<BarChart3 className="h-6 w-6" />}
+          title="Nenhum estudo registrado ainda"
+          description="Gere flashcards em suas folhas de anotação para começar a estudar e acompanhar seu progresso aqui."
+        />
       </Card>
     );
   }
@@ -235,17 +151,11 @@ export const StudyProgressSummary: React.FC = () => {
                     <p className="text-sm font-semibold text-slate-700 dark:text-dark-200 truncate">
                       {nb.notebookTitle}
                     </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="flex-1 h-1.5 bg-slate-100 dark:bg-dark-800 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-brand-500 rounded-full transition-all duration-500"
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
-                      <span className="text-[11px] font-medium text-slate-400 dark:text-dark-400 flex-shrink-0">
-                        {nb.reviewedToday}/{nb.totalCards}
-                      </span>
-                    </div>
+                    <ProgressBar
+                      value={nb.reviewedToday}
+                      max={nb.totalCards}
+                      showLabel
+                    />
                   </div>
                 </div>
               );
