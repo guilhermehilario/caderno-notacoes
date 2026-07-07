@@ -1,0 +1,64 @@
+/* Base ProseMirror dentro do container .tiptap-content */
+.tiptap-content .ProseMirror {
+  outline: none;
+  height: 100%;
+  min-height: 300px;
+  @apply leading-relaxed text-base caret-slate-800;
+}
+
+.dark .tiptap-content .ProseMirror {
+  @apply caret-dark-100;
+}
+
+/* Paragraphs */
+.tiptap-content .ProseMirror p {
+  @apply my-2;
+}
+
+.tiptap-content .ProseMirror p:first-child {
+  @apply mt-0;
+}
+
+/* Heading 1 */
+.tiptap-content .ProseMirror h1 {
+  @apply text-3xl font-heading font-extrabold tracking-tight mb-3 mt-6 text-slate-900;
+}
+
+.dark .tiptap-content .ProseMirror h1 {
+  @apply text-dark-50;
+}
+
+/* Heading 2 */
+.tiptap-content .ProseMirror h2 {
+  @apply text-2xl font-heading font-bold tracking-tight mb-2 mt-4 text-slate-800;
+}
+
+.dark .tiptap-content .ProseMirror h2 {
+  @apply text-dark-100;
+}
+
+/* Heading 3 */
+.tiptap-content .ProseMirror h3 {
+  @apply text-xl font-heading font-semibold tracking-tight mb-1.5 mt-3 text-slate-700;
+}
+
+.dark .tiptap-content .ProseMirror h3 {
+  @apply text-dark-200;
+}
+
+/* Lists */
+.tiptap-content .ProseMirror ul {
+  @apply pl-6;
+}
+
+.tiptap-content .ProseMirror ol {
+  @apply pl-6;
+}
+
+.tiptap-content .ProseMirror li {
+  @apply my-1.5;
+}
+
+.tiptap-content .ProseMirror li p {
+  @apply my-0;
+}
