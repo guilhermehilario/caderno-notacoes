@@ -15,18 +15,30 @@ import {
   Play,
   BookmarkIcon,
   Plus,
+  PanelRightClose,
+  PanelRightOpen,
+  Trash2,
+  Archive,
+  ArchiveRestore,
+  Maximize2,
+  Minimize2,
+  Upload,
+  FileText,
+  ChevronRight,
+  Calendar,
 } from "lucide-react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Highlight from "@tiptap/extension-highlight";
 import Placeholder from "@tiptap/extension-placeholder";
 import { Annotation } from "../extensions/Annotation";
-import { useLeaf } from "../hooks/useLeaves";
+import { useLeaf, useLeaves, useArchivedLeaves } from "../hooks/useLeaves";
 import { useLeafFlashcards } from "../../study/hooks/useFlashcards";
 import { useDebounce } from "../../../hooks/useDebounce";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import studyService from "../../study/services/studyService";
-import { useCreateBookmark, useDeleteBookmark, useBookmarks } from "../../bookmarks/hooks/useBookmarks";
+import { useToggleBookmark } from "../../bookmarks/hooks/useToggleBookmark";
+import { useSoftDeleteLeaf } from "../../trash/hooks/useTrash";
 import { TagSelector } from "../components/TagSelector/TagSelector";
 import { useEditorStatusStore } from "../../../store/editorStatusStore";
 import { Card } from "../../../components/ui/Card.tsx";
@@ -37,7 +49,17 @@ import { EditorToolbar } from "../components/EditorToolbar";
 import { EditorBubbleMenu } from "../components/EditorBubbleMenu";
 import { AnnotationSidebar } from "../components/AnnotationSidebar";
 import { EditorSkeleton } from "../components/EditorSkeleton";
+import { LeafCard } from "../../notebooks/components/LeafCard";
 import type { Leaf } from "../types";
+
+const AI_TABS = [
+  { id: "annotations" as const, label: "Anotações" },
+  { id: "arquivos" as const, label: "Arquivos" },
+  { id: "flashcards" as const, label: "Flashcards" },
+  { id: "summary" as const, label: "Resumo" },
+].sort((a, b) => a.label.localeCompare(b.label));
+
+type AiTab = typeof AI_TABS[number]["id"];
 
 const EditorView: React.FC = () => {
   const { notebookId, leafId } = useParams<{
@@ -54,31 +76,52 @@ const EditorView: React.FC = () => {
     isGeneratingSummary,
     generateAIFlashcards,
     isGeneratingFlashcards,
+    archiveLeaf,
+    unarchiveLeaf,
   } = useLeaf(leafId || "");
 
+  const { leaves } = useLeaves(notebookId || "");
   const { data: flashcards = [] } = useLeafFlashcards(leafId || "");
-  const { data: allBookmarks = [] } = useBookmarks();
-  const createBookmark = useCreateBookmark();
-  const deleteBookmark = useDeleteBookmark();
+  const { isBookmarked, toggleBookmark } = useToggleBookmark({
+    type: 'leaf',
+    id: leafId || '',
+    title: leaf?.title || '',
+    path: `/notebooks/${notebookId}/leaves/${leafId}`,
+  });
+  const softDeleteLeaf = useSoftDeleteLeaf();
   const queryClient = useQueryClient();
   const editorStatus = useEditorStatusStore();
 
-  // Check if current page is bookmarked
-  const isBookmarked = allBookmarks.some((b) => b.leafId === leafId);
+  const [aiSidebarOpen, setAiSidebarOpen] = useState(true);
+  const [editorExpanded, setEditorExpanded] = useState(false);
 
-  const toggleBookmark = async () => {
-    if (!leaf || !leafId) return;
-    if (isBookmarked) {
-      const existing = allBookmarks.find((b) => b.leafId === leafId);
-      if (existing) await deleteBookmark.mutateAsync(existing.id);
-    } else {
-      await createBookmark.mutateAsync({
-        leafId,
-        title: leaf.title,
-        path: `/notebooks/${notebookId}/leaves/${leafId}`,
-      });
+  // Check if current page is archived
+  const isArchived = leaf?.archivedAt != null;
+
+  const handleArchiveToggle = async () => {
+    if (!leafId) return;
+    try {
+      if (isArchived) {
+        await unarchiveLeaf();
+      } else {
+        await archiveLeaf();
+      }
+      queryClient.invalidateQueries({ queryKey: ["leaves", leafId] });
+    } catch (err) {
+      console.error("Erro ao arquivar/desarquivar:", err);
     }
-    queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
+  };
+
+  const handleDelete = async () => {
+    if (!leafId) return;
+    if (window.confirm(`Mover "${leaf?.title}" para a lixeira?`)) {
+      try {
+        await softDeleteLeaf.mutateAsync(leafId);
+        navigate(`/notebooks/${notebookId}`);
+      } catch (err) {
+        console.error("Erro ao excluir folha:", err);
+      }
+    }
   };
 
   // ── Flashcard manual form ──
@@ -119,9 +162,7 @@ const EditorView: React.FC = () => {
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "error">(
     "saved",
   );
-  const [activeTab, setActiveTab] = useState<
-    "summary" | "flashcards" | "annotations"
-  >("summary");
+  const [activeTab, setActiveTab] = useState<AiTab>("summary");
 
   const initialSyncDoneRef = useRef(false);
   const serverContentRef = useRef("");
@@ -224,7 +265,6 @@ const EditorView: React.FC = () => {
     });
 
     initialSyncDoneRef.current = true;
-    // Atualiza o store para exibir info na barra superior
     editorStatus.show();
     editorStatus.setLastUpdate(
       typeof leaf.updatedAt === 'string'
@@ -322,7 +362,7 @@ const EditorView: React.FC = () => {
     <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
       {/* Top Header */}
       <div className="flex items-center justify-between border-b border-slate-150 dark:border-dark-800 pb-3 flex-shrink-0">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {/* Tag Selector */}
           {leafId && <TagSelector leafId={leafId} />}
 
@@ -342,15 +382,74 @@ const EditorView: React.FC = () => {
             />
             {isBookmarked ? "Marcado" : "Marcar"}
           </button>
+
+          {/* Archive Button */}
+          <button
+            type="button"
+            onClick={handleArchiveToggle}
+            className={`flex items-center gap-1.5 text-xs font-semibold transition-colors py-1 px-2 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 cursor-pointer ${
+              isArchived
+                ? "text-emerald-500"
+                : "text-slate-500 dark:text-dark-300 hover:text-emerald-500"
+            }`}
+            title={isArchived ? "Desarquivar" : "Arquivar"}
+          >
+            {isArchived ? (
+              <ArchiveRestore className="h-3.5 w-3.5" />
+            ) : (
+              <Archive className="h-3.5 w-3.5" />
+            )}
+            {isArchived ? "Arquivado" : "Arquivar"}
+          </button>
+
+          {/* Delete Button */}
+          <button
+            type="button"
+            onClick={handleDelete}
+            className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-dark-300 hover:text-rose-500 transition-colors py-1 px-2 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 cursor-pointer"
+            title="Mover para lixeira"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Excluir
+          </button>
         </div>
 
+        <div className="flex items-center gap-2">
+          {/* Toggle AI Sidebar */}
+          <button
+            type="button"
+            onClick={() => setAiSidebarOpen(!aiSidebarOpen)}
+            className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-dark-300 hover:text-brand-500 transition-colors py-1 px-2 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 cursor-pointer"
+            title={aiSidebarOpen ? "Ocultar painel IA" : "Mostrar painel IA"}
+          >
+            {aiSidebarOpen ? (
+              <PanelRightClose className="h-3.5 w-3.5" />
+            ) : (
+              <PanelRightOpen className="h-3.5 w-3.5" />
+            )}
+            IA
+          </button>
 
+          {/* Expand Editor */}
+          <button
+            type="button"
+            onClick={() => setEditorExpanded(!editorExpanded)}
+            className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-dark-300 hover:text-brand-500 transition-colors py-1 px-2 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 cursor-pointer"
+            title={editorExpanded ? "Recolher editor" : "Expandir editor"}
+          >
+            {editorExpanded ? (
+              <Minimize2 className="h-3.5 w-3.5" />
+            ) : (
+              <Maximize2 className="h-3.5 w-3.5" />
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Split Pane Editor / IA */}
       <div className="flex-grow flex flex-col lg:flex-row gap-6 min-h-0">
         {/* Lado Esquerdo - Editor */}
-        <div className="flex-grow flex flex-col bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 rounded-3xl p-6 min-w-0">
+        <div className={`flex-grow flex flex-col bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 rounded-3xl p-6 min-w-0 ${editorExpanded ? 'lg:w-full' : ''}`}>
           <input
             type="text"
             value={localTitle}
@@ -372,189 +471,248 @@ const EditorView: React.FC = () => {
             <EditorBubbleMenu editor={editor} />
             <EditorContent
               editor={editor}
-              className="w-full h-full [&_.ProseMirror]:outline-none [&_.ProseMirror]:min-h-[200px] [&_.ProseMirror]:leading-relaxed [&_.ProseMirror]:text-base [&_.ProseMirror]:caret-slate-800 [&_.dark_.ProseMirror]:caret-dark-100 [&_.ProseMirror_p]:my-2 [&_.ProseMirror_p:first-child]:mt-0 [&_.ProseMirror_h1]:text-3xl [&_.ProseMirror_h1]:font-heading [&_.ProseMirror_h1]:font-extrabold [&_.ProseMirror_h1]:tracking-tight [&_.ProseMirror_h1]:mb-3 [&_.ProseMirror_h1]:mt-6 [&_.ProseMirror_h1]:text-slate-900 [&_.dark_.ProseMirror_h1]:text-dark-50 [&_.ProseMirror_h2]:text-2xl [&_.ProseMirror_h2]:font-heading [&_.ProseMirror_h2]:font-bold [&_.ProseMirror_h2]:tracking-tight [&_.ProseMirror_h2]:mb-2 [&_.ProseMirror_h2]:mt-4 [&_.ProseMirror_h2]:text-slate-800 [&_.dark_.ProseMirror_h2]:text-dark-100 [&_.ProseMirror_h3]:text-xl [&_.ProseMirror_h3]:font-heading [&_.ProseMirror_h3]:font-semibold [&_.ProseMirror_h3]:tracking-tight [&_.ProseMirror_h3]:mb-1.5 [&_.ProseMirror_h3]:mt-3 [&_.ProseMirror_h3]:text-slate-700 [&_.dark_.ProseMirror_h3]:text-dark-200 [&_.ProseMirror_ul]:pl-6 [&_.ProseMirror_ol]:pl-6 [&_.ProseMirror_li]:my-1.5 [&_.ProseMirror_li_p]:my-0"
+              className="w-full h-full [&_.ProseMirror]:outline-none [&_.ProseMirror]:min-h-[200px] [&_.ProseMirror]:leading-relaxed [&_.ProseMirror]:text-base [&_.ProseMirror]:caret-slate-800 [&_.dark_.ProseMirror]:caret-dark-100 [&_.ProseMirror_p]:my-2 [&_.ProseMirror_p:first-child]:mt-0 [&_.ProseMirror_h1]:text-3xl [&_.ProseMirror_h1]:font-heading [&_.ProseMirror_h1]:font-extrabold [&_.ProseMirror_h1]:tracking-tight [&_.ProseMirror_h1]:mb-3 [&_.ProseMirror_h1]:mt-6 [&_.ProseMirror_h1]:text-slate-900 [&_.dark_.ProseMirror_h1]:text-dark-50 [&_.ProseMirror_h2]:text-2xl [&_.ProseMirror_h2]:font-heading [&_.ProseMirror_h2]:font-bold [&_.ProseMirror_h2]:tracking-tight [&_.ProseMirror_h2]:mb-2 [&_.ProseMirror_h2]:mt-4 [&_.ProseMirror_h2]:text-slate-800 [&_.dark_.ProseMirror_h2]:text-dark-100 [&_.ProseMirror_h3]:text-xl [&_.ProseMirror_h3]:font-heading [&_.ProseMirror_h3]:font-semibold [&_.ProseMirror_h3]:tracking-tight [&_.ProseMirror_h3]:mb-1.5 [&_.ProseMirror_h3]:mt-3 [&_.ProseMirror_h3]:text-slate-700 [&_.dark_.ProseMirror_h3]:text-dark-200 [&_.ProseMirror_ul]:pl-6 [&_.ProseMirror_ol]:pl-6 [&_.ProseMirror_li]:my-1.5[&_.ProseMirror_li_p]:my-0"
             />
           </div>
         </div>
 
-        {/* Lado Direito - Painel de IA */}
-        <div className="w-full lg:w-[450px] flex flex-col bg-white dark:bg-dark-900 border border-slate-150 dark:border-dark-800 rounded-3xl overflow-hidden flex-shrink-0 min-h-0">
-          {/* Abas */}
-          <div className="flex border-b border-slate-100 dark:border-dark-800/60 flex-shrink-0 bg-slate-50 dark:bg-dark-950/20">
-            <button
-              onClick={() => setActiveTab("summary")}
-              className={`flex-1 py-4 text-center font-heading font-bold text-sm tracking-wide transition-all border-b-2 cursor-pointer ${
-                activeTab === "summary"
-                  ? "border-brand-500 text-brand-500"
-                  : "border-transparent text-slate-500 dark:text-dark-400 hover:text-slate-700"
-              }`}
-            >
-              Resumo
-            </button>
-            <button
-              onClick={() => setActiveTab("annotations")}
-              className={`flex-1 py-4 text-center font-heading font-bold text-sm tracking-wide transition-all border-b-2 cursor-pointer ${
-                activeTab === "annotations"
-                  ? "border-brand-500 text-brand-500"
-                  : "border-transparent text-slate-500 dark:text-dark-400 hover:text-slate-700"
-              }`}
-            >
-              Anotações
-            </button>
-            <button
-              onClick={() => setActiveTab("flashcards")}
-              className={`flex-1 py-4 text-center font-heading font-bold text-sm tracking-wide transition-all border-b-2 cursor-pointer ${
-                activeTab === "flashcards"
-                  ? "border-brand-500 text-brand-500"
-                  : "border-transparent text-slate-500 dark:text-dark-400 hover:text-slate-700"
-              }`}
-            >
-              Flashcards ({flashcards.length})
-            </button>
-          </div>
-
-          {/* Painel Interno */}
-          <div className="flex-grow p-6 overflow-y-auto min-h-0">
-            {activeTab === "annotations" && (
-              <div className="flex flex-col h-full gap-4">
-                <AnnotationSidebar editor={editor} />
-              </div>
-            )}
-
-            {activeTab === "summary" && (
-              <div className="flex flex-col h-full gap-4">
-                {leaf.summary ? (
-                  <div className="flex flex-col gap-4">
-                    <div className="prose prose-slate dark:prose-invert max-w-none text-slate-700 dark:text-dark-200 text-sm leading-relaxed whitespace-pre-wrap bg-slate-50/50 dark:bg-dark-950/30 p-5 rounded-2xl border border-slate-100/50 dark:border-dark-850">
-                      {leaf.summary}
-                    </div>
-                    <Button
-                      variant="outline"
-                      onClick={handleGenerateSummary}
-                      isLoading={isGeneratingSummary}
-                      leftIcon={<Sparkles className="h-4 w-4" />}
-                      className="self-start"
-                    >
-                      Atualizar Resumo
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex-grow flex flex-col items-center justify-center text-center p-6 gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-brand-50 dark:bg-brand-950/20 flex items-center justify-center text-brand-500">
-                      <Sparkles className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <h4 className="font-heading font-bold text-slate-800 dark:text-dark-100">
-                        Nenhum resumo gerado
-                      </h4>
-                      <p className="text-xs text-slate-500 dark:text-dark-350 mt-1 max-w-xs">
-                        Escreva suas anotações no editor e clique abaixo para
-                        gerar um resumo inteligente estruturado pela nossa IA.
-                      </p>
-                    </div>
-                    <Button
-                      onClick={handleGenerateSummary}
-                      isLoading={isGeneratingSummary}
-                      leftIcon={<Sparkles className="h-4.5 w-4.5" />}
-                      disabled={!localRawText.trim()}
-                    >
-                      Gerar Resumo por IA
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === "flashcards" && (
-              <div className="flex flex-col h-full gap-4">
-                {/* Botão para criar flashcard manual */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsFlashcardModalOpen(true)}
-                  leftIcon={<Plus className="h-3.5 w-3.5" />}
-                  className="w-full"
+        {/* Lado Direito - Painel de IA (toggle) */}
+        {aiSidebarOpen && (
+          <div className="w-full lg:w-[450px] flex flex-col bg-white dark:bg-dark-900 border border-slate-150 dark:border-dark-800 rounded-3xl overflow-hidden flex-shrink-0 min-h-0">
+            {/* Abas - ordenadas alfabeticamente */}
+            <div className="flex border-b border-slate-100 dark:border-dark-800/60 flex-shrink-0 bg-slate-50 dark:bg-dark-950/20">
+              {AI_TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex-1 py-4 text-center font-heading font-bold text-sm tracking-wide transition-all border-b-2 cursor-pointer ${
+                    activeTab === tab.id
+                      ? "border-brand-500 text-brand-500"
+                      : "border-transparent text-slate-500 dark:text-dark-400 hover:text-slate-700"
+                  }`}
                 >
-                  Criar Flashcard Manual
-                </Button>
+                  {tab.id === "flashcards"
+                    ? `${tab.label} (${flashcards.length})`
+                    : tab.label}
+                </button>
+              ))}
+            </div>
 
-                {flashcards.length === 0 ? (
-                  <div className="flex-grow flex flex-col items-center justify-center text-center p-6 gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-brand-50 dark:bg-brand-950/20 flex items-center justify-center text-brand-500">
-                      <HelpCircle className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <h4 className="font-heading font-bold text-slate-800 dark:text-dark-100">
-                        Nenhum flashcard
-                      </h4>
-                      <p className="text-xs text-slate-500 dark:text-dark-350 mt-1 max-w-xs">
-                        Crie flashcards manualmente ou gere por IA.
-                      </p>
-                    </div>
-                    <Button
-                      onClick={handleGenerateFlashcards}
-                      isLoading={isGeneratingFlashcards}
-                      leftIcon={<Sparkles className="h-4.5 w-4.5" />}
-                      disabled={!localRawText.trim()}
-                    >
-                      Gerar Flashcards por IA
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-bold text-slate-400 dark:text-dark-400">
-                        {flashcards.length} cards disponíveis
-                      </span>
+            {/* Painel Interno */}
+            <div className="flex-grow p-6 overflow-y-auto min-h-0">
+              {activeTab === "annotations" && (
+                <div className="flex flex-col h-full gap-4">
+                  <AnnotationSidebar editor={editor} />
+                </div>
+              )}
+
+              {activeTab === "summary" && (
+                <div className="flex flex-col h-full gap-4">
+                  {leaf.summary ? (
+                    <div className="flex flex-col gap-4">
+                      <div className="prose prose-slate dark:prose-invert max-w-none text-slate-700 dark:text-dark-200 text-sm leading-relaxed whitespace-pre-wrap bg-slate-50/50 dark:bg-dark-950/30 p-5 rounded-2xl border border-slate-100/50 dark:border-dark-850">
+                        {leaf.summary}
+                      </div>
                       <Button
                         variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          navigate(`/notebooks/${notebookId}/study`)
-                        }
-                        leftIcon={<Play className="h-3.5 w-3.5" />}
+                        onClick={handleGenerateSummary}
+                        isLoading={isGeneratingSummary}
+                        leftIcon={<Sparkles className="h-4 w-4" />}
+                        className="self-start"
                       >
-                        Estudar Agora
+                        Atualizar Resumo
                       </Button>
                     </div>
-
-                    <div className="flex flex-col gap-3 max-h-[50vh] overflow-y-auto pr-1">
-                      {flashcards.map((card) => (
-                        <Card
-                          key={card.id}
-                          className="p-4 bg-slate-50/50 dark:bg-dark-950/30 border border-slate-100 dark:border-dark-850 flex flex-col gap-2.5"
-                        >
-                          <div className="text-xs font-bold text-brand-500 tracking-wide uppercase">
-                            Pergunta:
-                          </div>
-                          <p className="text-xs font-semibold text-slate-800 dark:text-dark-100">
-                            {card.front}
-                          </p>
-                          <div className="border-t border-dashed border-slate-200 dark:border-dark-800 pt-2 text-xs font-bold text-slate-400 dark:text-dark-450 tracking-wide uppercase">
-                            Resposta:
-                          </div>
-                          <p className="text-xs text-slate-600 dark:text-dark-300">
-                            {card.back}
-                          </p>
-                        </Card>
-                      ))}
+                  ) : (
+                    <div className="flex-grow flex flex-col items-center justify-center text-center p-6 gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-brand-50 dark:bg-brand-950/20 flex items-center justify-center text-brand-500">
+                        <Sparkles className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <h4 className="font-heading font-bold text-slate-800 dark:text-dark-100">
+                          Nenhum resumo gerado
+                        </h4>
+                        <p className="text-xs text-slate-500 dark:text-dark-350 mt-1 max-w-xs">
+                          Escreva suas anotações no editor e clique abaixo para
+                          gerar um resumo inteligente.
+                        </p>
+                      </div>
+                      <Button
+                        onClick={handleGenerateSummary}
+                        isLoading={isGeneratingSummary}
+                        leftIcon={<Sparkles className="h-4.5 w-4.5" />}
+                        disabled={!localRawText.trim()}
+                      >
+                        Gerar Resumo por IA
+                      </Button>
                     </div>
+                  )}
+                </div>
+              )}
 
-                    <Button
-                      variant="outline"
-                      onClick={handleGenerateFlashcards}
-                      isLoading={isGeneratingFlashcards}
-                      leftIcon={<Sparkles className="h-4 w-4" />}
-                    >
-                      Recriar Flashcards
-                    </Button>
+              {activeTab === "flashcards" && (
+                <div className="flex flex-col h-full gap-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsFlashcardModalOpen(true)}
+                    leftIcon={<Plus className="h-3.5 w-3.5" />}
+                    className="w-full"
+                  >
+                    Criar Flashcard Manual
+                  </Button>
+
+                  {flashcards.length === 0 ? (
+                    <div className="flex-grow flex flex-col items-center justify-center text-center p-6 gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-brand-50 dark:bg-brand-950/20 flex items-center justify-center text-brand-500">
+                        <HelpCircle className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <h4 className="font-heading font-bold text-slate-800 dark:text-dark-100">
+                          Nenhum flashcard
+                        </h4>
+                        <p className="text-xs text-slate-500 dark:text-dark-350 mt-1 max-w-xs">
+                          Crie flashcards manualmente ou gere por IA.
+                        </p>
+                      </div>
+                      <Button
+                        onClick={handleGenerateFlashcards}
+                        isLoading={isGeneratingFlashcards}
+                        leftIcon={<Sparkles className="h-4.5 w-4.5" />}
+                        disabled={!localRawText.trim()}
+                      >
+                        Gerar Flashcards por IA
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-bold text-slate-400 dark:text-dark-400">
+                          {flashcards.length} cards disponíveis
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            navigate(`/notebooks/${notebookId}/study`)
+                          }
+                          leftIcon={<Play className="h-3.5 w-3.5" />}
+                        >
+                          Estudar Agora
+                        </Button>
+                      </div>
+
+                      <div className="flex flex-col gap-3 max-h-[50vh] overflow-y-auto pr-1">
+                        {flashcards.map((card) => (
+                          <Card
+                            key={card.id}
+                            className="p-4 bg-slate-50/50 dark:bg-dark-950/30 border border-slate-100 dark:border-dark-850 flex flex-col gap-2.5"
+                          >
+                            <div className="text-xs font-bold text-brand-500 tracking-wide uppercase">
+                              Pergunta:
+                            </div>
+                            <p className="text-xs font-semibold text-slate-800 dark:text-dark-100">
+                              {card.front}
+                            </p>
+                            <div className="border-t border-dashed border-slate-200 dark:border-dark-800 pt-2 text-xs font-bold text-slate-400 dark:text-dark-450 tracking-wide uppercase">
+                              Resposta:
+                            </div>
+                            <p className="text-xs text-slate-600 dark:text-dark-300">
+                              {card.back}
+                            </p>
+                          </Card>
+                        ))}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        onClick={handleGenerateFlashcards}
+                        isLoading={isGeneratingFlashcards}
+                        leftIcon={<Sparkles className="h-4 w-4" />}
+                      >
+                        Recriar Flashcards
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === "arquivos" && (
+                <div className="flex flex-col h-full gap-4">
+                  <div className="flex-grow flex flex-col items-center justify-center text-center p-6 gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-brand-50 dark:bg-brand-950/20 flex items-center justify-center text-brand-500">
+                      <Upload className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <h4 className="font-heading font-bold text-slate-800 dark:text-dark-100">
+                        Anexar Arquivos
+                      </h4>
+                      <p className="text-xs text-slate-500 dark:text-dark-350 mt-1 max-w-xs">
+                        Arraste arquivos ou clique para fazer upload de imagens,
+                        PDFs e documentos para esta folha.
+                      </p>
+                    </div>
+                    <label className="cursor-pointer">
+                      <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-slate-300 dark:border-dark-700 text-sm font-semibold text-slate-500 dark:text-dark-300 hover:border-brand-400 hover:text-brand-500 transition-all">
+                        <Upload className="h-4 w-4" />
+                        Selecionar Arquivos
+                      </div>
+                      <input type="file" multiple className="hidden" />
+                    </label>
+                    <p className="text-[10px] text-slate-400 dark:text-dark-500">
+                      Upload de imagens, PDF e documentos (max 10MB)
+                    </p>
                   </div>
-                )}
-              </div>
-            )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Barra de Sub-folhas no final da página ── */}
+      {leaves.filter((l) => l.parentId === leafId || l.id === leafId).length > 0 && (
+        <div className="flex-shrink-0 border-t border-slate-100 dark:border-dark-800/60 pt-4 mt-2">
+          <div className="flex items-center gap-2 mb-3">
+            <FileText className="h-4 w-4 text-slate-400" />
+            <h3 className="text-sm font-heading font-bold text-slate-600 dark:text-dark-300">
+              Sub-folhas
+            </h3>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-2 max-h-[60vh] overflow-y-auto">
+            {leaves
+              .filter((l) => l.parentId === leafId)
+              .map((subLeaf) => (
+                <button
+                  key={subLeaf.id}
+                  type="button"
+                  onClick={() =>
+                    navigate(
+                      `/notebooks/${notebookId}/leaves/${subLeaf.id}`
+                    )
+                  }
+                  className="flex-shrink-0 w-72 p-4 rounded-2xl bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 hover:border-brand-200 dark:hover:border-brand-900/40 hover:shadow-md transition-all text-left cursor-pointer"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-dark-800 flex items-center justify-center text-slate-500 dark:text-dark-300 flex-shrink-0">
+                      <FileText className="h-4 w-4" />
+                    </div>
+                    <h4 className="font-heading font-semibold text-sm truncate text-slate-800 dark:text-dark-50">
+                      {subLeaf.title}
+                    </h4>
+                  </div>
+                  <p className="text-[10px] text-slate-400 dark:text-dark-400 flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {new Date(subLeaf.updatedAt).toLocaleDateString("pt-BR")}
+                  </p>
+                  <div className="mt-2 flex items-center gap-1 text-[10px] font-semibold text-brand-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                    Abrir <ChevronRight className="h-3 w-3" />
+                  </div>
+                </button>
+              ))}
           </div>
         </div>
-      </div>
+      )}
 
       {/* Modal: Criar Flashcard Manual */}
       <Modal

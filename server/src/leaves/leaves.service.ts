@@ -4,16 +4,17 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
-import * as crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { EditHistoryService } from '../trash/edit-history.service';
 import { buildTree } from '../prisma/utils/build-tree.util';
+import { AiMockService } from './utils/ai-mock.service';
 
 @Injectable()
 export class LeavesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly editHistory: EditHistoryService,
+    private readonly aiMock: AiMockService,
   ) {}
 
   private async verifyLeafOwnership(leafId: string, userId: string) {
@@ -37,7 +38,7 @@ export class LeavesService {
     if (!notebook) throw new NotFoundException('Caderno não encontrado');
 
     return this.prisma.leaf.findMany({
-      where: { notebookId, parentId: null, deletedAt: null },
+      where: { notebookId, parentId: null, deletedAt: null, archivedAt: null },
       orderBy: { createdAt: 'desc' },
       include: {
         children: {
@@ -177,10 +178,11 @@ export class LeavesService {
       throw new NotFoundException(error);
     }
 
-    const cleanTitle = leaf!.title;
-    const cleanText = leaf!.rawText || 'Sem conteúdo adicional.';
-
-    const summaryText = `### Resumo da Aula: ${cleanTitle}\n\nEste resumo foi gerado dinamicamente pela inteligência artificial com base nas notas fornecidas.\n\n- **Conceito Principal**: Foco em ${cleanTitle}.\n- **Ideias Chave**:\n  1. A importância de reter os conceitos práticos e relacioná-los a exemplos do cotidiano.\n  2. Uso de revisões sistemáticas para evitar a curva do esquecimento de Ebbinghaus.\n- **Conteúdo Analisado**:\n  > "${cleanText.substring(0, 150)}${cleanText.length > 150 ? '...' : ''}"\n\n*Utilize os flashcards associados para testar sua memória ativa!*`;
+    // ✨ Delega a geração do resumo para o AiMockService
+    const summaryText = this.aiMock.generateSummary(
+      leaf!.title,
+      leaf!.rawText || '',
+    );
 
     const updated = await this.prisma.leaf.update({
       where: { id: leafId },
@@ -205,42 +207,12 @@ export class LeavesService {
       throw new NotFoundException(error);
     }
 
-    const now = new Date();
-    const mockCards = [
-      {
-        id: crypto.randomUUID(),
-        leafId: leaf!.id,
-        notebookId: leaf!.notebookId,
-        front: `Qual é o tema principal abordado na folha "${leaf!.title}"?`,
-        back: `O tema principal é "${leaf!.title}", focado em aprofundar e consolidar este conteúdo de forma sistemática.`,
-        repetitions: 0,
-        interval: 0,
-        easeFactor: 2.5,
-        nextReviewDate: now,
-      },
-      {
-        id: crypto.randomUUID(),
-        leafId: leaf!.id,
-        notebookId: leaf!.notebookId,
-        front: `De acordo com as notas de "${leaf!.title}", qual é uma boa prática de estudo para este tema?`,
-        back: 'Escrever resumos com as próprias palavras e fazer exercícios práticos/simulados logo em seguida.',
-        repetitions: 0,
-        interval: 0,
-        easeFactor: 2.5,
-        nextReviewDate: now,
-      },
-      {
-        id: crypto.randomUUID(),
-        leafId: leaf!.id,
-        notebookId: leaf!.notebookId,
-        front: `Qual a importância da repetição espaçada no aprendizado de "${leaf!.title}"?`,
-        back: 'Ela ajuda a combater a curva do esquecimento, movendo a informação da memória de curto prazo para a de longo prazo.',
-        repetitions: 0,
-        interval: 0,
-        easeFactor: 2.5,
-        nextReviewDate: now,
-      },
-    ];
+    // ✨ Delega a geração dos flashcards para o AiMockService
+    const mockCards = this.aiMock.generateFlashcardTemplates(
+      leaf!.id,
+      leaf!.notebookId,
+      leaf!.title,
+    );
 
     for (const card of mockCards) {
       await this.prisma.flashcard.create({ data: card });
@@ -270,6 +242,48 @@ export class LeavesService {
     });
   }
 
+  async archive(leafId: string, userId: string) {
+    const { leaf, error } = await this.verifyLeafOwnership(leafId, userId);
+    if (error) {
+      if (error === 'Acesso negado') throw new ForbiddenException(error);
+      throw new NotFoundException(error);
+    }
+
+    const now = new Date();
+    return this.prisma.leaf.update({
+      where: { id: leafId },
+      data: { archivedAt: now },
+    });
+  }
+
+  async unarchive(leafId: string, userId: string) {
+    const { leaf, error } = await this.verifyLeafOwnership(leafId, userId);
+    if (error) {
+      if (error === 'Acesso negado') throw new ForbiddenException(error);
+      throw new NotFoundException(error);
+    }
+
+    return this.prisma.leaf.update({
+      where: { id: leafId },
+      data: { archivedAt: null },
+    });
+  }
+
+  async findArchived(userId: string) {
+    return this.prisma.leaf.findMany({
+      where: {
+        notebook: { userId },
+        archivedAt: { not: null },
+        deletedAt: null,
+      },
+      orderBy: { archivedAt: 'desc' },
+      include: {
+        notebook: { select: { title: true, color: true } },
+        tags: { include: { tag: true } },
+      },
+    });
+  }
+
   async getLeafHierarchy(notebookId: string, userId: string) {
     const notebook = await this.prisma.notebook.findFirst({
       where: { id: notebookId, userId },
@@ -277,7 +291,7 @@ export class LeavesService {
     if (!notebook) throw new NotFoundException('Caderno não encontrado');
 
     const allLeaves = await this.prisma.leaf.findMany({
-      where: { notebookId, deletedAt: null },
+      where: { notebookId, deletedAt: null, archivedAt: null },
       orderBy: { createdAt: 'desc' },
       include: {
         tags: {

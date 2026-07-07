@@ -36,5 +36,20 @@ export const leafService = {
     const response = await api.post<Flashcard[]>(`/leaves/${leafId}/flashcards`);
     return response.data;
   },
+
+  async archiveLeaf(leafId: string): Promise<Leaf> {
+    const response = await api.post<Leaf>(`/leaves/${leafId}/archive`);
+    return response.data;
+  },
+
+  async unarchiveLeaf(leafId: string): Promise<Leaf> {
+    const response = await api.post<Leaf>(`/leaves/${leafId}/unarchive`);
+    return response.data;
+  },
+
+  async getArchivedLeaves(): Promise<Leaf[]> {
+    const response = await api.get<Leaf[]>('/leaves/archived');
+    return response.data;
+  },
 };
 export default leafService;

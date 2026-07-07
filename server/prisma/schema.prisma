@@ -53,6 +53,7 @@ model Leaf {
   parentId   String?   // Para sub-folhas (árvore hierárquica)
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
+  archivedAt DateTime? // Arquivado: nulo = ativo, preenchido = arquivado
   deletedAt  DateTime? // Soft-delete: nulo = ativo, preenchido = na lixeira
 
   notebook   Notebook     @relation(fields: [notebookId], references: [id], onDelete: Cascade)

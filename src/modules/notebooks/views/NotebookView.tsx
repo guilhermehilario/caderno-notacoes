@@ -26,8 +26,7 @@ import type { CreateLeafInput } from '../../leaves/types';
 import { useNotebookFlashcards } from '../../study/hooks/useFlashcards';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import studyService from '../../study/services/studyService';
-import { useBookmarks } from '../../bookmarks/hooks/useBookmarks';
-import { useCreateBookmark, useDeleteBookmark } from '../../bookmarks/hooks/useBookmarks';
+import { useToggleBookmark } from '../../bookmarks/hooks/useToggleBookmark';
 import { useSoftDeleteNotebook } from '../../trash/hooks/useTrash';
 import { Card } from '../../../components/ui/Card.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
@@ -51,9 +50,12 @@ export const NotebookView: React.FC = () => {
   const { notebook, isLoading: isLoadingNotebook, updateNotebook } = useNotebook(notebookId || '');
   const { leaves, isLoading: isLoadingLeaves, createLeaf } = useLeaves(notebookId || '');
   const { data: flashcards = [], isLoading: isLoadingFlashcards } = useNotebookFlashcards(notebookId || '');
-  const { data: allBookmarks = [] } = useBookmarks();
-  const createBookmark = useCreateBookmark();
-  const deleteBookmark = useDeleteBookmark();
+  const { isBookmarked, toggleBookmark } = useToggleBookmark({
+    type: 'notebook',
+    id: notebookId || '',
+    title: notebook?.title || '',
+    path: `/notebooks/${notebookId}`,
+  });
   const softDeleteNotebook = useSoftDeleteNotebook();
   const queryClient = useQueryClient();
   const editorStatus = useEditorStatusStore();
@@ -68,23 +70,6 @@ export const NotebookView: React.FC = () => {
       editorStatus.hide();
     };
   }, [notebook?.id, notebook?.updatedAt]);
-
-  // Check if notebook is bookmarked
-  const isBookmarked = allBookmarks.some((b) => b.notebookId === notebookId);
-  const toggleBookmark = async () => {
-    if (!notebook || !notebookId) return;
-    if (isBookmarked) {
-      const existing = allBookmarks.find((b) => b.notebookId === notebookId);
-      if (existing) await deleteBookmark.mutateAsync(existing.id);
-    } else {
-      await createBookmark.mutateAsync({
-        notebookId,
-        title: notebook.title,
-        path: `/notebooks/${notebookId}`,
-      });
-    }
-    queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
-  };
 
   const {
     register,

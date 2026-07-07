@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../modules/auth/hooks/useAuth';
 import { useUIStore } from '../../store/uiStore';
@@ -8,8 +8,7 @@ import {
   Brain,
   BookOpen,
   LogOut,
-  Moon,
-  Sun,
+
   Menu,
   ChevronLeft,
   User as UserIcon,
@@ -22,15 +21,19 @@ import {
   Clock,
   Check,
   AlertTriangle,
+  Archive,
+  Settings,
 } from 'lucide-react';
 import { Button } from '../ui/Button.tsx';
+import { ProfileModal } from '../../modules/profile/ProfileModal.tsx';
 
 export const AppLayout: React.FC = () => {
   const { user, logout } = useAuth();
-  const { theme, sidebarCollapsed, toggleTheme, toggleSidebar } = useUIStore();
+  const { theme, sidebarCollapsed, toggleSidebar } = useUIStore();
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // Extrai IDs da rota para breadcrumbs
   const pathIds = useMemo(() => {
@@ -145,10 +148,11 @@ export const AppLayout: React.FC = () => {
     return LayoutDashboard;
   }, [location.pathname]);
 
-  // Nav items: Dashboard, Marcadores
+  // Nav items: Dashboard, Marcadores, Arquivados
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/bookmarks', label: 'Marcadores', icon: BookmarkIcon },
+    { path: '/archived', label: 'Arquivados', icon: Archive },
   ];
 
   const isTrashActive = location.pathname.startsWith('/trash');
@@ -213,19 +217,12 @@ export const AppLayout: React.FC = () => {
             {!sidebarCollapsed && <span className="truncate">Lixeira</span>}
           </Link>
 
-          {/* Botão de alternar tema */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleTheme}
-            className="w-full justify-start py-2.5 px-3.5 gap-3.5"
-            leftIcon={theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          {/* Dados do usuário (clicável → abre modal de perfil) */}
+          <button
+            type="button"
+            onClick={() => setIsProfileModalOpen(true)}
+            className="flex items-center gap-3 p-2 rounded-xl bg-slate-50 dark:bg-dark-950/60 overflow-hidden hover:bg-slate-100 dark:hover:bg-dark-800/60 transition-colors cursor-pointer w-full text-left"
           >
-            {!sidebarCollapsed && (theme === 'dark' ? 'Modo Claro' : 'Modo Escuro')}
-          </Button>
-
-          {/* Dados do usuário */}
-          <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-50 dark:bg-dark-950/60 overflow-hidden">
             <div className="w-10 h-10 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center text-brand-600 dark:text-brand-400 flex-shrink-0">
               {user?.avatarUrl ? (
                 <img
@@ -247,7 +244,7 @@ export const AppLayout: React.FC = () => {
                 </p>
               </div>
             )}
-          </div>
+          </button>
 
           {/* Botão de Logout */}
           <Button
@@ -379,6 +376,12 @@ export const AppLayout: React.FC = () => {
           <Outlet />
         </main>
       </div>
+
+      {/* Profile/Settings Modal */}
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+      />
     </div>
   );
 };

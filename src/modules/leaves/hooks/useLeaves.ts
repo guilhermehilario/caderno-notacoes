@@ -49,6 +49,14 @@ export function useLeaves(notebookId: string) {
   };
 }
 
+export function useArchivedLeaves() {
+  return useQuery({
+    queryKey: ["archived-leaves"],
+    queryFn: () => leafService.getArchivedLeaves(),
+    staleTime: 30_000,
+  });
+}
+
 export function useLeaf(leafId: string) {
   const queryClient = useQueryClient();
 
@@ -142,6 +150,23 @@ export function useLeaf(leafId: string) {
     },
   });
 
+  const archiveMutation = useMutation({
+    mutationFn: () => leafService.archiveLeaf(leafId),
+    onSuccess: () => {
+      if (leafQuery.data) {
+        queryClient.removeQueries({ queryKey: ["leaves", leafId] });
+        queryClient.invalidateQueries({ queryKey: ["archived-leaves"] });
+      }
+    },
+  });
+
+  const unarchiveMutation = useMutation({
+    mutationFn: () => leafService.unarchiveLeaf(leafId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["archived-leaves"] });
+    },
+  });
+
   const flashcardsMutation = useMutation({
     mutationFn: () => leafService.generateAIFlashcards(leafId),
     onSuccess: (flashcards) => {
@@ -174,6 +199,12 @@ export function useLeaf(leafId: string) {
     isUpdating: updateMutation.isPending,
     deleteLeaf: deleteMutation.mutateAsync,
     isDeleting: deleteMutation.isPending,
+
+    archiveLeaf: archiveMutation.mutateAsync,
+    isArchiving: archiveMutation.isPending,
+
+    unarchiveLeaf: unarchiveMutation.mutateAsync,
+    isUnarchiving: unarchiveMutation.isPending,
 
     generateAISummary: summaryMutation.mutateAsync,
     isGeneratingSummary: summaryMutation.isPending,

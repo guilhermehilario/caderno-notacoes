@@ -80,4 +80,25 @@ export class LeavesController {
   ) {
     return this.leavesService.findFlashcards(leafId, userId);
   }
+
+  @Post('leaves/:leafId/archive')
+  archive(
+    @Param('leafId') leafId: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.leavesService.archive(leafId, userId);
+  }
+
+  @Post('leaves/:leafId/unarchive')
+  unarchive(
+    @Param('leafId') leafId: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.leavesService.unarchive(leafId, userId);
+  }
+
+  @Get('leaves/archived')
+  findArchived(@CurrentUser('id') userId: string) {
+    return this.leavesService.findArchived(userId);
+  }
 }
