@@ -68,7 +68,20 @@ export class AuthController {
     if (!refreshToken) {
       return res.status(401).json({ error: 'Refresh token ausente' });
     }
-    return this.authService.refresh(refreshToken);
+
+    try {
+      const result = await this.authService.refresh(refreshToken);
+      // Renova o cookie de refresh (rotação de token)
+      this.setRefreshCookie(res, result.refreshToken);
+      return { accessToken: result.accessToken };
+    } catch {
+      res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: this.isSecure,
+        sameSite: 'lax',
+      });
+      return res.status(401).json({ error: 'Refresh token inválido ou expirado' });
+    }
   }
 
   @Get('profile')

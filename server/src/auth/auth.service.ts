@@ -114,7 +114,7 @@ export class AuthService {
 
   async refresh(
     refreshToken: string,
-  ): Promise<{ accessToken: string }> {
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     try {
       const decoded = this.jwtService.verify(refreshToken, {
         secret: this.refreshSecret,
@@ -128,8 +128,14 @@ export class AuthService {
         throw new UnauthorizedException('Usuário não encontrado');
       }
 
+      // Gera NOVO par de tokens (rotação completa)
       const accessToken = this.jwtService.sign({ userId: user.id });
-      return { accessToken };
+      const newRefreshToken = this.jwtService.sign(
+        { userId: user.id },
+        { secret: this.refreshSecret, expiresIn: '7d' },
+      );
+
+      return { accessToken, refreshToken: newRefreshToken };
     } catch {
       throw new UnauthorizedException('Refresh token inválido ou expirado');
     }

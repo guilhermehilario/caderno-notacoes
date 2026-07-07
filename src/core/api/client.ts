@@ -99,12 +99,20 @@ api.interceptors.response.use(
         lastRefreshAttempt = Date.now();
         refreshFailCount++;
         processQueue(refreshError, null);
-        // 🛑 NÃO chamamos logout() aqui para evitar que o PrivateRoute
-        //    redirecione para /login e derrube toda a árvore React durante
-        //    uma sessão de estudo ativa. A requisição original apenas falha
-        //    silenciosamente e o usuário continua estudando.
-        //    No fluxo normal (logout explícito), o handleLogout() no AppLayout
-        //    cuida da limpeza do auth state e do cache.
+
+        // 🛑 Se o refresh retornou 401, o token está definitivamente inválido
+        //    (expirado, secret alterado, etc.). Precisamos forçar logout
+        //    para evitar que o app fique num estado quebrado com todos os
+        //    endpoints retornando 401 infinitamente.
+        const refreshStatus = (refreshError as { response?: { status?: number } })?.response?.status;
+        if (refreshStatus === 401 || refreshFailCount >= MAX_REFRESH_FAILURES) {
+          useAuthStore.getState().logout();
+          // Redireciona para /login se não estiver lá (fora da árvore React)
+          if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+            window.location.href = '/login';
+          }
+        }
+
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
