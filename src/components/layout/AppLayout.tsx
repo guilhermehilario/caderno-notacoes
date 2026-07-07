@@ -7,8 +7,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   Brain,
   BookOpen,
-  LogOut,
-
   Menu,
   ChevronLeft,
   User as UserIcon,
@@ -22,13 +20,11 @@ import {
   Check,
   AlertTriangle,
   Archive,
-  Settings,
 } from 'lucide-react';
-import { Button } from '../ui/Button.tsx';
 import { ProfileModal } from '../../modules/profile/ProfileModal.tsx';
 
 export const AppLayout: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { theme, sidebarCollapsed, toggleSidebar } = useUIStore();
   const navigate = useNavigate();
   const location = useLocation();
@@ -67,11 +63,6 @@ export const AppLayout: React.FC = () => {
       document.documentElement.classList.remove('dark');
     }
   }, [theme]);
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
 
   // ── Breadcrumb navigation com nomes reais ──
   const breadcrumbs = useMemo(() => {
@@ -246,16 +237,7 @@ export const AppLayout: React.FC = () => {
             )}
           </button>
 
-          {/* Botão de Logout */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleLogout}
-            className="w-full justify-start text-rose-500 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 py-2.5 px-3.5 gap-3.5"
-            leftIcon={<LogOut className="h-5 w-5" />}
-          >
-            {!sidebarCollapsed && 'Sair da conta'}
-          </Button>
+
         </div>
 
         {/* Toggle Collapse Button */}
