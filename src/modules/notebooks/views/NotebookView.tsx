@@ -5,17 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Plus,
   FileText,
-  Play,
-  Trash2,
-  Edit2,
-  Calendar,
   Loader2,
-  ChevronRight,
-  Sparkles,
-  Lightbulb,
-  BookmarkIcon,
-  ChevronDown,
-  ChevronUp,
 } from 'lucide-react';
 import { useNotebook } from '../hooks/useNotebooks';
 import { CreateNotebookSchema } from '../types';
@@ -32,10 +22,14 @@ import { Card } from '../../../components/ui/Card.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
 import { Modal } from '../../../components/ui/Modal.tsx';
 import { Input } from '../../../components/ui/Input.tsx';
+import { TextArea } from '../../../components/ui/TextArea.tsx';
+import { ColorPicker } from '../../../components/ui/ColorPicker.tsx';
+import { EmptyState } from '../../../components/ui/EmptyState.tsx';
 import { useEditorStatusStore } from '../../../store/editorStatusStore';
-import { NOTEBOOK_COLORS, DEFAULT_NOTEBOOK_COLOR } from '../../notebooks/constants';
-import { TAG_COLOR_MAP } from '../../tags/constants';
+import { NOTEBOOK_COLORS } from '../../notebooks/constants';
 import { LeafCard } from '../components/LeafCard';
+import { NotebookHeader } from '../components/NotebookHeader';
+import { FlashcardsSection } from '../components/FlashcardsSection';
 
 export const NotebookView: React.FC = () => {
   const { notebookId } = useParams<{ notebookId: string }>();
@@ -138,7 +132,6 @@ export const NotebookView: React.FC = () => {
       setIsModalOpen(false);
       reset();
       setParentLeafId(undefined);
-      // Redireciona diretamente para a tela de edição da nova folha
       navigate(`/notebooks/${notebookId}/leaves/${newLeaf.id}`);
     } catch (error) {
       console.error('Erro ao criar folha:', error);
@@ -199,63 +192,13 @@ export const NotebookView: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto flex flex-col gap-6">
       {/* Cabeçalho do Caderno */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 p-6 rounded-3xl bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 relative overflow-hidden">
-        {/* Faixa lateral colorida */}
-        <div
-          className="absolute left-0 top-0 bottom-0 w-3.5"
-          style={{ backgroundColor: notebook.color }}
-        />
-        
-        <div className="flex flex-col gap-2 pl-4">
-          <h1 className="text-3xl font-heading font-extrabold text-slate-900 dark:text-dark-50 m-0">
-            {notebook.title}
-          </h1>
-          <p className="text-slate-550 dark:text-dark-300 text-sm max-w-xl">
-            {notebook.description || 'Nenhuma descrição adicionada.'}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 self-end md:self-auto flex-wrap justify-end">
-          {/* Bookmark button */}
-          <button
-            type="button"
-            onClick={toggleBookmark}
-            className={`p-2 rounded-lg transition-colors cursor-pointer ${
-              isBookmarked
-                ? 'text-amber-500 bg-amber-50 dark:bg-amber-950/20'
-                : 'text-slate-400 hover:text-amber-500 hover:bg-slate-100 dark:hover:bg-dark-800'
-            }`}
-            title={isBookmarked ? 'Remover marcador' : 'Adicionar marcador'}
-          >
-            <BookmarkIcon className={`h-5 w-5 ${isBookmarked ? 'fill-amber-500' : ''}`} />
-          </button>
-
-          <Button
-            variant="outline"
-            onClick={handleOpenEditModal}
-            leftIcon={<Edit2 className="h-4.5 w-4.5" />}
-          >
-            Editar
-          </Button>
-
-          <Button
-            variant="outline"
-            onClick={handleDeleteNotebook}
-            className="text-rose-500 border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/20"
-            leftIcon={<Trash2 className="h-4.5 w-4.5" />}
-          >
-            Excluir
-          </Button>
-
-          <Button
-            onClick={() => navigate(`/notebooks/${notebookId}/study`)}
-            leftIcon={<Play className="h-4.5 w-4.5" />}
-            className="bg-brand-500 shadow-md shadow-brand-500/10"
-          >
-            Estudar Flashcards
-          </Button>
-        </div>
-      </div>
+      <NotebookHeader
+        notebook={notebook}
+        isBookmarked={isBookmarked}
+        onToggleBookmark={toggleBookmark}
+        onOpenEditModal={handleOpenEditModal}
+        onDelete={handleDeleteNotebook}
+      />
 
       {/* Listagem de Folhas */}
       <div className="flex flex-col gap-4 mt-4">
@@ -279,28 +222,24 @@ export const NotebookView: React.FC = () => {
         </div>
 
         {leaves.length === 0 ? (
-          <Card className="glass flex flex-col items-center justify-center text-center p-12 min-h-[30vh] border border-dashed border-slate-200 dark:border-dark-800">
-            <div className="w-14 h-14 rounded-2xl bg-brand-50 dark:bg-brand-950/20 flex items-center justify-center text-brand-500 mb-4">
-              <FileText className="h-7 w-7" />
-            </div>
-            <h3 className="text-md font-heading font-bold text-slate-850 dark:text-dark-100">
-              Nenhuma folha criada neste caderno
-            </h3>
-            <p className="text-sm text-slate-500 dark:text-dark-350 mt-1 max-w-xs">
-              Crie folhas para anotar os conteúdos de suas aulas e gerar materiais de estudo por IA.
-            </p>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setParentLeafId(undefined);
-                setIsModalOpen(true);
-              }}
-              leftIcon={<Plus className="h-4 w-4" />}
-              className="mt-4 text-brand-500"
-            >
-              Criar primeira folha
-            </Button>
-          </Card>
+          <EmptyState
+            icon={<FileText className="h-7 w-7" />}
+            title="Nenhuma folha criada neste caderno"
+            description="Crie folhas para anotar os conteúdos de suas aulas e gerar materiais de estudo por IA."
+            action={
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setParentLeafId(undefined);
+                  setIsModalOpen(true);
+                }}
+                leftIcon={<Plus className="h-4 w-4" />}
+                className="mt-4 text-brand-500"
+              >
+                Criar primeira folha
+              </Button>
+            }
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {leaves.map((leaf) => (
@@ -318,78 +257,18 @@ export const NotebookView: React.FC = () => {
         )}
       </div>
 
-      {/* ── Seção de Flashcards ── */}
-      <div className="flex flex-col gap-4 mt-6 pt-6 border-t border-slate-100 dark:border-dark-800">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-heading font-bold text-slate-800 dark:text-dark-100 m-0">
-            Flashcards ({flashcards.length})
-          </h2>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (leaves.length > 0) {
-                  setSelectedLeafId(leaves[0].id);
-                }
-                setIsFlashcardModalOpen(true);
-              }}
-              leftIcon={<Sparkles className="h-4 w-4" />}
-            >
-              Criar Flashcard
-            </Button>
-          </div>
-        </div>
-
-        {isLoadingFlashcards ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-brand-500" />
-          </div>
-        ) : flashcards.length === 0 ? (
-          <Card className="glass flex flex-col items-center justify-center text-center p-8 min-h-[20vh] border border-dashed border-slate-200 dark:border-dark-800">
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/20 flex items-center justify-center text-amber-500 mb-3">
-              <Lightbulb className="h-6 w-6" />
-            </div>
-            <h3 className="text-md font-heading font-bold text-slate-850 dark:text-dark-100">
-              Nenhum flashcard criado
-            </h3>
-            <p className="text-sm text-slate-500 dark:text-dark-350 mt-1 max-w-md">
-              Crie flashcards manualmente ou gere automaticamente pela IA ao editar uma folha.
-            </p>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {flashcards.slice(0, 10).map((card) => (
-              <Card
-                key={card.id}
-                className="flex flex-col gap-2 p-4 border border-slate-100 dark:border-dark-800"
-              >
-                <p className="text-sm font-semibold text-slate-800 dark:text-dark-50 line-clamp-2">
-                  <span className="text-xs font-bold text-brand-500 mr-1.5">Q:</span>
-                  {card.front}
-                </p>
-                <p className="text-sm text-slate-500 dark:text-dark-350 line-clamp-2">
-                  <span className="text-xs font-bold text-emerald-500 mr-1.5">R:</span>
-                  {card.back}
-                </p>
-                <div className="flex gap-2 mt-1">
-                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-dark-800 text-slate-400 dark:text-dark-400">
-                    Repetições: {card.repetitions}
-                  </span>
-                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-dark-800 text-slate-400 dark:text-dark-400">
-                    EF: {card.easeFactor}
-                  </span>
-                </div>
-              </Card>
-            ))}
-            {flashcards.length > 10 && (
-              <p className="text-xs text-slate-400 dark:text-dark-400 text-center col-span-full pt-2">
-                + {flashcards.length - 10} flashcards ocultos. Estude-os na sessão de revisão.
-              </p>
-            )}
-          </div>
-        )}
-      </div>
+      {/* Seção de Flashcards */}
+      <FlashcardsSection
+        flashcards={flashcards}
+        isLoading={isLoadingFlashcards}
+        notebookId={notebookId || ''}
+        onOpenCreateModal={() => {
+          if (leaves.length > 0) {
+            setSelectedLeafId(leaves[0].id);
+          }
+          setIsFlashcardModalOpen(true);
+        }}
+      />
 
       {/* Modal Criar Folha (com suporte a sub-folha) */}
       <Modal
@@ -507,20 +386,15 @@ export const NotebookView: React.FC = () => {
             {...registerFc('front', { required: 'A pergunta é obrigatória' })}
           />
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-700 dark:text-dark-200">
-              Resposta (Verso)
-            </label>
-            <textarea
-              placeholder="Ex: a² + b² = c², onde c é a hipotenusa..."
-              rows={4}
-              className={`w-full px-3.5 py-2.5 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-xl text-slate-900 dark:text-dark-50 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900/20 focus:border-brand-500 transition-all duration-200 resize-none`}
-              {...registerFc('back', { required: 'A resposta é obrigatória' })}
-            />
-            {fcErrors.back?.message && (
-              <p className="text-xs text-rose-500 mt-1">{fcErrors.back.message}</p>
-            )}
-          </div>
+          <TextArea
+            label="Resposta (Verso)"
+            placeholder="Ex: a² + b² = c², onde c é a hipotenusa..."
+            rows={4}
+            {...registerFc('back', { required: 'A resposta é obrigatória' })}
+          />
+          {fcErrors.back?.message && (
+            <p className="text-xs text-rose-500 mt-1">{fcErrors.back.message}</p>
+          )}
         </div>
       </Modal>
 
@@ -555,38 +429,19 @@ export const NotebookView: React.FC = () => {
             {...registerEdit('title')}
           />
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-700 dark:text-dark-200">
-              Descrição (Opcional)
-            </label>
-            <textarea
-              placeholder="Uma breve descrição sobre este caderno..."
-              rows={3}
-              className={`w-full px-3.5 py-2.5 bg-white dark:bg-dark-900 border border-slate-200 focus:ring-brand-100 dark:border-dark-700 dark:focus:ring-brand-900/20 rounded-xl text-slate-900 dark:text-dark-50 placeholder-slate-400 focus:outline-none focus:ring-4 focus:border-brand-500 dark:focus:border-brand-600 transition-all duration-200`}
-              {...registerEdit('description')}
-            />
-          </div>
+          <TextArea
+            label="Descrição (Opcional)"
+            placeholder="Uma breve descrição sobre este caderno..."
+            rows={3}
+            {...registerEdit('description')}
+          />
 
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-slate-700 dark:text-dark-200">
-              Cor de Identificação
-            </label>
-            <div className="flex gap-3">
-              {NOTEBOOK_COLORS.map((color) => (
-                <button
-                  key={color}
-                  type="button"
-                  onClick={() => setSelectedColor(color)}
-                  className={`w-8 h-8 rounded-full border-2 transition-transform duration-200 hover:scale-110 cursor-pointer ${
-                    selectedColor === color
-                      ? 'border-slate-800 dark:border-white scale-110'
-                      : 'border-transparent'
-                  }`}
-                  style={{ backgroundColor: color }}
-                />
-              ))}
-            </div>
-          </div>
+          <ColorPicker
+            colors={NOTEBOOK_COLORS}
+            selectedColor={selectedColor}
+            onChange={setSelectedColor}
+            label="Cor de Identificação"
+          />
         </div>
       </Modal>
     </div>
