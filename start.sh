@@ -104,30 +104,45 @@ start_service() {
   fi
 
   # Inicia com setsid, redirecionando stdin/stdout/stderr
+  # NOTA: $$ dentro do bash -c é o PID do próprio shell (que após exec vira o PID do servidor)
   setsid bash -c "
     exec > '$logfile' 2>&1
     echo '[start.sh] Iniciando $name em $(date)'
-    echo '[start.sh] PID: \$\$'
-    echo '\$\$' > '$pidfile'
+    echo \"[start.sh] PID: \$\$\"
+    echo \$\$ > '$pidfile'
     exec $cmd
   " &
 
   # Aguarda um pouco e verifica se subiu
   local wait_time=0
-  local max_wait=20
+  local max_wait=30
+
+  # Define a URL de health check conforme o tipo de serviço
+  local health_url
+  if [[ "$name" == *"Backend"* ]]; then
+    health_url="http://localhost:$port/api/health"
+  else
+    health_url="http://localhost:$port/"
+  fi
 
   while [ $wait_time -lt $max_wait ]; do
     sleep 1
     wait_time=$((wait_time + 1))
 
-    # Verifica se o PID foi escrito
+    # Verifica se o PID foi escrito e o processo existe
     if [ -f "$pidfile" ]; then
       local pid=$(cat "$pidfile" 2>/dev/null)
-      if kill -0 "$pid" 2>/dev/null; then
-        # Verifica se está respondendo na porta
-        if command -v curl &>/dev/null; then
-          if curl -s -o /dev/null "http://localhost:$port" 2>/dev/null || curl -s -o /dev/null "http://localhost:$port/" 2>/dev/null; then
-            echo "     ✅ $name rodando (PID $pid) — porta $port"
+      if [ -n "$pid" ] && [ "$pid" -eq "$pid" ] 2>/dev/null; then
+        if kill -0 "$pid" 2>/dev/null; then
+          # Verifica se está respondendo na porta
+          if command -v curl &>/dev/null; then
+            if curl -s -o /dev/null --max-time 2 "$health_url" 2>/dev/null; then
+              echo "     ✅ $name rodando (PID $pid) — porta $port"
+              return 0
+            fi
+          else
+            # Sem curl, apenas confirma que o processo existe
+            echo "     ✅ $name iniciado (PID $pid) — porta $port (curl não disponível)"
             return 0
           fi
         fi
@@ -138,10 +153,12 @@ start_service() {
   # Timeout — verifica o log para diagnóstico
   if [ -f "$pidfile" ]; then
     local pid=$(cat "$pidfile" 2>/dev/null)
-    if kill -0 "$pid" 2>/dev/null; then
-      echo "     ⚠️  $name iniciado (PID $pid) mas pode não estar respondendo ainda"
-      echo "     📋 Log: $logfile"
-      return 0
+    if [ -n "$pid" ] && [ "$pid" -eq "$pid" ] 2>/dev/null; then
+      if kill -0 "$pid" 2>/dev/null; then
+        echo "     ⚠️  $name iniciado (PID $pid) mas pode não estar respondendo ainda"
+        echo "     📋 Log: $logfile"
+        return 0
+      fi
     fi
   fi
 

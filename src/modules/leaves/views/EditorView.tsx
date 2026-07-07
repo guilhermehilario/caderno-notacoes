@@ -24,8 +24,10 @@ import {
   Minimize2,
   Upload,
   FileText,
-  ChevronRight,
   Calendar,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
 } from "lucide-react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -94,6 +96,7 @@ const EditorView: React.FC = () => {
 
   const [aiSidebarOpen, setAiSidebarOpen] = useState(true);
   const [editorExpanded, setEditorExpanded] = useState(false);
+  const [subLeavesOpen, setSubLeavesOpen] = useState(false);
 
   // Check if current page is archived
   const isArchived = leaf?.archivedAt != null;
@@ -670,47 +673,59 @@ const EditorView: React.FC = () => {
         )}
       </div>
 
-      {/* ── Barra de Sub-folhas no final da página ── */}
-      {leaves.filter((l) => l.parentId === leafId || l.id === leafId).length > 0 && (
-        <div className="flex-shrink-0 border-t border-slate-100 dark:border-dark-800/60 pt-4 mt-2">
-          <div className="flex items-center gap-2 mb-3">
-            <FileText className="h-4 w-4 text-slate-400" />
-            <h3 className="text-sm font-heading font-bold text-slate-600 dark:text-dark-300">
-              Sub-folhas
+      {/* ── Barra de Sub-folhas (colapsável) ── */}
+      {leaves.filter((l) => l.parentId === leafId).length > 0 && (
+        <div className="flex-shrink-0 border-t border-slate-100 dark:border-dark-800/60 pt-3 mt-1">
+          <button
+            type="button"
+            onClick={() => setSubLeavesOpen(!subLeavesOpen)}
+            className="flex items-center gap-2 mb-2 w-full text-left cursor-pointer group"
+          >
+            <FileText className="h-4 w-4 text-slate-400 group-hover:text-brand-500 transition-colors" />
+            <h3 className="text-sm font-heading font-bold text-slate-500 dark:text-dark-400 group-hover:text-slate-700 dark:group-hover:text-dark-200 transition-colors">
+              Sub-folhas ({leaves.filter((l) => l.parentId === leafId).length})
             </h3>
-          </div>
-          <div className="flex gap-3 overflow-x-auto pb-2 max-h-[60vh] overflow-y-auto">
-            {leaves
-              .filter((l) => l.parentId === leafId)
-              .map((subLeaf) => (
-                <button
-                  key={subLeaf.id}
-                  type="button"
-                  onClick={() =>
-                    navigate(
-                      `/notebooks/${notebookId}/leaves/${subLeaf.id}`
-                    )
-                  }
-                  className="flex-shrink-0 w-72 p-4 rounded-2xl bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 hover:border-brand-200 dark:hover:border-brand-900/40 hover:shadow-md transition-all text-left cursor-pointer"
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-dark-800 flex items-center justify-center text-slate-500 dark:text-dark-300 flex-shrink-0">
-                      <FileText className="h-4 w-4" />
+            {subLeavesOpen ? (
+              <ChevronUp className="h-4 w-4 text-slate-400 ml-auto group-hover:text-slate-600 transition-colors" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-slate-400 ml-auto group-hover:text-slate-600 transition-colors" />
+            )}
+          </button>
+
+          {subLeavesOpen && (
+            <div className="flex gap-3 overflow-x-auto pb-2 max-h-[30vh] overflow-y-auto">
+              {leaves
+                .filter((l) => l.parentId === leafId)
+                .map((subLeaf) => (
+                  <button
+                    key={subLeaf.id}
+                    type="button"
+                    onClick={() =>
+                      navigate(
+                        `/notebooks/${notebookId}/leaves/${subLeaf.id}`
+                      )
+                    }
+                    className="flex-shrink-0 w-72 p-4 rounded-2xl bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 hover:border-brand-200 dark:hover:border-brand-900/40 hover:shadow-md transition-all text-left cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-dark-800 flex items-center justify-center text-slate-500 dark:text-dark-300 flex-shrink-0">
+                        <FileText className="h-4 w-4" />
+                      </div>
+                      <h4 className="font-heading font-semibold text-sm truncate text-slate-800 dark:text-dark-50">
+                        {subLeaf.title}
+                      </h4>
                     </div>
-                    <h4 className="font-heading font-semibold text-sm truncate text-slate-800 dark:text-dark-50">
-                      {subLeaf.title}
-                    </h4>
-                  </div>
-                  <p className="text-[10px] text-slate-400 dark:text-dark-400 flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {new Date(subLeaf.updatedAt).toLocaleDateString("pt-BR")}
-                  </p>
-                  <div className="mt-2 flex items-center gap-1 text-[10px] font-semibold text-brand-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                    Abrir <ChevronRight className="h-3 w-3" />
-                  </div>
-                </button>
-              ))}
-          </div>
+                    <p className="text-[10px] text-slate-400 dark:text-dark-400 flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {new Date(subLeaf.updatedAt).toLocaleDateString("pt-BR")}
+                    </p>
+                    <div className="mt-2 flex items-center gap-1 text-[10px] font-semibold text-brand-500">
+                      Abrir <ChevronRight className="h-3 w-3" />
+                    </div>
+                  </button>
+                ))}
+            </div>
+          )}
         </div>
       )}
 
