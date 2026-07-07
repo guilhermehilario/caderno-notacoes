@@ -10,11 +10,7 @@ import {
 import type { Editor } from "@tiptap/react";
 import { useParams, useNavigate, Link as RouterLink } from "react-router-dom";
 import {
-  Sparkles,
-  HelpCircle,
-  Play,
   BookmarkIcon,
-  Plus,
   PanelRightClose,
   PanelRightOpen,
   Trash2,
@@ -22,12 +18,10 @@ import {
   ArchiveRestore,
   Maximize2,
   Minimize2,
-  Upload,
   FileText,
   Calendar,
   ChevronDown,
   ChevronRight,
-  ChevronUp,
   GripVertical,
 } from "lucide-react";
 import { useEditor, EditorContent } from "@tiptap/react";
@@ -35,7 +29,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Highlight from "@tiptap/extension-highlight";
 import Placeholder from "@tiptap/extension-placeholder";
 import { Annotation } from "../extensions/Annotation";
-import { useLeaf, useLeaves, useArchivedLeaves } from "../hooks/useLeaves";
+import { useLeaf, useLeaves } from "../hooks/useLeaves";
 import { useLeafFlashcards } from "../../study/hooks/useFlashcards";
 import { useDebounce } from "../../../hooks/useDebounce";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -62,25 +56,14 @@ import { useToggleBookmark } from "../../bookmarks/hooks/useToggleBookmark";
 import { useSoftDeleteLeaf } from "../../trash/hooks/useTrash";
 import { TagSelector } from "../components/TagSelector/TagSelector";
 import { useEditorStatusStore } from "../../../store/editorStatusStore";
-import { Card } from "../../../components/ui/Card.tsx";
 import { Button } from "../../../components/ui/Button.tsx";
 import { Modal } from "../../../components/ui/Modal.tsx";
 import { Input } from "../../../components/ui/Input.tsx";
 import { EditorToolbar } from "../components/EditorToolbar";
 import { EditorBubbleMenu } from "../components/EditorBubbleMenu";
-import { AnnotationSidebar } from "../components/AnnotationSidebar";
+import { AISidebar } from "../components/AISidebar";
 import { EditorSkeleton } from "../components/EditorSkeleton";
-import { LeafCard } from "../../notebooks/components/LeafCard";
 import type { Leaf } from "../types";
-
-const AI_TABS = [
-  { id: "annotations" as const, label: "Anotações" },
-  { id: "arquivos" as const, label: "Arquivos" },
-  { id: "flashcards" as const, label: "Flashcards" },
-  { id: "summary" as const, label: "Resumo" },
-].sort((a, b) => a.label.localeCompare(b.label));
-
-type AiTab = (typeof AI_TABS)[number]["id"];
 
 const EditorView: React.FC = () => {
   const { notebookId, leafId } = useParams<{
@@ -264,7 +247,6 @@ const EditorView: React.FC = () => {
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "error">(
     "saved",
   );
-  const [activeTab, setActiveTab] = useState<AiTab>("summary");
 
   const initialSyncDoneRef = useRef(false);
   const serverContentRef = useRef("");
@@ -580,202 +562,25 @@ const EditorView: React.FC = () => {
             <EditorBubbleMenu editor={editor} />
             <EditorContent
               editor={editor}
-              className="w-full h-full [&_.ProseMirror]:outline-none [&_.ProseMirror]:h-full [&_.ProseMirror]:min-h-[300px] [&_.ProseMirror]:leading-relaxed [&_.ProseMirror]:text-base [&_.ProseMirror]:caret-slate-800 [&_.dark_.ProseMirror]:caret-dark-100 [&_.ProseMirror_p]:my-2 [&_.ProseMirror_p:first-child]:mt-0 [&_.ProseMirror_h1]:text-3xl [&_.ProseMirror_h1]:font-heading [&_.ProseMirror_h1]:font-extrabold [&_.ProseMirror_h1]:tracking-tight [&_.ProseMirror_h1]:mb-3 [&_.ProseMirror_h1]:mt-6 [&_.ProseMirror_h1]:text-slate-900 [&_.dark_.ProseMirror_h1]:text-dark-50 [&_.ProseMirror_h2]:text-2xl [&_.ProseMirror_h2]:font-heading [&_.ProseMirror_h2]:font-bold [&_.ProseMirror_h2]:tracking-tight [&_.ProseMirror_h2]:mb-2 [&_.ProseMirror_h2]:mt-4 [&_.ProseMirror_h2]:text-slate-800 [&_.dark_.ProseMirror_h2]:text-dark-100 [&_.ProseMirror_h3]:text-xl [&_.ProseMirror_h3]:font-heading [&_.ProseMirror_h3]:font-semibold [&_.ProseMirror_h3]:tracking-tight [&_.ProseMirror_h3]:mb-1.5 [&_.ProseMirror_h3]:mt-3 [&_.ProseMirror_h3]:text-slate-700 [&_.dark_.ProseMirror_h3]:text-dark-200 [&_.ProseMirror_ul]:pl-6 [&_.ProseMirror_ol]:pl-6 [&_.ProseMirror_li]:my-1.5 [&_.ProseMirror_li_p]:my-0"
+              className="tiptap-content w-full h-full"
             />
           </div>
         </div>
 
         {/* Lado Direito - Painel de IA (toggle, escondido quando expandido) */}
         {aiSidebarOpen && !editorExpanded && (
-          <div className="w-full lg:w-[450px] flex flex-col bg-white dark:bg-dark-900 border border-slate-150 dark:border-dark-800 rounded-3xl overflow-hidden flex-shrink-0 min-h-0">
-            {/* Abas - ordenadas alfabeticamente */}
-            <div className="flex border-b border-slate-100 dark:border-dark-800/60 flex-shrink-0 bg-slate-50 dark:bg-dark-950/20">
-              {AI_TABS.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 py-4 text-center font-heading font-bold text-sm tracking-wide transition-all border-b-2 cursor-pointer ${
-                    activeTab === tab.id
-                      ? "border-brand-500 text-brand-500"
-                      : "border-transparent text-slate-500 dark:text-dark-400 hover:text-slate-700"
-                  }`}
-                >
-                  {tab.id === "flashcards"
-                    ? `${tab.label} (${flashcards.length})`
-                    : tab.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Painel Interno */}
-            <div className="flex-grow p-6 overflow-y-auto min-h-0">
-              {activeTab === "annotations" && (
-                <div className="flex flex-col h-full gap-4">
-                  <AnnotationSidebar editor={editor} />
-                </div>
-              )}
-
-              {activeTab === "summary" && (
-                <div className="flex flex-col h-full gap-4">
-                  {leaf.summary ? (
-                    <div className="flex flex-col gap-4">
-                      <div className="prose prose-slate dark:prose-invert max-w-none text-slate-700 dark:text-dark-200 text-sm leading-relaxed whitespace-pre-wrap bg-slate-50/50 dark:bg-dark-950/30 p-5 rounded-2xl border border-slate-100/50 dark:border-dark-850">
-                        {leaf.summary}
-                      </div>
-                      <Button
-                        variant="outline"
-                        onClick={handleGenerateSummary}
-                        isLoading={isGeneratingSummary}
-                        leftIcon={<Sparkles className="h-4 w-4" />}
-                        className="self-start"
-                      >
-                        Atualizar Resumo
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex-grow flex flex-col items-center justify-center text-center p-6 gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-brand-50 dark:bg-brand-950/20 flex items-center justify-center text-brand-500">
-                        <Sparkles className="h-6 w-6" />
-                      </div>
-                      <div>
-                        <h4 className="font-heading font-bold text-slate-800 dark:text-dark-100">
-                          Nenhum resumo gerado
-                        </h4>
-                        <p className="text-xs text-slate-500 dark:text-dark-350 mt-1 max-w-xs">
-                          Escreva suas anotações no editor e clique abaixo para
-                          gerar um resumo inteligente.
-                        </p>
-                      </div>
-                      <Button
-                        onClick={handleGenerateSummary}
-                        isLoading={isGeneratingSummary}
-                        leftIcon={<Sparkles className="h-4.5 w-4.5" />}
-                        disabled={!localRawText.trim()}
-                      >
-                        Gerar Resumo por IA
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {activeTab === "flashcards" && (
-                <div className="flex flex-col h-full gap-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsFlashcardModalOpen(true)}
-                    leftIcon={<Plus className="h-3.5 w-3.5" />}
-                    className="w-full"
-                  >
-                    Criar Flashcard Manual
-                  </Button>
-
-                  {flashcards.length === 0 ? (
-                    <div className="flex-grow flex flex-col items-center justify-center text-center p-6 gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-brand-50 dark:bg-brand-950/20 flex items-center justify-center text-brand-500">
-                        <HelpCircle className="h-6 w-6" />
-                      </div>
-                      <div>
-                        <h4 className="font-heading font-bold text-slate-800 dark:text-dark-100">
-                          Nenhum flashcard
-                        </h4>
-                        <p className="text-xs text-slate-500 dark:text-dark-350 mt-1 max-w-xs">
-                          Crie flashcards manualmente ou gere por IA.
-                        </p>
-                      </div>
-                      <Button
-                        onClick={handleGenerateFlashcards}
-                        isLoading={isGeneratingFlashcards}
-                        leftIcon={<Sparkles className="h-4.5 w-4.5" />}
-                        disabled={!localRawText.trim()}
-                      >
-                        Gerar Flashcards por IA
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs font-bold text-slate-400 dark:text-dark-400">
-                          {flashcards.length} cards disponíveis
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            navigate(`/notebooks/${notebookId}/study`)
-                          }
-                          leftIcon={<Play className="h-3.5 w-3.5" />}
-                        >
-                          Estudar Agora
-                        </Button>
-                      </div>
-
-                      <div className="flex flex-col gap-3 max-h-[50vh] overflow-y-auto pr-1">
-                        {flashcards.map((card) => (
-                          <Card
-                            key={card.id}
-                            className="p-4 bg-slate-50/50 dark:bg-dark-950/30 border border-slate-100 dark:border-dark-850 flex flex-col gap-2.5"
-                          >
-                            <div className="text-xs font-bold text-brand-500 tracking-wide uppercase">
-                              Pergunta:
-                            </div>
-                            <p className="text-xs font-semibold text-slate-800 dark:text-dark-100">
-                              {card.front}
-                            </p>
-                            <div className="border-t border-dashed border-slate-200 dark:border-dark-800 pt-2 text-xs font-bold text-slate-400 dark:text-dark-450 tracking-wide uppercase">
-                              Resposta:
-                            </div>
-                            <p className="text-xs text-slate-600 dark:text-dark-300">
-                              {card.back}
-                            </p>
-                          </Card>
-                        ))}
-                      </div>
-
-                      <Button
-                        variant="outline"
-                        onClick={handleGenerateFlashcards}
-                        isLoading={isGeneratingFlashcards}
-                        leftIcon={<Sparkles className="h-4 w-4" />}
-                      >
-                        Recriar Flashcards
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {activeTab === "arquivos" && (
-                <div className="flex flex-col h-full gap-4">
-                  <div className="flex-grow flex flex-col items-center justify-center text-center p-6 gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-brand-50 dark:bg-brand-950/20 flex items-center justify-center text-brand-500">
-                      <Upload className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <h4 className="font-heading font-bold text-slate-800 dark:text-dark-100">
-                        Anexar Arquivos
-                      </h4>
-                      <p className="text-xs text-slate-500 dark:text-dark-350 mt-1 max-w-xs">
-                        Arraste arquivos ou clique para fazer upload de imagens,
-                        PDFs e documentos para esta folha.
-                      </p>
-                    </div>
-                    <label className="cursor-pointer">
-                      <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-slate-300 dark:border-dark-700 text-sm font-semibold text-slate-500 dark:text-dark-300 hover:border-brand-400 hover:text-brand-500 transition-all">
-                        <Upload className="h-4 w-4" />
-                        Selecionar Arquivos
-                      </div>
-                      <input type="file" multiple className="hidden" />
-                    </label>
-                    <p className="text-[10px] text-slate-400 dark:text-dark-500">
-                      Upload de imagens, PDF e documentos (max 10MB)
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+          <AISidebar
+            editor={editor}
+            summary={leaf?.summary}
+            flashcards={flashcards}
+            notebookId={notebookId || ""}
+            localRawText={localRawText}
+            isGeneratingSummary={isGeneratingSummary}
+            isGeneratingFlashcards={isGeneratingFlashcards}
+            onCreateManualFlashcard={() => setIsFlashcardModalOpen(true)}
+            onGenerateSummary={handleGenerateSummary}
+            onGenerateFlashcards={handleGenerateFlashcards}
+          />
         )}
       </div>
 
