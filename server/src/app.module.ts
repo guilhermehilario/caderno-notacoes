@@ -10,6 +10,7 @@ import { StudyModule } from './study/study.module';
 import { TagsModule } from './tags/tags.module';
 import { BookmarksModule } from './bookmarks/bookmarks.module';
 import { TrashModule } from './trash/trash.module';
+import { TodosModule } from './todos/todos.module';
 import { AppController } from './app.controller';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
@@ -28,6 +29,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     TagsModule,
     BookmarksModule,
     TrashModule,
+    TodosModule,
   ],
   controllers: [AppController],
   providers: [

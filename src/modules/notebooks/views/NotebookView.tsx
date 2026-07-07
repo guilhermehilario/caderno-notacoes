@@ -1,36 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Plus,
-  FileText,
-  Loader2,
-} from 'lucide-react';
-import { useNotebook } from '../hooks/useNotebooks';
-import { CreateNotebookSchema } from '../types';
-import type { CreateNotebookInput } from '../types';
-import { useLeaves } from '../../leaves/hooks/useLeaves';
-import { CreateLeafSchema } from '../../leaves/types';
-import type { CreateLeafInput } from '../../leaves/types';
-import { useNotebookFlashcards } from '../../study/hooks/useFlashcards';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import studyService from '../../study/services/studyService';
-import { useToggleBookmark } from '../../bookmarks/hooks/useToggleBookmark';
-import { useSoftDeleteNotebook } from '../../trash/hooks/useTrash';
-import { Card } from '../../../components/ui/Card.tsx';
-import { Button } from '../../../components/ui/Button.tsx';
-import { Modal } from '../../../components/ui/Modal.tsx';
-import { Input } from '../../../components/ui/Input.tsx';
-import { TextArea } from '../../../components/ui/TextArea.tsx';
-import { ColorPicker } from '../../../components/ui/ColorPicker.tsx';
-import { EmptyState } from '../../../components/ui/EmptyState.tsx';
-import { useEditorStatusStore } from '../../../store/editorStatusStore';
-import { NOTEBOOK_COLORS } from '../../notebooks/constants';
-import { LeafCard } from '../components/LeafCard';
-import { NotebookHeader } from '../components/NotebookHeader';
-import { FlashcardsSection } from '../components/FlashcardsSection';
-import { ConfirmDialog } from '../../../components/ui/ConfirmDialog.tsx';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Plus, FileText, Loader2 } from "lucide-react";
+import { useNotebook } from "../hooks/useNotebooks";
+import { CreateNotebookSchema } from "../types";
+import type { CreateNotebookInput } from "../types";
+import { useLeaves } from "../../leaves/hooks/useLeaves";
+import { CreateLeafSchema } from "../../leaves/types";
+import type { CreateLeafInput } from "../../leaves/types";
+import { useNotebookFlashcards } from "../../study/hooks/useFlashcards";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import studyService from "../../study/services/studyService";
+import { useToggleBookmark } from "../../bookmarks/hooks/useToggleBookmark";
+import { useSoftDeleteNotebook } from "../../trash/hooks/useTrash";
+import { Card } from "../../../components/ui/Card.tsx";
+import { Button } from "../../../components/ui/Button.tsx";
+import { Modal } from "../../../components/ui/Modal.tsx";
+import { Input } from "../../../components/ui/Input.tsx";
+import { TextArea } from "../../../components/ui/TextArea.tsx";
+import { ColorPicker } from "../../../components/ui/ColorPicker.tsx";
+import { EmptyState } from "../../../components/ui/EmptyState.tsx";
+import { useEditorStatusStore } from "../../../store/editorStatusStore";
+import { NOTEBOOK_COLORS } from "../../notebooks/constants";
+import { LeafCard } from "../components/LeafCard";
+import { NotebookHeader } from "../components/NotebookHeader";
+import { FlashcardsSection } from "../components/FlashcardsSection";
+import { ConfirmDialog } from "../../../components/ui/ConfirmDialog.tsx";
 
 export const NotebookView: React.FC = () => {
   const { notebookId } = useParams<{ notebookId: string }>();
@@ -39,16 +35,27 @@ export const NotebookView: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isFlashcardModalOpen, setIsFlashcardModalOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState(NOTEBOOK_COLORS[0]);
-  const [selectedLeafId, setSelectedLeafId] = useState('');
-  const [parentLeafId, setParentLeafId] = useState<string | undefined>(undefined);
+  const [selectedLeafId, setSelectedLeafId] = useState("");
+  const [parentLeafId, setParentLeafId] = useState<string | undefined>(
+    undefined,
+  );
 
-  const { notebook, isLoading: isLoadingNotebook, updateNotebook } = useNotebook(notebookId || '');
-  const { leaves, isLoading: isLoadingLeaves, createLeaf } = useLeaves(notebookId || '');
-  const { data: flashcards = [], isLoading: isLoadingFlashcards } = useNotebookFlashcards(notebookId || '');
+  const {
+    notebook,
+    isLoading: isLoadingNotebook,
+    updateNotebook,
+  } = useNotebook(notebookId || "");
+  const {
+    leaves,
+    isLoading: isLoadingLeaves,
+    createLeaf,
+  } = useLeaves(notebookId || "");
+  const { data: flashcards = [], isLoading: isLoadingFlashcards } =
+    useNotebookFlashcards(notebookId || "");
   const { isBookmarked, toggleBookmark } = useToggleBookmark({
-    type: 'notebook',
-    id: notebookId || '',
-    title: notebook?.title || '',
+    type: "notebook",
+    id: notebookId || "",
+    title: notebook?.title || "",
     path: `/notebooks/${notebookId}`,
   });
   const softDeleteNotebook = useSoftDeleteNotebook();
@@ -74,9 +81,9 @@ export const NotebookView: React.FC = () => {
   } = useForm<CreateLeafInput>({
     resolver: zodResolver(CreateLeafSchema),
     defaultValues: {
-      title: '',
-      content: '',
-      rawText: '',
+      title: "",
+      content: "",
+      rawText: "",
     },
   });
 
@@ -99,13 +106,19 @@ export const NotebookView: React.FC = () => {
   } = useForm<{ front: string; back: string }>();
 
   const createFlashcardMutation = useMutation({
-    mutationFn: (data: { leafId: string; notebookId: string; front: string; back: string }) =>
-      studyService.createFlashcard(data),
+    mutationFn: (data: {
+      leafId: string;
+      notebookId: string;
+      front: string;
+      back: string;
+    }) => studyService.createFlashcard(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notebook-flashcards', notebookId] });
+      queryClient.invalidateQueries({
+        queryKey: ["notebook-flashcards", notebookId],
+      });
       setIsFlashcardModalOpen(false);
       resetFc();
-      setSelectedLeafId('');
+      setSelectedLeafId("");
     },
   });
 
@@ -119,7 +132,7 @@ export const NotebookView: React.FC = () => {
         back: data.back,
       });
     } catch (error) {
-      console.error('Erro ao criar flashcard:', error);
+      console.error("Erro ao criar flashcard:", error);
     }
   };
 
@@ -135,14 +148,14 @@ export const NotebookView: React.FC = () => {
       setParentLeafId(undefined);
       navigate(`/notebooks/${notebookId}/leaves/${newLeaf.id}`);
     } catch (error) {
-      console.error('Erro ao criar folha:', error);
+      console.error("Erro ao criar folha:", error);
     }
   };
 
   const handleOpenEditModal = () => {
     if (notebook) {
-      setEditValue('title', notebook.title);
-      setEditValue('description', notebook.description || '');
+      setEditValue("title", notebook.title);
+      setEditValue("description", notebook.description || "");
       setSelectedColor(notebook.color || NOTEBOOK_COLORS[0]);
       setIsEditModalOpen(true);
     }
@@ -156,7 +169,7 @@ export const NotebookView: React.FC = () => {
       });
       setIsEditModalOpen(false);
     } catch (error) {
-      console.error('Erro ao atualizar caderno:', error);
+      console.error("Erro ao atualizar caderno:", error);
     }
   };
 
@@ -164,11 +177,11 @@ export const NotebookView: React.FC = () => {
 
   const handleDeleteNotebookConfirm = async () => {
     try {
-      await softDeleteNotebook.mutateAsync(notebookId || '');
+      await softDeleteNotebook.mutateAsync(notebookId || "");
       setConfirmDeleteOpen(false);
-      navigate('/dashboard');
+      navigate("/dashboard");
     } catch (error) {
-      console.error('Erro ao mover para lixeira:', error);
+      console.error("Erro ao mover para lixeira:", error);
     }
   };
 
@@ -184,7 +197,10 @@ export const NotebookView: React.FC = () => {
     return (
       <div className="text-center p-8">
         <h3 className="text-lg font-bold">Caderno não encontrado</h3>
-        <Link to="/dashboard" className="text-brand-500 hover:underline mt-2 inline-block">
+        <Link
+          to="/dashboard"
+          className="text-brand-500 hover:underline mt-2 inline-block"
+        >
           Voltar para o Dashboard
         </Link>
       </div>
@@ -248,7 +264,7 @@ export const NotebookView: React.FC = () => {
               <LeafCard
                 key={leaf.id}
                 leaf={leaf}
-                notebookId={notebookId || ''}
+                notebookId={notebookId || ""}
                 onCreateSubLeaf={() => {
                   setParentLeafId(leaf.id);
                   setIsModalOpen(true);
@@ -263,7 +279,7 @@ export const NotebookView: React.FC = () => {
       <FlashcardsSection
         flashcards={flashcards}
         isLoading={isLoadingFlashcards}
-        notebookId={notebookId || ''}
+        notebookId={notebookId || ""}
         onOpenCreateModal={() => {
           if (leaves.length > 0) {
             setSelectedLeafId(leaves[0].id);
@@ -280,7 +296,7 @@ export const NotebookView: React.FC = () => {
           reset();
           setParentLeafId(undefined);
         }}
-        title={parentLeafId ? 'Criar Sub-folha' : 'Criar Nova Folha'}
+        title={parentLeafId ? "Criar Sub-folha" : "Criar Nova Folha"}
         footer={
           <div className="flex gap-3">
             <Button
@@ -302,7 +318,7 @@ export const NotebookView: React.FC = () => {
             label="Título da Folha"
             placeholder="Ex: Aula 01 - Introdução ao Protocolo HTTP"
             error={errors.title?.message}
-            {...register('title')}
+            {...register("title")}
           />
 
           {/* Parent leaf selector (only when creating sub-leaf) */}
@@ -312,7 +328,7 @@ export const NotebookView: React.FC = () => {
                 Folha Pai (opcional - cria sub-folha)
               </label>
               <select
-                value={parentLeafId || ''}
+                value={parentLeafId || ""}
                 onChange={(e) => setParentLeafId(e.target.value || undefined)}
                 className="w-full px-3.5 py-2.5 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-xl text-slate-500 dark:text-dark-400 text-sm focus:outline-none focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900/20 focus:border-brand-500 transition-all duration-200 cursor-pointer"
               >
@@ -327,7 +343,8 @@ export const NotebookView: React.FC = () => {
           )}
           {parentLeafId && (
             <p className="text-xs text-brand-500 font-semibold">
-              Esta será uma sub-folha de: {leaves.find((l) => l.id === parentLeafId)?.title || '...'}
+              Esta será uma sub-folha de:{" "}
+              {leaves.find((l) => l.id === parentLeafId)?.title || "..."}
             </p>
           )}
         </div>
@@ -356,7 +373,9 @@ export const NotebookView: React.FC = () => {
               onClick={handleSubmitFc(onFlashcardSubmit)}
               disabled={createFlashcardMutation.isPending}
             >
-              {createFlashcardMutation.isPending ? 'Criando...' : 'Criar Flashcard'}
+              {createFlashcardMutation.isPending
+                ? "Criando..."
+                : "Criar Flashcard"}
             </Button>
           </div>
         }
@@ -385,17 +404,19 @@ export const NotebookView: React.FC = () => {
             label="Pergunta (Frente)"
             placeholder="Ex: Qual a fórmula do teorema de Pitágoras?"
             error={fcErrors.front?.message}
-            {...registerFc('front', { required: 'A pergunta é obrigatória' })}
+            {...registerFc("front", { required: "A pergunta é obrigatória" })}
           />
 
           <TextArea
             label="Resposta (Verso)"
             placeholder="Ex: a² + b² = c², onde c é a hipotenusa..."
             rows={4}
-            {...registerFc('back', { required: 'A resposta é obrigatória' })}
+            {...registerFc("back", { required: "A resposta é obrigatória" })}
           />
           {fcErrors.back?.message && (
-            <p className="text-xs text-rose-500 mt-1">{fcErrors.back.message}</p>
+            <p className="text-xs text-rose-500 mt-1">
+              {fcErrors.back.message}
+            </p>
           )}
         </div>
       </Modal>
@@ -419,7 +440,9 @@ export const NotebookView: React.FC = () => {
             >
               Cancelar
             </Button>
-            <Button onClick={handleSubmitEdit(onEditSubmit)}>Salvar Alterações</Button>
+            <Button onClick={handleSubmitEdit(onEditSubmit)}>
+              Salvar Alterações
+            </Button>
           </div>
         }
       >
@@ -428,14 +451,14 @@ export const NotebookView: React.FC = () => {
             label="Título do Caderno"
             placeholder="Ex: Engenharia de Software II, Cálculo III"
             error={editErrors.title?.message}
-            {...registerEdit('title')}
+            {...registerEdit("title")}
           />
 
           <TextArea
             label="Descrição (Opcional)"
             placeholder="Uma breve descrição sobre este caderno..."
             rows={3}
-            {...registerEdit('description')}
+            {...registerEdit("description")}
           />
 
           <ColorPicker
@@ -448,19 +471,5 @@ export const NotebookView: React.FC = () => {
       </Modal>
     </div>
   );
-
-      {/* Confirmar exclusão */}
-      <ConfirmDialog
-        isOpen={confirmDeleteOpen}
-        onClose={() => setConfirmDeleteOpen(false)}
-        onConfirm={handleDeleteNotebookConfirm}
-        title="Mover para lixeira?"
-        message="Mover este caderno para a lixeira? Ele ficará lá por 15 dias antes de ser excluído permanentemente."
-        confirmLabel="Mover para Lixeira"
-        variant="danger"
-      />
-    </div>
-  );
 };
-
 export default NotebookView;

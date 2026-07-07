@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   BookmarkIcon,
   Archive,
+  ListChecks,
   Trash2,
   User as UserIcon,
   ChevronLeft,
@@ -17,6 +18,7 @@ const NAV_ITEMS = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/bookmarks', label: 'Marcadores', icon: BookmarkIcon },
   { path: '/archived', label: 'Arquivados', icon: Archive },
+  { path: '/todos', label: 'Tarefas', icon: ListChecks },
 ] as const;
 
 export const Sidebar: React.FC = () => {
