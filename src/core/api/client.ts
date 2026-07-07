@@ -87,7 +87,6 @@ api.interceptors.response.use(
         );
 
         const { accessToken } = response.data;
-        console.log("access: ", accessToken);
         useAuthStore.getState().setAccessToken(accessToken);
         refreshFailCount = 0; // ✅ Reseta contador no refresh bem-sucedido
 

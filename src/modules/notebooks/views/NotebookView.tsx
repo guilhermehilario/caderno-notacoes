@@ -215,7 +215,7 @@ export const NotebookView: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-end md:self-auto pl-4">
+        <div className="flex items-center gap-2 self-end md:self-auto flex-wrap justify-end">
           {/* Bookmark button */}
           <button
             type="button"

@@ -1,566 +1,351 @@
 # 🔍 Análise de Problemas — Revisa Aula
 
-> **Data:** 30/06/2026
-> **Escopo:** Frontend (React 19 + TypeScript + Vite) e Backend (Express + JSON Database)
+> **Data:** 07/07/2026
+> **Escopo:** Frontend (React 19 + Vite 8 + TypeScript) e Backend (NestJS 11 + Prisma ORM 7 + SQLite)
 
 ---
 
 ## Sumário
 
-1. [🔴 Problemas Críticos de Segurança](#1--problemas-críticos-de-segurança)
-2. [🔴 Problemas de Arquitetura e Design](#2--problemas-de-arquitetura-e-design)
-3. [🟡 Problemas de Qualidade de Código](#3--problemas-de-qualidade-de-código)
-4. [🟡 Problemas de Performance](#4--problemas-de-performance)
-5. [🟡 Problemas de UX e UI](#5--problemas-de-ux-e-ui)
-6. [🟢 Problemas de Manutenibilidade](#6--problemas-de-manutenibilidade)
-7. [🟢 Problemas de Configuração e Dev Experience](#7--problemas-de-configuração-e-dev-experience)
-8. [📊 Resumo e Priorização](#8--resumo-e-priorização)
+1. [🔴 Problemas Críticos](#1--problemas-críticos)
+2. [🟡 Problemas de Qualidade e Manutenibilidade](#2--problemas-de-qualidade-e-manutenibilidade)
+3. [🟡 Problemas de UX e UI](#3--problemas-de-ux-e-ui)
+4. [🟢 Problemas de Performance](#4--problemas-de-performance)
+5. [🟢 Problemas de Configuração e DevEx](#5--problemas-de-configuração-e-devex)
+6. [📊 Resumo e Priorização](#6--resumo-e-priorização)
 
 ---
 
-## 1. 🔴 Problemas Críticos de Segurança
+## 1. 🔴 Problemas Críticos
 
-### 1.1. Senhas armazenadas em texto puro
+### 1.1. IA totalmente mockada (funcionalidade falsa)
 
-**Arquivo:** `server/routes.js` (linhas 58, 122, 194)
+**Arquivos:** `server/src/leaves/utils/ai-mock.service.ts`
 
-**Problema:** As senhas dos usuários são armazenadas **sem nenhum hash** no banco de dados JSON. O próprio código reconhece isso com o comentário: `// Em produção, usar bcryptjs. Para fins básicos, armazenamos simples`.
+**Problema:** A geração de resumos e flashcards por IA é completamente simulada com templates fixos. Não há integração com nenhum serviço real (OpenAI, Anthropic, etc.).
 
-```js
-const newUser = {
-  // ...
-  password, // Em produção, usar bcryptjs. Para fins básicos, armazenamos simples
-};
+**Impacto:** O produto não entrega o valor prometido de "geração inteligente". Isso engana o usuário e torna o core diferencial do app inútil.
+
+**Solução:** Integrar com API real de IA (OpenAI, Anthropic Claude, etc.). Usar o Gravity Index para escolher o provider.
+
+**Esforço:** Alto
+
+---
+
+### 1.2. Sem testes automatizados
+
+**Problema:** O projeto não possui testes unitários, de integração ou E2E. Qualquer refatoração corre alto risco de quebrar funcionalidades.
+
+**Impacto:** Dificuldade de evoluir o código com segurança. Regression bugs frequentes.
+
+**Solução:** Implementar ao menos testes unitários para:
+- Algoritmo SM-2 (`flashcards.service.ts`)
+- Cálculo de estatísticas (`study.service.ts`)
+- Hooks críticos (useAuth, useLeaves)
+- Componentes principais (EditorView, StudyView)
+
+**Esforço:** Alto
+
+---
+
+### 1.3. `console.log` com token sensível em produção
+
+**Arquivo:** `src/core/api/client.ts` (linha 90)
+
+**Problema:**
+```ts
+console.log("access: ", accessToken);
 ```
+O access token JWT é logado no console do navegador a cada refresh.
 
-**Impacto:** Qualquer pessoa com acesso ao arquivo `db.json` (ou um atacante que explore uma vulnerabilidade) pode ler todas as senhas dos usuários em texto claro.
+**Impacto:** Vazamento do token de autenticação via console. Qualquer extensão maliciosa ou script de terceiro pode capturá-lo.
 
-**Solução:** Usar `bcryptjs` ou `bcrypt` com salt rounds (≥ 10) para hash das senhas antes do armazenamento e comparação.
+**Solução:** Remover o `console.log` ou substituir por logger condicional (`if (process.env.NODE_ENV !== 'production')`).
+
+**Esforço:** Baixo
 
 ---
 
-### 1.2. Chaves JWT hardcoded
+### 1.4. CORS com `origin: true` em produção
 
-**Arquivos:** `server/routes.js` (linha 7) e `server/authMiddleware.js` (linha 4)
+**Arquivo:** `server/src/main.ts` (linha 18)
 
-**Problema:** As chaves secretas para assinatura dos tokens JWT estão **hardcoded** no código-fonte:
-
-```js
-export const JWT_SECRET = 'super-secret-key-revisa-aula'; // authMiddleware.js
-const REFRESH_SECRET = 'super-secret-refresh-key-revisa-aula'; // routes.js
+**Problema:**
+```ts
+const origin = process.env.NODE_ENV === 'production'
+  ? process.env.FRONTEND_URL || false
+  : true;
 ```
+Em desenvolvimento, `origin: true` permite qualquer origem. Em produção, se `FRONTEND_URL` não for definido, `false` bloqueia tudo.
 
-**Impacto:** Como o código está versionado no Git, qualquer pessoa com acesso ao repositório tem as chaves secretas. Isso permite forjar tokens JWT, assumir identidade de qualquer usuário e acessar todas as rotas protegidas.
+**Impacto:** Em dev, CORS aberto. Em produção, sem configuração, o app quebra completamente.
 
-**Solução:** Usar variáveis de ambiente (e.g., `process.env.JWT_SECRET`) com fallback apenas para desenvolvimento local, e garantir que o `.env` não seja versionado.
+**Solução:** Validar a variável `FRONTEND_URL` no startup e lançar erro se não definida em produção.
 
----
-
-### 1.3. Ausência de validação de propriedade do recurso (Owner Check)
-
-**Arquivos:** `server/routes.js` — rotas de leaves (`/leaves/:leafId`, `/leaves/:leafId/summary`, etc.)
-
-**Problema:** As rotas de folhas (leaves) e flashcards não verificam se o recurso pertence ao usuário autenticado. Apenas os cadernos (notebooks) têm essa verificação (`nb.userId === req.user.id`).
-
-Por exemplo, na rota `GET /leaves/:leafId`:
-```js
-router.get('/leaves/:leafId', authMiddleware, async (req, res) => {
-  const leaves = await db.get('leaves');
-  const leaf = leaves.find(l => l.id === req.params.leafId);
-  // ❌ NÃO verifica se leaf pertence ao notebook do usuário
-});
-```
-
-**Impacto:** Um usuário autenticado pode acessar, modificar ou deletar folhas e flashcards de **outros usuários**, desde que saiba ou adivinhe os IDs (UUIDs não são imprevisíveis o suficiente como único mecanismo de segurança).
-
-**Solução:** Verificar a cadeia de propriedade: leaf → notebook → userId === req.user.id.
+**Esforço:** Baixo
 
 ---
 
-### 1.4. `secure: false` nos cookies de refresh token
+## 2. 🟡 Problemas de Qualidade e Manutenibilidade
 
-**Arquivo:** `server/routes.js` (linhas 76-79, 140-143)
+### 2.1. Componentes God (muitas responsabilidades)
 
-**Problema:** O cookie de refresh token é configurado com `secure: false`, o que significa que ele é enviado em conexões HTTP (não apenas HTTPS).
+**Arquivos:** `EditorView.tsx` (~550 linhas), `NotebookView.tsx` (~450 linhas)
 
-```js
-res.cookie('refreshToken', refreshToken, {
-  httpOnly: true,
-  secure: false, // ⚠️ local development
-  sameSite: 'lax',
-  maxAge: 7 * 24 * 60 * 60 * 1000
-});
-```
+**Problema:** Os componentes de View acumulam gerenciamento de estado, lógica de API, validação de formulários, modais, drag & drop, etc.
 
-**Impacto:** Em produção, o token de refresh pode ser interceptado em ataques Man-in-the-Middle.
+**Exemplo:** `EditorView.tsx` gerencia editor, sidebar de IA, anotações, autosave, flashcards, resumo, sub-folhas com drag & drop — tudo em um único arquivo.
 
-**Solução:** Tornar `secure` configurável via variável de ambiente, ativando-o em produção.
+**Solução:** Extrair responsabilidades em hooks customizados e componentes menores. Separar a lógica do painel de IA em um componente dedicado.
+
+**Esforço:** Alto
 
 ---
 
-### 1.5. CORS com `origin: true`
-
-**Arquivo:** `server/index.js` (linha 10)
-
-**Problema:** `origin: true` reflete dinamicamente qualquer origem da requisição, efetivamente permitindo acesso de qualquer domínio.
-
-```js
-app.use(cors({
-  origin: true, // Reflete dinamicamente a origem da requisição
-  credentials: true,
-}));
-```
-
-**Impacto:** Qualquer site malicioso pode fazer requisições autenticadas (com cookies) para a API se um usuário estiver logado.
-
-**Solução:** Especificar origens permitidas explicitamente (e.g., `http://localhost:5173` para dev, e o domínio de produção).
-
----
-
-## 2. 🔴 Problemas de Arquitetura e Design
-
-### 2.1. Banco de dados JSON em arquivo único (sem concorrência)
-
-**Arquivo:** `server/database.js`
-
-**Problema:** O "banco de dados" é um arquivo JSON (`db.json`) lido e escrito inteiramente em cada operação. O arquivo cresce linearmente com o uso. Não há proteção contra race conditions em requisições concorrentes — duas requisições simultâneas podem corromper os dados.
-
-```js
-async function saveDb() {
-  await fs.writeFile(dbPath, JSON.stringify(inMemoryDb, null, 2), 'utf8');
-}
-```
-
-**Impacto:** Instabilidade em cenários de múltiplos usuários simultâneos. Perda de dados em requisições concorrentes.
-
-**Solução:** Migrar para SQLite (com `better-sqlite3`) ou PostgreSQL. Pelo menos implementar locks de leitura/escrita.
-
----
-
-### 2.2. Geração de resumo e flashcards totalmente mockada
-
-**Arquivo:** `server/routes.js` — rotas `POST /leaves/:leafId/summary` e `POST /leaves/:leafId/flashcards`
-
-**Problema:** As funcionalidades de "IA" são completamente simuladas com templates fixos — não há integração com nenhum serviço real de IA (OpenAI, Anthropic, etc.). O "resumo" gerado é sempre o mesmo texto genérico com placeholder, e os flashcards são 3 cards idênticos com variação de template.
-
-```js
-const summaryText = `### Resumo da Aula: ${cleanTitle}
-Este resumo foi gerado dinamicamente pela inteligência artificial...`;
-```
-
-**Impacto:** O produto não entrega o valor prometido de "geração inteligente de resumos e flashcards". Isso engana o usuário e torna o core diferencial do app inútil.
-
-**Solução:** Integrar com uma API real de IA (OpenAI, Anthropic Claude, etc.) usando `<NOME_DA_INSTITUIÇÃO>` e o Gravity Index para escolher o provider.
-
----
-
-### 2.3. Estado gerenciado em dois lugares (Zustand + React Query) sem boundary claro
-
-**Arquivos:** Múltiplos (stores do Zustand e cache do React Query)
-
-**Problema:** O projeto usa tanto Zustand (para estado UI e sessão de estudo) quanto React Query (para estado do servidor). Porém, o hook `useAuth` mistura os dois: dados de perfil são armazenados tanto no Zustand (`useAuthStore`) quanto no cache do React Query (`queryClient.setQueryData(['profile'], data.user)`). Isso cria duas fontes de verdade para o mesmo dado.
-
-```js
-// useAuth.ts
-const { login, logout, isAuthenticated, user, accessToken } = useAuthStore();
-// ...
-onSuccess: (data) => {
-  login(data.user, data.accessToken);          // Zustand
-  queryClient.setQueryData(['profile'], data.user); // React Query
-},
-```
-
-**Impacto:**Possíveis inconsistências se um dos dois for atualizado sem o outro. Maior complexidade cognitiva para novos desenvolvedores.
-
-**Solução:** Definir uma estratégia clara: React Query para dados de servidor, Zustand apenas para estado UI local (tema, sidebar, sessão de estudo).
-
----
-
-### 2.4. Refresh token sem rotação
-
-**Arquivo:** `server/routes.js` (linhas 155-172)
-
-**Problema:** O refresh token nunca é rotacionado. O mesmo token pode ser usado múltiplas vezes para obter novos access tokens. Se vazar, o atacante pode renovar a sessão indefinidamente.
-
-```js
-router.post('/auth/refresh', async (req, res) => {
-  // ...
-  const accessToken = jwt.sign(...);
-  return res.json({ accessToken });
-  // ❌ Não gera novo refresh token
-});
-```
-
-**Solução:** Gerar um novo refresh token a cada requisição de refresh e invalidar o anterior.
-
----
-
-## 3. 🟡 Problemas de Qualidade de Código
-
-### 3.1. ESLint com regra restritiva de imports que pode ser ignorada
+### 2.2. ESLint configurado incorretamente
 
 **Arquivo:** `eslint.config.js`
 
-**Problema:** A regra `no-restricted-imports` proíbe imports sem extensão de arquivo (e.g., `from './Component'` em vez de `from './Component/index.tsx'`). Porém, em nenhum lugar do projeto isso é seguido — todos os imports usam extensão explícita (e.g., `from './EditorBubbleMenu'`) que não deveria ser necessária com o Vite. A regra foi configurada ao contrário: deveria proibir imports COM extensão de arquivo, não sem.
+**Problema:** A regra `no-restricted-imports` está configurada ao contrário: proíbe imports sem extensão, mas todos os imports do projeto usam extensão explícita (`.tsx`, `.ts`).
 
-```js
-'no-restricted-imports': ['error', {
-  patterns: [
-    { group: ['./**/!(*.*)'], message: '...' },
-  ],
-}],
-```
+**Solução:** Reverter a lógica ou remover a regra, já que TypeScript + Vite resolvem extensões corretamente.
 
-**Impacto:** A regra de lint não está fazendo o que se propõe e pode causar confusão. Na verdade, todos os imports atuais usam `.tsx` e `.ts` explicitamente, o que deveria ser o comportamento proibido, não o permitido.
-
-**Solução:** Reverter a lógica ou remover a regra (já que TypeScript + Vite resolvem extensões corretamente).
+**Esforço:** Baixo
 
 ---
 
-### 3.2. Comentários em português misturados com código em inglês
+### 2.3. Import default vs named export inconsistente
 
-**Arquivos:** Múltiplos (especialmente views e services)
+**Exemplos:** Múltiplos arquivos exportam tanto `export function` quanto `export default`, e as importações misturam padrões.
 
-**Problema:** Código fonte usa nomes de variáveis e funções em inglês (boa prática), mas comentários estão em português. As mensagens de erro no frontend estão em português, enquanto as do servidor misturam inglês e português. Falta consistência.
+**Solução:** Remover todos os `export default` e usar apenas named exports.
 
-**Impacto:** Baixo para funcionalidade, mas dificulta colaboração internacional e contribui para uma sensação de falta de polish.
-
-**Solução:** Decidir por um idioma (recomendado: inglês para tudo, com i18n para UI) ou padronizar português para todo o ecossistema.
+**Esforço:** Baixo
 
 ---
 
-### 3.3. `console.log` e `console.error` espalhados sem tratamento adequado
+### 2.4. Classes Tailwind inline massivas
 
-**Arquivos:** `core/api/client.ts`, `views/EditorView.tsx`, `views/StudyView.tsx`, `views/NotebookView.tsx`, `views/DashboardView.tsx`, `server/routes.js`, `server/index.js`
+**Arquivo:** `src/modules/leaves/views/EditorView.tsx`
 
-**Problema:** Há múltiplos `console.log` e `console.error` usados como tratamento de erro e debug no código de produção:
+**Problema:** O `EditorContent` tem uma string de classes Tailwind de ~1500 caracteres inline no JSX, difícil de ler e manter.
 
-```ts
-console.log("access: ", accessToken); // client.ts (linha 90)
-console.log("event: ", Object.keys(e.nativeEvent)); // StudyView.tsx (linha 88)
-console.error('Erro no auto-save:', error); // EditorView.tsx (linha 227)
-```
+**Solução:** Extrair para classes CSS em `index.css` com nomes semânticos como `.editor-content` ou `.tiptap-content`.
 
-**Impacto:** `console.log` em produção pode vazar informações sensíveis. `console.error` como único tratamento de erro não oferece feedback ao usuário e polui o console.
-
-**Solução:** Implementar um sistema de logging adequado (e.g., sentry, logger estruturado) e usar `toast` ou notificações para feedback ao usuário.
+**Esforço:** Médio
 
 ---
 
-### 3.4. Tipagem insegura no `setQueryData`
+### 2.5. Form aninhado no modal de criação de caderno
 
-**Arquivo:** `hooks/useLeaves.ts` (linhas 100-108)
+**Arquivo:** `src/modules/notebooks/views/DashboardView.tsx`
 
-**Problema:** O hook `summaryMutation` faz `setQueryData` com tipagem `any` implícita, e o próprio README reconhece isso como problema:
+**Problema:** O modal de criação de notebook tem o botão de submit no `footer` (fora do `<form>`), e há um `<form>` dentro do `children`. No NotebookView o mesmo padrão se repete.
 
-```ts
-queryClient.setQueryData(['leaves', leafId], (old: { summary?: string } | undefined) => {
-  if (!old) return old;
-  return { ...old, summary: data.summary };
-});
-```
+**Solução:** Unificar o submit handler sem forms aninhados.
 
-**Impacto:** Perda de segurança de tipos. Se a estrutura do Leaf mudar, esse código pode silenciosamente produzir estados inválidos no cache.
-
-**Solução:** Tipar corretamente com `Leaf` em vez do objeto genérico.
+**Esforço:** Baixo
 
 ---
 
-### 3.5. Estilos CSS inline e classes Tailwind massivas
+### 2.6. Lógica de "revisados hoje" pode ser imprecisa
 
-**Arquivo:** `EditorView.tsx` (linha ~170)
+**Arquivo:** `server/src/study/study.service.ts`
 
-**Problema:** O componente `EditorView` contém classes Tailwind CSS extremamente longas (centenas de caracteres) inline no JSX para estilizar o `EditorContent`. Essas classes são difíceis de ler, manter e reaproveitar.
+**Problema:** O cálculo de `reviewedToday` usa `updatedAt` como proxy de "última revisão", mas `updatedAt` muda também na criação do card.
 
-```tsx
-className="w-full h-full [&_.ProseMirror]:outline-none [&_.ProseMirror]:min-h-[200px] [&_.ProseMirror]:leading-relaxed [&_.ProseMirror]:text-base [&_.ProseMirror]:caret-slate-800 ..."
-```
+**Status:** ✅ Corrigido parcialmente — agora verifica se o card foi efetivamente revisado (`repetitions > 0 || interval > 0 || easeFactor != 2.5`).
 
-**Impacto:** Dificuldade de manutenção. Qualquer mudança de estilo requer editar uma string gigante.
-
-**Solução:** Extrair para classes CSS no `index.css` ou `App.css` com nomes semânticos como `.editor-content` ou `.tiptap-content`.
+**Melhoria futura:** Adicionar coluna `lastReviewedAt` no modelo `Flashcard` para rastreamento preciso.
 
 ---
 
-## 4. 🟡 Problemas de Performance
+## 3. 🟡 Problemas de UX e UI
 
-### 4.1. Autosave dispara a cada digitação (mesmo com debounce)
+### 3.1. Link "Esqueceu a senha?" quebrado
 
-**Arquivo:** `EditorView.tsx`
+**Arquivo:** `src/modules/auth/views/LoginView.tsx`
 
-**Problema:** Embora o debounce seja aplicado (1.5s), as funções `setLocalContent`, `setLocalRawText` e `setSaveStatus('saving')` são chamadas **a cada caractere digitado** no `onUpdate` do editor, porque o callback executa imediatamente para atualizar o estado local. O debounce só atrasa o salvamento no servidor.
+**Problema:** O link aponta para `/forgot-password`, rota que não existe. Usuário que esqueceu a senha fica sem opção de recuperação.
 
-```ts
-const handleEditorUpdate = useCallback(({ editor }) => {
-  if (isApplyingRemote.current) return;
-  setLocalContent(ed.getHTML());  // ← executa em cada tecla
-  setLocalRawText(ed.getText());  // ← executa em cada tecla
-  setSaveStatus('saving');        // ← executa em cada tecla
-}, []);
-```
+**Solução:** Implementar fluxo de recuperação de senha ou remover o link.
 
-**Impacto:** Cada tecla pressionada no editor dispara pelo menos 3 atualizações de estado (setLocalContent + setLocalRawText + setSaveStatus), que causam re-renderizações em cascata. Em dispositivos mais lentos ou com documentos longos, isso pode causar lag perceptível.
-
-**Solução:** Debounce também os estados locais ou atualize-os apenas quando necessário (e.g., apenas no salvamento).
+**Esforço:** Médio
 
 ---
 
-### 4.2. Re-renderização desnecessária da AnnotationSidebar
+### 3.2. Skeleton exibido mesmo com dados em cache
 
-**Arquivo:** `components/AnnotationSidebar.tsx`
+**Arquivo:** `src/modules/leaves/views/EditorView.tsx`
 
-**Problema:** A sidebar de anotações escaneia o HTML inteiro do editor a cada atualização (`editor.on('update')`) e atualiza o estado com `setAnnotations`. Isso é feito no componente pai via `useEffect`, que reexecuta todo parsing mesmo para mudanças de texto não relacionadas a anotações.
+**Problema:** A condição `isLoadingLeaf || (leaf && !contentReady)` exibe o skeleton mesmo quando a leaf já está no cache.
 
-```ts
-useEffect(() => {
-  const updateAnnotations = () => {
-    const html = editor.getHTML();
-    const parser = new DOMParser(); // ← Parsing completo do HTML
-    const doc = parser.parseFromString(html, 'text/html');
-    const marks = doc.querySelectorAll('span.annotation-anchor[data-annotation]');
-    // ...
-  };
-  editor.on('update', updateAnnotations);
-  return () => { editor.off('update', updateAnnotations); };
-}, [editor]);
-```
+**Solução:** Usar `isFetching` + `isStale` em vez de `isLoading` ou pular skeleton para dados em cache.
 
-**Impacto:** A cada caractere digitado, o HTML completo do editor é parseado com DOMParser. Com documentos grandes, isso pode causar queda de performance.
-
-**Solução:** Usar `useMemo` com dependência no HTML, ou limitar o escaneamento a mudanças que afetam anotações (usando a API do TipTap/ProseMirror para detectar marks).
+**Esforço:** Baixo
 
 ---
 
-### 4.3. Skeleton carregado mesmo quando leaf está em cache
+### 3.3. Sem feedback visual ao criar/excluir itens
 
-**Arquivo:** `EditorView.tsx`
+**Problema:** Operações como criar folha, excluir caderno, criar flashcard não exibem toast/notificação de sucesso.
 
-**Problema:** A condição `if (isLoadingLeaf || (leaf && !contentReady))` exibe o skeleton **sempre** que `!contentReady`, mesmo quando a leaf já está no cache do React Query. O usuário vê o skeleton mesmo para navegações instantâneas entre folhas.
+**Solução:** Adicionar um sistema de toasts ou usar o elemento de status já existente no header.
 
-**Impacto:** Experiência de usuário subótima para navegação entre folhas já carregadas.
-
-**Solução:** Skip do skeleton quando os dados vêm do cache (e.g., verificar `isStale` ou `isFetching` em vez de `isLoading`).
+**Esforço:** Médio
 
 ---
 
-## 5. 🟡 Problemas de UX e UI
+### 3.4. Nome da marca inconsistente
 
-### 5.1. Botão "Esqueceu a senha?" leva a rota inexistente
+**Arquivos:** `LoginView.tsx` ("StudyNotes Flash"), `RegisterView.tsx` ("StudyNotes AI"), Sidebar ("StudyNotes AI")
 
-**Arquivo:** `LoginView.tsx` (linha 111)
+**Problema:** O nome da aplicação é inconsistente entre as telas.
 
-**Problema:** O link "Esqueceu a senha?" aponta para `/forgot-password`, mas essa rota **não existe** no sistema:
+**Solução:** Padronizar para "StudyNotes AI" em todos os lugares.
 
-```tsx
-<Link to="/forgot-password" className="...">
-  Esqueceu a senha?
-</Link>
-```
-
-O catch-all (`path: '*'`) redireciona para `/dashboard`, que é uma rota privada. Se o usuário não estiver logado, será redirecionado de volta ao login em um loop infinito.
-
-**Impacto:** Link quebrado. Usuário que esqueceu a senha fica sem opção de recuperação.
-
-**Solução:** Implementar a funcionalidade de "esqueci minha senha" ou remover o link.
+**Esforço:** Baixo
 
 ---
 
-### 5.2. Marca d'água "StudyNotes Flash" vs "StudyNotes AI"
+### 3.5. Indicador de salvamento no editor poderia ser mais visível
 
-**Arquivos:** `LoginView.tsx` (linha 47) e `RegisterView.tsx` (linha 49)
+**Arquivo:** `src/modules/leaves/views/EditorView.tsx`
 
-**Problema:** O nome da aplicação é inconsistente entre as duas telas de autenticação:
+**Problema:** O status de salvamento ("Salvando...", "Salvo", "Erro") está no header global, longe do editor. O usuário pode não perceber se o salvamento falhou.
 
-- **Login:** "StudyNotes **Flash**"
-- **Register:** "StudyNotes **AI**"
+**Solução:** Adicionar indicador local próximo ao editor ou usar um toast.
 
-**Impacto:** Pequeno, mas transmite falta de cuidado com a identidade visual.
-
-**Solução:** Padronizar o nome da marca.
+**Esforço:** Baixo
 
 ---
 
-### 5.3. Navegação quebrada ao fechar modal de criação de caderno
+## 4. 🟢 Problemas de Performance
 
-**Arquivo:** `DashboardView.tsx`
+### 4.1. Autosave dispara re-renders mesmo com debounce
 
-**Problema:** O modal de criação de notebook tem dois `form` aninhados: o `form` do `handleSubmit` dentro do `Modal` + o form dentro do `children` do modal. Quando o usuário clica "Criar Caderno" no footer, ele está fora do form interno.
+**Arquivo:** `src/modules/leaves/views/EditorView.tsx`
 
-```tsx
-<Modal
-  footer={
-    <Button onClick={handleSubmit(onSubmit)}>Criar Caderno</Button>
-  }
->
-  <form onSubmit={handleSubmit(onSubmit)}>... {/* ❌ Form dentro de form */}
-  </form>
-</Modal>
-```
+**Problema:** `handleEditorUpdate` é chamado a cada caractere digitado, disparando `setLocalContent`, `setLocalRawText`, `editorStatus.setSaveStatus('saving')` em cada tecla.
 
-**Impacto:** O botão de submit no footer pode não disparar a validação corretamente, e há forms HTML aninhados (comportamento indefinido por especificação HTML).
+**Solução:** Debounced local state updates ou usar refs para comparar antes de setar estado.
 
-**Solução:** Remover o `form` do `children` ou mover o submit handler para o botão do footer.
+**Esforço:** Médio
 
 ---
 
-## 6. 🟢 Problemas de Manutenibilidade
+### 4.2. AnnotationSidebar faz parsing completo do HTML a cada update
 
-### 6.1. Ausência total de testes automatizados
+**Arquivo:** `src/modules/leaves/components/AnnotationSidebar.tsx`
 
-**Problema:** O projeto não possui **nenhum teste** — nem unitário, nem de integração, nem end-to-end. Conforme mencionado no próprio README na seção de melhorias planejadas.
+**Problema:** A sidebar escaneia o HTML inteiro do editor via DOMParser a cada atualização do editor, mesmo para mudanças não relacionadas a anotações.
 
-**Impacto:** Qualquer refatoração ou nova funcionalidade corre alto risco de quebrar funcionalidades existentes sem ser detectado.
+**Solução:** Usar `useMemo` ou limitar escaneamento via marks do ProseMirror.
 
-**Solução:** Implementar testes unitários para hooks (React Testing Library), serviços, e componentes críticos como o editor e o algoritmo SM-2.
-
----
-
-### 6.2. Componentes com muitas responsabilidades (God Components)
-
-**Arquivos:** `EditorView.tsx`, `NotebookView.tsx`, `DashboardView.tsx`
-
-**Problema:** Os componentes de View acumulam múltiplas responsabilidades:
-- `EditorView`: gerencia editor, sidebar de IA, anotações, autosave, flashcards, resumo
-- `NotebookView`: exibe dados, gerencia modais de criação/edição/exclusão, navegação
-
-**Exemplo:** `EditorView.tsx` tem ~280 linhas com ~10 estados diferentes, 5 efeitos, lógica de editor, painel de IA, autosave, anotações, etc.
-
-**Impacto:** Dificuldade de testar, entender e modificar. Alto acoplamento.
-
-**Solução:** Extrair responsabilidades em hooks customizados e componentes menores.
+**Esforço:** Médio
 
 ---
 
-### 6.3. Lógica de autosave frágil com race conditions
+### 4.3. Re-renderização excessiva do EditorView por `editorStatus`
 
-**Arquivo:** `EditorView.tsx`
+**Arquivo:** `src/store/editorStatusStore.ts`
 
-**Problema:** A lógica de autosave usa `useRef` para rastrear o último estado salvo e `isFirstRender` para evitar salvar na montagem. Porém, não há proteção contra:
-1. Salvamento concorrente (duas chamadas simultâneas se o debounce resetar)
-2. Salvamento após desmontagem do componente
-3. Estado do servidor mais recente sobrescrito por estado local desatualizado (caso o usuário edite enquanto o servidor está sendo atualizado)
+**Problema:** O `editorStatus` é usado no AppLayout (fora do EditorView), o que significa que qualquer mudança no status de salvamento causa re-render no layout inteiro.
 
-**Solução:** Usar `useRef` para armazenar o último `AbortController`, cancelar salvamentos pendentes no unmount, e verificar timestamps.
+**Solução:** Separar o indicador de status em um componente dedicado e isolado.
 
----
-
-### 6.4. Duplicação de código entre LoginView e RegisterView
-
-**Arquivos:** `LoginView.tsx` e `RegisterView.tsx`
-
-**Problema:** Os dois componentes compartilham ~70% de código duplicado: estrutura de layout, gradiente de fundo, efeitos de blur radial, header com logo, estilos de card glassmorphism, tratamento de erro, etc.
-
-**Impacto:** Qualquer mudança visual precisa ser replicada em dois lugares.
-
-**Solução:** Extrair um componente `AuthLayout` ou `AuthCard` compartilhado.
+**Esforço:** Baixo
 
 ---
 
-## 7. 🟢 Problemas de Configuração e Dev Experience
+## 5. 🟢 Problemas de Configuração e DevEx
 
-### 7.1. Servidor sem nodemon ou hot-reload
+### 5.1. Variáveis de ambiente não documentadas
 
-**Arquivo:** `server/package.json`
+**Problema:** Não há arquivo `.env.example` ou documentação sobre quais variáveis de ambiente são necessárias.
 
-**Problema:** O script `dev` do servidor usa apenas `node index.js`, sem nodemon, ts-node ou qualquer ferramenta de hot-reload.
+**Solução:** Criar `.env.example` na raiz e em `server/`.
 
-```json
-"scripts": {
-  "start": "node index.js",
-  "dev": "node index.js" // ❌ Mesmo que start
-}
-```
-
-**Impacto:** Desenvolvedor precisa reiniciar manualmente o servidor a cada mudança nos arquivos do backend.
-
-**Solução:** Adicionar `nodemon` como dependência de desenvolvimento e criar script `"dev": "npx nodemon index.js"`.
+**Esforço:** Baixo
 
 ---
 
-### 7.2. Sem lint-staged ou pre-commit hooks
+### 5.2. Sem lint-staged ou pre-commit hooks
 
-**Problema:** Não há configuração de `husky`, `lint-staged` ou qualquer git hook para garantir qualidade do código antes do commit.
+**Problema:** Não há Husky ou lint-staged configurados.
 
-**Impacto:** Código com problemas de lint ou formatação pode ser commitado acidentalmente.
+**Solução:** Configurar Husky + lint-staged para rodar ESLint e TypeScript check antes de commits.
 
-**Solução:** Configurar Husky + lint-staged para rodar ESLint e TypeScript check antes de cada commit.
-
----
-
-### 7.3. Variáveis de ambiente não documentadas
-
-**Problema:** Embora exista `import.meta.env.VITE_API_URL` no `client.ts`, não há arquivo `.env.example`, `.env` ou documentação sobre quais variáveis de ambiente são necessárias para rodar o projeto.
-
-**Impacto:** Novo desenvolvedor pode não saber que precisa configurar `VITE_API_URL` se a API estiver em porta diferente.
-
-**Solução:** Criar `.env.example` com todas as variáveis documentadas.
+**Esforço:** Baixo
 
 ---
 
-### 7.4. Uso inconsistente de import default vs named export
+### 5.3. Sem validação de environment no startup
 
-**Exemplos:**
-- `export const Button` + importação como `{ Button }` ✔️
-- `export default useAuth` + importação como `{ useAuth }` (named import de default export) ⚠️
+**Arquivo:** `server/src/main.ts`
 
-**Arquivos:** `hooks/useAuth.ts`, `hooks/useLeaves.ts`, etc.
+**Problema:** O servidor inicia mesmo sem as variáveis de ambiente essenciais (`JWT_SECRET`, `DATABASE_URL`).
 
-**Problema:** Alguns arquivos exportam named exports e também `export default`, e as importações ora usam default import, ora named import. Exemplo em `useAuth.ts`:
+**Solução:** Adicionar validação no bootstrap com `class-validator` ou joi.
 
-```ts
-export function useAuth() { ... }
-export default useAuth;
-```
-
-E em `LoginView.tsx`:
-```ts
-import { useAuth } from '../hooks/useAuth'; // Named import do default export
-```
-
-**Impacto:** Código confuso. O leitor precisa verificar se está importando o named export correto ou o default.
-
-**Solução:** Remover todos os `export default` e usar apenas named exports consistentemente.
+**Esforço:** Baixo
 
 ---
 
-### 7.5. Robô do DiceBear provavelmente quebrado
+### 5.4. db.json.backup não utilizado
 
-**Arquivo:** `server/routes.js` (linha 60)
+**Arquivo:** `server/db.json.backup`
 
-**Problema:** A URL de avatar usa `api.dicebear.com/7.x/adventurer/svg`. A API DiceBear mudou para v8+ e o endpoint `/7.x` pode não funcionar mais.
+**Problema:** Arquivo sobrando da migração Express → NestJS.
 
-```js
-avatarUrl: `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name)}`,
-```
+**Solução:** Remover após confirmar que todos os dados foram migrados.
 
-**Solução:** Atualizar para a versão mais recente da API ou usar um fallback.
+**Esforço:** Muito Baixo
 
 ---
 
-## 8. 📊 Resumo e Priorização
+## 6. 📊 Resumo e Priorização
 
 | Prioridade | Categoria | Problema | Esforço |
 |------------|-----------|----------|---------|
-| 🔴 Crítico | Segurança | Senhas em texto puro | Baixo |
-| 🔴 Crítico | Segurança | Chaves JWT hardcoded | Baixo |
-| 🔴 Crítico | Segurança | Owner check ausente em leaves/flashcards | Médio |
-| 🔴 Crítico | Arquitetura | IA mockada (funcionalidade falsa) | Alto |
-| 🔴 Crítico | Segurança | CORS com origem aberta | Baixo |
-| 🔴 Crítico | Arquitetura | DB JSON sem concorrência | Alto |
-| 🟡 Alto | Segurança | Cookie secure: false | Baixo |
-| 🟡 Alto | Segurança | Refresh token sem rotação | Baixo |
+| 🔴 Crítico | Funcionalidade | IA mockada (funcionalidade falsa) | Alto |
+| 🔴 Crítico | Qualidade | Sem testes automatizados | Alto |
+| 🔴 Crítico | Segurança | console.log do token JWT | Baixo |
+| 🔴 Crítico | Config | CORS sem fallback adequado em produção | Baixo |
+| 🟡 Alto | Manutenibilidade | God Components (EditorView, NotebookView) | Alto |
 | 🟡 Alto | Qualidade | ESLint configurado incorretamente | Baixo |
-| 🟡 Alto | UX | Link "Esqueceu a senha?" quebrado | Baixo |
-| 🟡 Alto | UX | Marca inconsistente (Flash vs AI) | Baixo |
-| 🟡 Médio | Performance | Autosave com excesso de re-renders | Médio |
-| 🟡 Médio | Performance | AnnotationSidebar com parsing excessivo | Médio |
-| 🟡 Médio | Arquitetura | Duas fontes de verdade (Zustand + RQ) | Médio |
-| 🟢 Baixo | Manutenibilidade | Sem testes automatizados | Alto |
-| 🟢 Baixo | Manutenibilidade | God Components (EditorView, etc.) | Alto |
-| 🟢 Baixo | Manutenibilidade | Código duplicado (Login/Register) | Baixo |
-| 🟢 Baixo | DevEx | Sem nodemon no servidor | Baixo |
-| 🟢 Baixo | DevEx | Sem .env.example | Baixo |
+| 🟡 Alto | UX | Link "Esqueceu a senha?" quebrado | Médio |
+| 🟡 Alto | UX | Sem toasts/notificações de sucesso | Médio |
+| 🟡 Médio | Qualidade | Classes Tailwind inline massivas | Médio |
+| 🟡 Médio | UX | Skeleton mesmo com cache | Baixo |
+| 🟡 Médio | UX | Marca inconsistente (Flash vs AI) | Baixo |
+| 🟢 Baixo | Performance | Autosave com excesso de re-renders | Médio |
+| 🟢 Baixo | Performance | AnnotationSidebar DOMParser excessivo | Médio |
+| 🟢 Baixo | Manutenibilidade | Import default vs named export | Baixo |
+| 🟢 Baixo | Manutenibilidade | Form aninhado no modal | Baixo |
+| 🟢 Baixo | Config | Sem .env.example | Baixo |
+| 🟢 Baixo | Config | Sem pre-commit hooks | Baixo |
+| 🟢 Baixo | Config | db.json.backup inútil | Muito Baixo |
+| 🟢 Baixo | Backend | Validação de env no startup | Baixo |
 
 ---
 
-*Documento gerado automaticamente em 30/06/2026 por análise estática do código-fonte.*
+## Problemas resolvidos desde a última análise
+
+| Problema | Status | Data |
+|----------|--------|------|
+| Senhas em texto puro → bcrypt via NestJS AuthService | ✅ Resolvido | Migração NestJS |
+| Chaves JWT hardcoded → env vars via ConfigService | ✅ Resolvido | Migração NestJS |
+| Owner check ausente → Guards + verificação por userId | ✅ Resolvido | Migração NestJS |
+| Cookie secure: false → configurável via env | ✅ Resolvido | Migração NestJS |
+| DB JSON sem concorrência → SQLite + Prisma transações | ✅ Resolvido | Migração NestJS |
+| Refresh token sem rotação → rotação implementada | ✅ Resolvido | Migração NestJS |
+| DiceBear v7 obsoleto → v9 com fallback | ✅ Resolvido | Migração NestJS |
+| Cálculo de reviewedToday impreciso | ✅ Corrigido | 07/07/2026 |
+| Estudo sem refresh manual | ✅ Corrigido | 07/07/2026 |
+| Editor com altura fixa (80vh) | ✅ Corrigido | 07/07/2026 |
+| saveSession sem transação | ✅ Corrigido | 07/07/2026 |
+
+---
+
+*Documento gerado em 07/07/2026 por análise estática do código-fonte.*

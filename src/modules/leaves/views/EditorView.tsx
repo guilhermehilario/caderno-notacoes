@@ -80,7 +80,7 @@ const AI_TABS = [
   { id: "summary" as const, label: "Resumo" },
 ].sort((a, b) => a.label.localeCompare(b.label));
 
-type AiTab = typeof AI_TABS[number]["id"];
+type AiTab = (typeof AI_TABS)[number]["id"];
 
 const EditorView: React.FC = () => {
   const { notebookId, leafId } = useParams<{
@@ -104,9 +104,9 @@ const EditorView: React.FC = () => {
   const { leaves } = useLeaves(notebookId || "");
   const { data: flashcards = [] } = useLeafFlashcards(leafId || "");
   const { isBookmarked, toggleBookmark } = useToggleBookmark({
-    type: 'leaf',
-    id: leafId || '',
-    title: leaf?.title || '',
+    type: "leaf",
+    id: leafId || "",
+    title: leaf?.title || "",
     path: `/notebooks/${notebookId}/leaves/${leafId}`,
   });
   const softDeleteLeaf = useSoftDeleteLeaf();
@@ -116,6 +116,17 @@ const EditorView: React.FC = () => {
   const [aiSidebarOpen, setAiSidebarOpen] = useState(true);
   const [editorExpanded, setEditorExpanded] = useState(false);
   const [subLeavesOpen, setSubLeavesOpen] = useState(false);
+
+  const handleExpandToggle = useCallback(() => {
+    setEditorExpanded((prev) => {
+      const expanding = !prev;
+      if (expanding) {
+        setAiSidebarOpen(false);
+        setSubLeavesOpen(false);
+      }
+      return expanding;
+    });
+  }, []);
 
   // ── Reorder sub-leaves via drag & drop ──
   const reorderMutation = useMutation({
@@ -140,10 +151,7 @@ const EditorView: React.FC = () => {
     }),
   );
 
-  const subLeaves = useMemo(
-    () => (leaf?.children as Leaf[]) ?? [],
-    [leaf],
-  );
+  const subLeaves = useMemo(() => (leaf?.children as Leaf[]) ?? [], [leaf]);
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
@@ -172,10 +180,7 @@ const EditorView: React.FC = () => {
         },
       );
 
-      queryClient.setQueryData<Leaf>(
-        ["leaves", leafId],
-        () => updatedLeaf,
-      );
+      queryClient.setQueryData<Leaf>(["leaves", leafId], () => updatedLeaf);
 
       // Persiste a nova ordem no backend
       reorderMutation.mutate(reordered.map((l) => l.id));
@@ -218,11 +223,19 @@ const EditorView: React.FC = () => {
   const [manualBack, setManualBack] = useState("");
 
   const createFlashcardMutation = useMutation({
-    mutationFn: (data: { leafId: string; notebookId: string; front: string; back: string }) =>
-      studyService.createFlashcard(data),
+    mutationFn: (data: {
+      leafId: string;
+      notebookId: string;
+      front: string;
+      back: string;
+    }) => studyService.createFlashcard(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["leaves", leafId, "flashcards"] });
-      queryClient.invalidateQueries({ queryKey: ["notebook-flashcards", notebookId] });
+      queryClient.invalidateQueries({
+        queryKey: ["leaves", leafId, "flashcards"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["notebook-flashcards", notebookId],
+      });
       setIsFlashcardModalOpen(false);
       setManualFront("");
       setManualBack("");
@@ -230,7 +243,8 @@ const EditorView: React.FC = () => {
   });
 
   const handleCreateManualFlashcard = async () => {
-    if (!leafId || !notebookId || !manualFront.trim() || !manualBack.trim()) return;
+    if (!leafId || !notebookId || !manualFront.trim() || !manualBack.trim())
+      return;
     try {
       await createFlashcardMutation.mutateAsync({
         leafId,
@@ -355,9 +369,9 @@ const EditorView: React.FC = () => {
     initialSyncDoneRef.current = true;
     editorStatus.show();
     editorStatus.setLastUpdate(
-      typeof leaf.updatedAt === 'string'
+      typeof leaf.updatedAt === "string"
         ? leaf.updatedAt
-        : leaf.updatedAt.toISOString()
+        : leaf.updatedAt.toISOString(),
     );
   }, [leaf, editor]);
 
@@ -447,7 +461,7 @@ const EditorView: React.FC = () => {
   }
 
   return (
-    <div className="h-full min-h-0 flex flex-col gap-4">
+    <div className="h-full flex flex-col gap-4">
       {/* Top Header */}
       <div className="flex items-center justify-between border-b border-slate-150 dark:border-dark-800 pb-3 flex-shrink-0">
         <div className="flex items-center gap-2">
@@ -521,8 +535,12 @@ const EditorView: React.FC = () => {
           {/* Expand Editor */}
           <button
             type="button"
-            onClick={() => setEditorExpanded(!editorExpanded)}
-            className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-dark-300 hover:text-brand-500 transition-colors py-1 px-2 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 cursor-pointer"
+            onClick={handleExpandToggle}
+            className={`flex items-center gap-1.5 text-xs font-semibold transition-colors py-1 px-2 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 cursor-pointer ${
+              editorExpanded
+                ? "text-brand-500 bg-brand-50 dark:bg-brand-950/20"
+                : "text-slate-500 dark:text-dark-300 hover:text-brand-500"
+            }`}
             title={editorExpanded ? "Recolher editor" : "Expandir editor"}
           >
             {editorExpanded ? (
@@ -530,14 +548,17 @@ const EditorView: React.FC = () => {
             ) : (
               <Maximize2 className="h-3.5 w-3.5" />
             )}
+            {editorExpanded ? "Recolher" : "Expandir"}
           </button>
         </div>
       </div>
 
       {/* Split Pane Editor / IA */}
-      <div className="flex-grow flex flex-col lg:flex-row gap-6 min-h-0">
+      <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-0">
         {/* Lado Esquerdo - Editor */}
-        <div className={`flex-grow flex flex-col bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 rounded-3xl p-6 min-w-0 ${editorExpanded ? 'lg:w-full' : ''}`}>
+        <div
+          className={`flex-1 flex flex-col bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 rounded-3xl p-6 min-w-0 ${editorExpanded ? "lg:w-full" : ""}`}
+        >
           <input
             type="text"
             value={localTitle}
@@ -555,17 +576,17 @@ const EditorView: React.FC = () => {
             annotationTrigger={annotationTrigger}
           />
 
-          <div className="tiptap-editor flex-grow overflow-y-auto text-slate-750 dark:text-dark-100 relative">
+          <div className="tiptap-editor flex-1 overflow-y-auto text-slate-750 dark:text-dark-100 relative min-h-0">
             <EditorBubbleMenu editor={editor} />
             <EditorContent
               editor={editor}
-              className="w-full h-full [&_.ProseMirror]:outline-none [&_.ProseMirror]:min-h-[200px] [&_.ProseMirror]:leading-relaxed [&_.ProseMirror]:text-base [&_.ProseMirror]:caret-slate-800 [&_.dark_.ProseMirror]:caret-dark-100 [&_.ProseMirror_p]:my-2 [&_.ProseMirror_p:first-child]:mt-0 [&_.ProseMirror_h1]:text-3xl [&_.ProseMirror_h1]:font-heading [&_.ProseMirror_h1]:font-extrabold [&_.ProseMirror_h1]:tracking-tight [&_.ProseMirror_h1]:mb-3 [&_.ProseMirror_h1]:mt-6 [&_.ProseMirror_h1]:text-slate-900 [&_.dark_.ProseMirror_h1]:text-dark-50 [&_.ProseMirror_h2]:text-2xl [&_.ProseMirror_h2]:font-heading [&_.ProseMirror_h2]:font-bold [&_.ProseMirror_h2]:tracking-tight [&_.ProseMirror_h2]:mb-2 [&_.ProseMirror_h2]:mt-4 [&_.ProseMirror_h2]:text-slate-800 [&_.dark_.ProseMirror_h2]:text-dark-100 [&_.ProseMirror_h3]:text-xl [&_.ProseMirror_h3]:font-heading [&_.ProseMirror_h3]:font-semibold [&_.ProseMirror_h3]:tracking-tight [&_.ProseMirror_h3]:mb-1.5 [&_.ProseMirror_h3]:mt-3 [&_.ProseMirror_h3]:text-slate-700 [&_.dark_.ProseMirror_h3]:text-dark-200 [&_.ProseMirror_ul]:pl-6 [&_.ProseMirror_ol]:pl-6 [&_.ProseMirror_li]:my-1.5[&_.ProseMirror_li_p]:my-0"
+              className="w-full h-full [&_.ProseMirror]:outline-none [&_.ProseMirror]:h-full [&_.ProseMirror]:min-h-[300px] [&_.ProseMirror]:leading-relaxed [&_.ProseMirror]:text-base [&_.ProseMirror]:caret-slate-800 [&_.dark_.ProseMirror]:caret-dark-100 [&_.ProseMirror_p]:my-2 [&_.ProseMirror_p:first-child]:mt-0 [&_.ProseMirror_h1]:text-3xl [&_.ProseMirror_h1]:font-heading [&_.ProseMirror_h1]:font-extrabold [&_.ProseMirror_h1]:tracking-tight [&_.ProseMirror_h1]:mb-3 [&_.ProseMirror_h1]:mt-6 [&_.ProseMirror_h1]:text-slate-900 [&_.dark_.ProseMirror_h1]:text-dark-50 [&_.ProseMirror_h2]:text-2xl [&_.ProseMirror_h2]:font-heading [&_.ProseMirror_h2]:font-bold [&_.ProseMirror_h2]:tracking-tight [&_.ProseMirror_h2]:mb-2 [&_.ProseMirror_h2]:mt-4 [&_.ProseMirror_h2]:text-slate-800 [&_.dark_.ProseMirror_h2]:text-dark-100 [&_.ProseMirror_h3]:text-xl [&_.ProseMirror_h3]:font-heading [&_.ProseMirror_h3]:font-semibold [&_.ProseMirror_h3]:tracking-tight [&_.ProseMirror_h3]:mb-1.5 [&_.ProseMirror_h3]:mt-3 [&_.ProseMirror_h3]:text-slate-700 [&_.dark_.ProseMirror_h3]:text-dark-200 [&_.ProseMirror_ul]:pl-6 [&_.ProseMirror_ol]:pl-6 [&_.ProseMirror_li]:my-1.5 [&_.ProseMirror_li_p]:my-0"
             />
           </div>
         </div>
 
-        {/* Lado Direito - Painel de IA (toggle) */}
-        {aiSidebarOpen && (
+        {/* Lado Direito - Painel de IA (toggle, escondido quando expandido) */}
+        {aiSidebarOpen && !editorExpanded && (
           <div className="w-full lg:w-[450px] flex flex-col bg-white dark:bg-dark-900 border border-slate-150 dark:border-dark-800 rounded-3xl overflow-hidden flex-shrink-0 min-h-0">
             {/* Abas - ordenadas alfabeticamente */}
             <div className="flex border-b border-slate-100 dark:border-dark-800/60 flex-shrink-0 bg-slate-50 dark:bg-dark-950/20">
@@ -758,50 +779,61 @@ const EditorView: React.FC = () => {
         )}
       </div>
 
-      {/* ── Barra de Sub-folhas (colapsável + drag & drop) ── */}
-      {subLeaves.length > 0 && (
+      {/* ── Barra de Sub-folhas (colapsável + drag & drop, escondida quando expandido) ── */}
+      {!editorExpanded && subLeaves.length > 0 && (
         <div className="flex-shrink-0 border-t border-slate-100 dark:border-dark-800/60 pt-3 mt-1">
           <button
             type="button"
             onClick={() => setSubLeavesOpen(!subLeavesOpen)}
-            className="flex items-center gap-2 mb-2 w-full text-left cursor-pointer group"
+            className="flex items-center gap-2 w-full text-left cursor-pointer group pb-2"
           >
             <FileText className="h-4 w-4 text-slate-400 group-hover:text-brand-500 transition-colors" />
             <h3 className="text-sm font-heading font-bold text-slate-500 dark:text-dark-400 group-hover:text-slate-700 dark:group-hover:text-dark-200 transition-colors">
               Sub-folhas ({subLeaves.length})
             </h3>
-            {subLeavesOpen ? (
-              <ChevronUp className="h-4 w-4 text-slate-400 ml-auto group-hover:text-slate-600 transition-colors" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-slate-400 ml-auto group-hover:text-slate-600 transition-colors" />
-            )}
+            <div
+              className="ml-auto transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+              style={{
+                transform: subLeavesOpen ? "rotate(0deg)" : "rotate(-90deg)",
+              }}
+            >
+              <ChevronDown className="h-4 w-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
+            </div>
           </button>
 
-          {subLeavesOpen && (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={subLeaves.map((l) => l.id)}
-                strategy={horizontalListSortingStrategy}
+          {/* Animação de altura com CSS grid trick */}
+          <div
+            className="grid transition-[grid-template-rows] duration-300 ease-out"
+            style={{
+              gridTemplateRows: subLeavesOpen ? "1fr" : "0fr",
+            }}
+          >
+            <div className="overflow-hidden min-h-0">
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
               >
-                <div className="flex gap-3 overflow-x-auto pb-2 max-h-[30vh] overflow-y-auto">
-                  {subLeaves.map((subLeaf) => (
-                    <SortableSubLeafCard
-                      key={subLeaf.id}
-                      subLeaf={subLeaf}
-                      notebookId={notebookId ?? ''}
-                      onNavigate={(id) =>
-                        navigate(`/notebooks/${notebookId}/leaves/${id}`)
-                      }
-                    />
-                  ))}
-                </div>
-              </SortableContext>
-            </DndContext>
-          )}
+                <SortableContext
+                  items={subLeaves.map((l) => l.id)}
+                  strategy={horizontalListSortingStrategy}
+                >
+                  <div className="flex gap-3 overflow-x-auto pb-2 max-h-[30vh] overflow-y-auto">
+                    {subLeaves.map((subLeaf) => (
+                      <SortableSubLeafCard
+                        key={subLeaf.id}
+                        subLeaf={subLeaf}
+                        notebookId={notebookId ?? ""}
+                        onNavigate={(id) =>
+                          navigate(`/notebooks/${notebookId}/leaves/${id}`)
+                        }
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            </div>
+          </div>
         </div>
       )}
 
@@ -829,10 +861,14 @@ const EditorView: React.FC = () => {
             <Button
               onClick={handleCreateManualFlashcard}
               disabled={
-                !manualFront.trim() || !manualBack.trim() || createFlashcardMutation.isPending
+                !manualFront.trim() ||
+                !manualBack.trim() ||
+                createFlashcardMutation.isPending
               }
             >
-              {createFlashcardMutation.isPending ? "Criando..." : "Criar Flashcard"}
+              {createFlashcardMutation.isPending
+                ? "Criando..."
+                : "Criar Flashcard"}
             </Button>
           </div>
         }
@@ -888,7 +924,7 @@ const SortableSubLeafCard: React.FC<SortableSubLeafCardProps> = ({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 50 : 'auto' as const,
+    zIndex: isDragging ? 50 : ("auto" as const),
   };
 
   return (

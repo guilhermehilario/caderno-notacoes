@@ -354,7 +354,7 @@ export const AppLayout: React.FC = () => {
         </header>
 
         {/* Content Outlet */}
-        <main className="flex-grow overflow-y-auto relative p-6 md:p-8">
+        <main className="flex-1 min-h-0 overflow-y-auto relative p-6 md:p-8">
           <Outlet />
         </main>
       </div>

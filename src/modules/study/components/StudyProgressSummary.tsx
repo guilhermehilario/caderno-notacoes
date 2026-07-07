@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import {
   Brain,
   BookCheck,
@@ -6,6 +6,7 @@ import {
   TrendingUp,
   Loader2,
   BarChart3,
+  RefreshCw,
 } from "lucide-react";
 import { useStudyStats } from "../hooks/useStudyStats";
 import { Card } from "../../../components/ui/Card.tsx";
@@ -89,7 +90,12 @@ const MiniProgressRing: React.FC<{ value: number; size?: number }> = ({
 };
 
 export const StudyProgressSummary: React.FC = () => {
-  const { data: stats, isLoading } = useStudyStats();
+  const { data: stats, isLoading, isFetching, refetch } = useStudyStats();
+
+  // Refresh manual com feedback visual
+  const handleRefresh = useCallback(() => {
+    refetch();
+  }, [refetch]);
 
   if (isLoading) {
     return (
@@ -127,7 +133,29 @@ export const StudyProgressSummary: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Header */}
+      {/* Barra de atualização */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="h-4 w-4 text-brand-500" />
+          <span className="text-xs font-semibold text-slate-500 dark:text-dark-400">
+            {isFetching ? "Atualizando..." : "Resumo do progresso"}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={handleRefresh}
+          disabled={isFetching}
+          className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-brand-500 dark:text-dark-400 dark:hover:text-brand-400 transition-colors py-1 px-2 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-800 cursor-pointer disabled:opacity-50"
+          title="Atualizar estatísticas"
+        >
+          <RefreshCw
+            className={`h-3.5 w-3.5 transition-transform duration-300 ${
+              isFetching ? "animate-spin text-brand-500" : ""
+            }`}
+          />
+          Atualizar
+        </button>
+      </div>
 
       {/* Stat Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">

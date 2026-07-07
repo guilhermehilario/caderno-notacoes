@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 export interface StudyStats {
@@ -21,7 +25,23 @@ export interface StudyStats {
 export class StudyService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // ── Study Sessions ──
+  // ── Helpers ──
+
+  private getTodayStart(): Date {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return now;
+  }
+
+  private safeJsonParse<T>(json: string, fallback: T): T {
+    try {
+      return JSON.parse(json) as T;
+    } catch {
+      return fallback;
+    }
+  }
+
+  // ── Study Sessions (com validação e transações) ──
 
   async saveSession(
     notebookId: string,
@@ -36,36 +56,55 @@ export class StudyService {
       scores?: Record<string, number>;
     },
   ) {
+    // Validação de tipos
+    if (
+      data.currentIndex !== undefined &&
+      (typeof data.currentIndex !== 'number' || data.currentIndex < 0)
+    ) {
+      throw new InternalServerErrorException('currentIndex inválido');
+    }
+    if (
+      data.reviewedCount !== undefined &&
+      (typeof data.reviewedCount !== 'number' || data.reviewedCount < 0)
+    ) {
+      throw new InternalServerErrorException('reviewedCount inválido');
+    }
+
     const notebook = await this.prisma.notebook.findFirst({
       where: { id: notebookId, userId },
     });
     if (!notebook) throw new NotFoundException('Caderno não encontrado');
 
-    return this.prisma.studySession.upsert({
-      where: {
-        notebookId_userId: { notebookId, userId },
-      },
-      create: {
-        notebookId,
-        userId,
-        currentIndex: data.currentIndex ?? 0,
-        reviewedCount: data.reviewedCount ?? 0,
-        showAnswer: data.showAnswer ?? false,
-        sessionActive: data.sessionActive ?? false,
-        flashcards: JSON.stringify(data.flashcards ?? []),
-        completedCardIds: JSON.stringify(data.completedCardIds ?? []),
-        scores: JSON.stringify(data.scores ?? {}),
-      },
-      update: {
-        currentIndex: data.currentIndex,
-        reviewedCount: data.reviewedCount,
-        showAnswer: data.showAnswer,
-        sessionActive: data.sessionActive,
-        flashcards: JSON.stringify(data.flashcards ?? []),
-        completedCardIds: JSON.stringify(data.completedCardIds ?? []),
-        scores: JSON.stringify(data.scores ?? {}),
-      },
-    });
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const sessionData = {
+          currentIndex: data.currentIndex ?? 0,
+          reviewedCount: data.reviewedCount ?? 0,
+          showAnswer: data.showAnswer ?? false,
+          sessionActive: data.sessionActive ?? false,
+          flashcards: JSON.stringify(data.flashcards ?? []),
+          completedCardIds: JSON.stringify(data.completedCardIds ?? []),
+          scores: JSON.stringify(data.scores ?? {}),
+        };
+
+        return tx.studySession.upsert({
+          where: {
+            notebookId_userId: { notebookId, userId },
+          },
+          create: {
+            notebookId,
+            userId,
+            ...sessionData,
+          },
+          update: sessionData,
+        });
+      });
+    } catch (err) {
+      if (err instanceof NotFoundException) throw err;
+      throw new InternalServerErrorException(
+        'Erro ao salvar sessão de estudo',
+      );
+    }
   }
 
   async loadSession(notebookId: string, userId: string) {
@@ -83,9 +122,9 @@ export class StudyService {
 
     return {
       ...session,
-      flashcards: JSON.parse(session.flashcards),
-      completedCardIds: JSON.parse(session.completedCardIds),
-      scores: JSON.parse(session.scores),
+      flashcards: this.safeJsonParse(session.flashcards, []),
+      completedCardIds: this.safeJsonParse(session.completedCardIds, []),
+      scores: this.safeJsonParse(session.scores, {}),
     };
   }
 
@@ -101,7 +140,7 @@ export class StudyService {
     }
   }
 
-  // ── Stats ──
+  // ── Stats (cálculo robusto e confiável) ──
 
   async getStats(userId: string): Promise<StudyStats> {
     const notebooks = await this.prisma.notebook.findMany({
@@ -114,30 +153,36 @@ export class StudyService {
       where: { notebookId: { in: userNotebookIds } },
     });
 
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    const todayStart = this.getTodayStart();
+    const now = new Date();
+
+    // ── Cálculo mais confiável de revisões de hoje ──
+    // Considera revisado hoje se:
+    // - updatedAt é de hoje
+    // - E o card foi efetivamente revisado (repetitions > 0 OU interval > 0 OU easeFactor != 2.5)
+    // Isso exclui cards recém-criados que nunca foram revisados
+    const hasBeenReviewed = (c: typeof allFlashcards[0]) =>
+      c.repetitions > 0 || c.interval > 0 || Math.abs(c.easeFactor - 2.5) > 0.001;
 
     const reviewedToday = allFlashcards.filter((c) => {
       const updated = new Date(c.updatedAt);
       if (updated < todayStart) return false;
-      if (c.repetitions > 0) return true;
-      const created = new Date(c.createdAt);
-      return created < todayStart;
+      return hasBeenReviewed(c);
     });
 
-    const now = new Date();
     const dueForReview = allFlashcards.filter(
       (c) => new Date(c.nextReviewDate) <= now,
     );
 
-    const totalReviewed = allFlashcards.filter((c) => c.repetitions > 0).length;
+    const totalReviewed = allFlashcards.filter(hasBeenReviewed).length;
+    const reviewedCards = allFlashcards.filter(hasBeenReviewed);
+
     const avgEaseFactor =
       totalReviewed > 0
-        ? allFlashcards
-            .filter((c) => c.repetitions > 0)
-            .reduce((sum, c) => sum + c.easeFactor, 0) / totalReviewed
+        ? reviewedCards.reduce((sum, c) => sum + c.easeFactor, 0) / totalReviewed
         : 2.5;
 
+    // accuracyRate baseada no ease-factor médio (proxy confiável do SM-2)
     const accuracyRate = Math.min(
       100,
       Math.max(0, Math.round(((avgEaseFactor - 1.3) / (3.3 - 1.3)) * 100)),

@@ -88,63 +88,25 @@ O usuário cria cadernos, folhas de anotação, gera resumos e flashcards por IA
 - ✅ Reordenação de sub-folhas por drag & drop (com @dnd-kit)
 - ✅ Scripts start.sh e stop.sh para gerenciar backend + frontend
 
-## ⚡ Últimas alterações (Julho 2026)
+## Histórico de alterações
 
-### Migração Express → NestJS + Prisma + SQLite
+### Sessão 07/07/2026 — Melhorias de layout, confiabilidade e documentação
 
-**O que foi feito:** Substituição completa do backend Express (JavaScript, db.json) por NestJS (TypeScript, Prisma ORM, SQLite).
-
-#### Mudanças na arquitetura
-
-| Aspecto | Antes (Express) | Depois (NestJS) |
-|---------|-----------------|-----------------|
-| **Linguagem** | JavaScript (`.js`) | TypeScript (`.ts`) |
-| **Framework** | Express | NestJS 11 |
-| **Banco** | `db.json` (arquivo JSON) | SQLite via Prisma ORM 7 |
-| **Validação** | `validateBody()` manual | `class-validator` decorators |
-| **Auth** | `authMiddleware.js` manual | Passport JWT Strategy |
-| **DI** | Import direto de módulos | Injeção de dependência |
-| **Erros** | try/catch manual | ExceptionFilter global |
-| **Config** | `process.env` direto | ConfigModule + ConfigService |
-| **ORM** | N/A | Prisma 7 (driver adapter LibSQL) |
-
-#### Correções aplicadas (sessão anterior)
-
-1. **`server/src/main.ts`** — cookie-parser corrigido: `import * as cookieParser` → `import cookieParser from 'cookie-parser'`, removendo ternary frágil
-2. **`server/prisma.config.ts`** — `dotenv` adicionado como dependência direta para comandos Prisma CLI
-3. **Porta 3000** — Processo antigo do Express finalizado
-4. **Arquivos legados** — `server/index.js`, `database.js`, `authMiddleware.js`, `routes/`, `middleware/` movidos para `server/_express_backup/`
-5. **`package.json`** — `express` instalado como dependência (peer do `@nestjs/platform-express`)
-
-### Sessão atual (Julho 2026) — Correção scripts + Drag & Drop + Ajustes Editor
-
-**O que foi feito:** Correção do script de inicialização, implementação de drag & drop para reordenação de sub-folhas, e ajustes de layout do editor.
+**O que foi feito:** Correção da altura do editor, melhoria da confiabilidade do backend, aprimoramento do resumo de estudos, revisão geral de layout e atualização de documentação.
 
 #### Mudanças realizadas
 
 | Área | Mudança | Detalhes |
 |------|---------|----------|
-| `start.sh` | **Correção de PID** | `\$\$` estava entre aspas simples dentro do `bash -c`, resultando em PID literal `$$` no arquivo. Corrigido para escrever o PID real do processo. |
-| `start.sh` | **Health check aprimorado** | URL específica por serviço: `/api/health` para backend, `/` para frontend. Timeout aumentado para 30s com `--max-time 2` no curl. |
-| `start.sh` | **Validação de PID** | `[ "$pid" -eq "$pid" ] 2>/dev/null` para garantir que o PID é numérico antes de testar com `kill -0`. |
-| `start.sh` | **Frontend** | Instala `node_modules` na raiz automaticamente ao iniciar o frontend. |
-| `server/prisma/schema.prisma` | **Campo `position`** | Adicionado `position Int @default(0)` ao modelo `Leaf` para ordenação manual. |
-| `server/src/leaves/` | **Endpoint reorder** | `PATCH /leaves/reorder` com DTO `ReorderLeavesDto`. Atualiza posições em transação. Todas as queries de leaf ordenam por `position asc, createdAt desc`. |
-| `server/src/leaves/leaves.service.ts` | **Auto-position** | `create()` calcula `nextPosition` via `aggregate._max.position` entre os irmãos. |
-| `src/modules/leaves/services/leafService.ts` | **reorderLeaves** | Novo método que chama `PATCH /leaves/reorder` com array de IDs ordenados. |
-| `src/modules/leaves/views/EditorView.tsx` | **Seção colapsável** | Sub-folhas agora iniciam recolhidas, com toggle e contagem (`Sub-folhas (N)`). `max-h` reduzido de 60vh para 30vh. |
-| `src/modules/leaves/views/EditorView.tsx` | **Drag & Drop** | Instalado `@dnd-kit`. Novo componente `SortableSubLeafCard` com drag handle (`GripVertical`). `DndContext` + `SortableContext` com `horizontalListSortingStrategy`. Update otimista nos caches + rollback via `onSettled`. |
-| `src/modules/leaves/views/EditorView.tsx` | **Altura do editor** | `h-[calc(100vh-8rem)]` → `h-full min-h-0`. Remove dupla contagem do padding do `<main>`, dando mais espaço vertical. |
-| `src/modules/leaves/views/EditorView.tsx` | **Bug de sub-folhas** | `subLeaves` agora usa `leaf?.children` (do `useLeaf`) em vez de filtrar `leaves` (que só contém folhas raiz). |
-| `package.json` | **Dependências** | Adicionado `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`. |
-
-#### Fluxo de reordenação (drag & drop)
-
-1. Usuário expande seção de sub-folhas no editor
-2. Arrasta o card pelo ícone `GripVertical` (6 pontos) para a posição desejada
-3. O cache do React Query é atualizado imediatamente (feedback visual instantâneo)
-4. `reorderMutation.mutate()` persiste a nova ordem no backend
-5. Em caso de erro, `onSettled` invalida os caches para restaurar o estado real
+| `src/components/layout/AppLayout.tsx` | **Altura do `<main>`** | `flex-grow` → `flex-1 min-h-0` para estabelecer altura explícita no flex container, permitindo que `h-full` nos filhos funcione corretamente. |
+| `src/modules/leaves/views/EditorView.tsx` | **Altura do editor** | `flex-grow` → `flex-1` no split pane e editor pane. Adicionado `[&_.ProseMirror]:h-full` e `min-h-[300px]` para o editor ocupar todo o espaço vertical disponível. |
+| `server/src/study/study.service.ts` | **Confiabilidade dos stats** | Cálculo de `reviewedToday` mais robusto (verifica `repetitions > 0 || interval > 0 || easeFactor != 2.5`). Adicionado `$transaction` no saveSession. Validação de tipos nos parâmetros. JSON parsing seguro com `safeJsonParse`. |
+| `src/modules/study/hooks/useStudyStats.ts` | **Hook exposto** | Agora expõe `refetch` e `isFetching` para refresh manual. |
+| `src/modules/study/components/StudyProgressSummary.tsx` | **Refresh manual** | Adicionado botão "Atualizar" com spinner e indicador de fetch. Melhor alinhamento dos componentes. |
+| `src/modules/notebooks/views/NotebookView.tsx` | **Layout** | Adicionado `flex-wrap` e `justify-end` no grupo de ações do cabeçalho para melhor responsividade. |
+| `AGENTS.md` | **Documentação** | Removido histórico obsoleto da migração Express e sessões anteriores. Mantido apenas o histórico atual e regras relevantes. |
+| `README.md` | **Documentação** | Simplificado para refletir o estado atual (NestJS + Prisma + SQLite). Removidas referências ao Express/db.json. |
+| `ANALISE_PROBLEMAS.md` | **Débitos técnicos** | Criada nova versão com problemas atuais após a migração para NestJS + Prisma.
 
 ## Rotas da API
 
