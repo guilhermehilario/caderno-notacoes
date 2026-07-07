@@ -224,7 +224,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             </div>
 
             {/* Variants Grid - 20 avatars for the selected category */}
-            <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 gap-2">
+            <div className="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 gap-2">
               {currentCategory.variants.map((variant) => {
                 const isSelected = selectedVariant === variant.id;
                 const url = getAvatarUrl(currentCategory.style, variant.seed);
@@ -262,7 +262,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                 <ChevronRight className="h-3 w-3 group-open:rotate-90 transition-transform" />
                 {AVATAR_CATEGORIES.length} categorias · {AVATAR_CATEGORIES.reduce((a, c) => a + c.variants.length, 0)} avatares no total
               </summary>
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-1.5 mt-2 p-3 bg-slate-50 dark:bg-dark-950/30 rounded-xl">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5 mt-2 p-3 bg-slate-50 dark:bg-dark-950/30 rounded-xl">
                 {AVATAR_CATEGORIES.map((cat) => {
                   const previewUrl = getAvatarUrl(cat.style, cat.variants[0].seed);
                   return (
@@ -270,7 +270,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       key={cat.id}
                       type="button"
                       onClick={() => { setSelectedCategory(cat.id); }}
-                      className={`flex items-center gap-2 px-2 py-1.5 rounded-lg border transition-all cursor-pointer text-left ${
+                      className={`flex items-center gap-2 px-2 py-1.5 rounded-lg border transition-all cursor-pointer text-left min-w-0 ${
                         selectedCategory === cat.id
                           ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/20'
                           : 'border-transparent hover:bg-white dark:hover:bg-dark-800/60'
