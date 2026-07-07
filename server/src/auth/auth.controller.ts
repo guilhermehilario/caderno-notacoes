@@ -67,7 +67,8 @@ export class AuthController {
   ) {
     const refreshToken = req.cookies?.refreshToken;
     if (!refreshToken) {
-      return res.status(401).json({ error: 'Refresh token ausente' });
+      res.status(401);
+      return { error: 'Refresh token ausente' };
     }
 
     try {
@@ -81,7 +82,8 @@ export class AuthController {
         secure: this.isSecure,
         sameSite: 'lax',
       });
-      return res.status(401).json({ error: 'Refresh token inválido ou expirado' });
+      res.status(401);
+      return { error: 'Refresh token inválido ou expirado' };
     }
   }
 

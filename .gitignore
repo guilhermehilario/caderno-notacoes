@@ -26,6 +26,10 @@ dist-ssr
 .antigravityignore
 .env
 .env.local
+
+# Runtime files
+.pids/
+logs/
 TarefasAfazer
 CHANGELOG.md
 DOCUMENTACAO_CONTEXTO.md

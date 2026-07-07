@@ -43,6 +43,11 @@ export class LeavesController {
     return this.leavesService.getLeafHierarchy(notebookId, userId);
   }
 
+  @Get('leaves/archived')
+  findArchived(@CurrentUser('id') userId: string) {
+    return this.leavesService.findArchived(userId);
+  }
+
   @Get('leaves/:leafId')
   findOne(@Param('leafId') leafId: string, @CurrentUser('id') userId: string) {
     return this.leavesService.findOne(leafId, userId);
@@ -95,10 +100,5 @@ export class LeavesController {
     @CurrentUser('id') userId: string,
   ) {
     return this.leavesService.unarchive(leafId, userId);
-  }
-
-  @Get('leaves/archived')
-  findArchived(@CurrentUser('id') userId: string) {
-    return this.leavesService.findArchived(userId);
   }
 }
