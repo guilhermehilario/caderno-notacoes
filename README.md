@@ -112,6 +112,18 @@ revisa-aula/
 6. **Modo Escuro (Dark Mode)**
    - Chaveamento via Zustand + Tailwind v4
 
+7. **Sub-folhas com Reordenação Drag & Drop**
+   - Seção de sub-folhas colapsável no editor (inicia fechada)
+   - Reordenação via drag & drop com `@dnd-kit`
+   - Drag handle visual (`GripVertical`) nos cards
+   - Update otimista no cache + rollback automático em caso de erro
+
+8. **Scripts de Gerenciamento (start.sh / stop.sh)**
+   - `./start.sh` — inicia backend + frontend em modo persistente (setsid)
+   - `./start.sh --status` — verifica se os serviços estão rodando
+   - `./stop.sh` — encerra ambos os serviços
+   - Logs separados para cada serviço
+
 ---
 
 ## 🚀 Como Executar
@@ -163,6 +175,16 @@ npx tsx prisma/seed.ts
 | `npm run dev` | Dev server Vite |
 | `npm run build` | Build de produção |
 | `npm run preview` | Preview do build |
+
+### Scripts de Gerenciamento (raiz do projeto)
+| Comando | Descrição |
+|---------|-----------|
+| `./start.sh` | Inicia backend (3000) + frontend (5173) |
+| `./start.sh --backend` | Apenas backend |
+| `./start.sh --frontend` | Apenas frontend |
+| `./start.sh --status` | Mostra status dos serviços |
+| `./stop.sh` | Encerra ambos os serviços |
+| `./stop.sh --force` | Força kill -9 se necessário |
 
 ---
 

@@ -14,6 +14,7 @@ Este repositório é o frontend/backend de um app de estudos chamado **Revisa Au
 | **Estado servidor** | TanStack React Query v5 |
 | **Estado local/UI** | Zustand 5 (com persistência) |
 | **Editor de folhas** | TipTap |
+| **Drag & Drop** | @dnd-kit (core + sortable + utilities) |
 | **Autenticação** | JWT + Passport + refresh token em cookie HttpOnly |
 | **Validação** | class-validator + class-transformer (backend), Zod (frontend) |
 | **Config** | @nestjs/config (backend) |
@@ -48,7 +49,7 @@ server/
 │   │   ├── leaves.module.ts
 │   │   ├── leaves.controller.ts        → CRUD /notebooks/:nbId/leaves + /leaves/:id
 │   │   ├── leaves.service.ts           → CRUD + IA mock (summary, flashcards)
-│   │   └── dto/                        → CreateLeafDto, UpdateLeafDto
+│   │   └── dto/                        → CreateLeafDto, UpdateLeafDto, ReorderLeavesDto
 │   ├── flashcards/
 │   │   ├── flashcards.module.ts
 │   │   ├── flashcards.controller.ts    → GET/PUT flashcards + POST review
@@ -60,9 +61,9 @@ server/
 │       ├── study.service.ts            → Persistência sessão + getStats
 │       └── dto/                        → SaveSessionDto
 ├── prisma/
-│   ├── schema.prisma                   → Modelos: User, Notebook, Leaf, Flashcard, StudySession
+│   ├── schema.prisma                   → Modelos: User, Notebook, Leaf, Flashcard, StudySession, etc.
 │   ├── seed.ts                         → Script de migração db.json → SQLite
-│   └── migrations/                     → Migration inicial
+│   └── migrations/                     → Migrações (init, tags, trash, position, etc.)
 ├── prisma.config.ts                    → Config Prisma v7
 ├── dev.db                              → Banco SQLite
 └── .env                                → PORT, JWT_SECRET, DATABASE_URL, etc.
@@ -83,6 +84,9 @@ O usuário cria cadernos, folhas de anotação, gera resumos e flashcards por IA
 - ✅ Estatísticas de progresso (StudyProgressSummary)
 - ✅ Refatoração completa para NestJS 11 + Prisma ORM 7 + SQLite
 - ✅ Limpeza de arquivos legados do Express
+- ✅ Seção de sub-folhas colapsável no editor
+- ✅ Reordenação de sub-folhas por drag & drop (com @dnd-kit)
+- ✅ Scripts start.sh e stop.sh para gerenciar backend + frontend
 
 ## ⚡ Últimas alterações (Julho 2026)
 
@@ -104,37 +108,43 @@ O usuário cria cadernos, folhas de anotação, gera resumos e flashcards por IA
 | **Config** | `process.env` direto | ConfigModule + ConfigService |
 | **ORM** | N/A | Prisma 7 (driver adapter LibSQL) |
 
-#### Correções aplicadas (nesta sessão)
+#### Correções aplicadas (sessão anterior)
 
 1. **`server/src/main.ts`** — cookie-parser corrigido: `import * as cookieParser` → `import cookieParser from 'cookie-parser'`, removendo ternary frágil
 2. **`server/prisma.config.ts`** — `dotenv` adicionado como dependência direta para comandos Prisma CLI
-3. **Porta 3000** — Processo antigo do Express finalizado (PID 53201 e 59635)
+3. **Porta 3000** — Processo antigo do Express finalizado
 4. **Arquivos legados** — `server/index.js`, `database.js`, `authMiddleware.js`, `routes/`, `middleware/` movidos para `server/_express_backup/`
 5. **`package.json`** — `express` instalado como dependência (peer do `@nestjs/platform-express`)
 
-#### Arquivos alterados/criados
+### Sessão atual (Julho 2026) — Correção scripts + Drag & Drop + Ajustes Editor
 
-| Arquivo | Ação |
-|---------|------|
-| `server/prisma/schema.prisma` | **Criado** — 5 modelos com relações e cascade delete |
-| `server/prisma/seed.ts` | **Criado** — Migração db.json → SQLite |
-| `server/prisma.config.ts` | **Criado** — Config Prisma v7 |
-| `server/src/prisma/prisma.service.ts` | **Criado** — PrismaClient + LibSQL adapter |
-| `server/src/prisma/prisma.module.ts` | **Criado** — Módulo @Global |
-| `server/src/auth/*` | **Reescritos** — NestJS com Passport JWT |
-| `server/src/notebooks/*` | **Reescrito** — CRUD com Prisma |
-| `server/src/leaves/*` | **Reescrito** — CRUD + IA mock |
-| `server/src/flashcards/*` | **Reescrito** — SM-2 com CAP |
-| `server/src/study/*` | **Reescrito** — Sessões + stats |
-| `server/src/common/*` | **Criado** — Guards, decorators, filters |
-| `server/src/main.ts` | **Criado** — Bootstrap NestJS |
-| `server/src/app.module.ts` | **Criado** — Root module |
-| `server/src/app.controller.ts` | **Criado** — Health check |
-| `server/tsconfig.json` | **Criado** — Config TypeScript |
-| `server/nest-cli.json` | **Criado** — Config NestJS CLI |
-| `server/.env` | **Atualizado** — JWT_SECRET, DATABASE_URL, etc. |
-| `server/package.json` | **Atualizado** — Dependências NestJS + Prisma |
-| `server/_express_backup/` | **Criado** — Backup dos arquivos Express antigos |
+**O que foi feito:** Correção do script de inicialização, implementação de drag & drop para reordenação de sub-folhas, e ajustes de layout do editor.
+
+#### Mudanças realizadas
+
+| Área | Mudança | Detalhes |
+|------|---------|----------|
+| `start.sh` | **Correção de PID** | `\$\$` estava entre aspas simples dentro do `bash -c`, resultando em PID literal `$$` no arquivo. Corrigido para escrever o PID real do processo. |
+| `start.sh` | **Health check aprimorado** | URL específica por serviço: `/api/health` para backend, `/` para frontend. Timeout aumentado para 30s com `--max-time 2` no curl. |
+| `start.sh` | **Validação de PID** | `[ "$pid" -eq "$pid" ] 2>/dev/null` para garantir que o PID é numérico antes de testar com `kill -0`. |
+| `start.sh` | **Frontend** | Instala `node_modules` na raiz automaticamente ao iniciar o frontend. |
+| `server/prisma/schema.prisma` | **Campo `position`** | Adicionado `position Int @default(0)` ao modelo `Leaf` para ordenação manual. |
+| `server/src/leaves/` | **Endpoint reorder** | `PATCH /leaves/reorder` com DTO `ReorderLeavesDto`. Atualiza posições em transação. Todas as queries de leaf ordenam por `position asc, createdAt desc`. |
+| `server/src/leaves/leaves.service.ts` | **Auto-position** | `create()` calcula `nextPosition` via `aggregate._max.position` entre os irmãos. |
+| `src/modules/leaves/services/leafService.ts` | **reorderLeaves** | Novo método que chama `PATCH /leaves/reorder` com array de IDs ordenados. |
+| `src/modules/leaves/views/EditorView.tsx` | **Seção colapsável** | Sub-folhas agora iniciam recolhidas, com toggle e contagem (`Sub-folhas (N)`). `max-h` reduzido de 60vh para 30vh. |
+| `src/modules/leaves/views/EditorView.tsx` | **Drag & Drop** | Instalado `@dnd-kit`. Novo componente `SortableSubLeafCard` com drag handle (`GripVertical`). `DndContext` + `SortableContext` com `horizontalListSortingStrategy`. Update otimista nos caches + rollback via `onSettled`. |
+| `src/modules/leaves/views/EditorView.tsx` | **Altura do editor** | `h-[calc(100vh-8rem)]` → `h-full min-h-0`. Remove dupla contagem do padding do `<main>`, dando mais espaço vertical. |
+| `src/modules/leaves/views/EditorView.tsx` | **Bug de sub-folhas** | `subLeaves` agora usa `leaf?.children` (do `useLeaf`) em vez de filtrar `leaves` (que só contém folhas raiz). |
+| `package.json` | **Dependências** | Adicionado `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`. |
+
+#### Fluxo de reordenação (drag & drop)
+
+1. Usuário expande seção de sub-folhas no editor
+2. Arrasta o card pelo ícone `GripVertical` (6 pontos) para a posição desejada
+3. O cache do React Query é atualizado imediatamente (feedback visual instantâneo)
+4. `reorderMutation.mutate()` persiste a nova ordem no backend
+5. Em caso de erro, `onSettled` invalida os caches para restaurar o estado real
 
 ## Rotas da API
 
@@ -167,6 +177,10 @@ O usuário cria cadernos, folhas de anotação, gera resumos e flashcards por IA
 | POST | `/leaves/:id/summary` | Gerar resumo (IA mock) |
 | POST | `/leaves/:id/flashcards` | Gerar flashcards (IA mock) |
 | GET | `/leaves/:id/flashcards` | Listar flashcards da folha |
+| PATCH | `/leaves/reorder` | Reordenar sub-folhas (recebe `orderedIds: string[]`) |
+| POST | `/leaves/:leafId/archive` | Arquivar folha |
+| POST | `/leaves/:leafId/unarchive` | Desarquivar folha |
+| GET | `/leaves/archived` | Listar folhas arquivadas |
 
 ### Flashcards (auth required)
 | Método | Rota | Descrição |
@@ -193,10 +207,20 @@ O usuário cria cadernos, folhas de anotação, gera resumos e flashcards por IA
 - Limpar timeouts e timers em `useEffect` de cleanup para evitar memory leaks
 - Ao adicionar novos módulos NestJS, importar `AuthModule` para disponibilizar o `JwtAuthGuard`
 - Dependências Prisma: o `prisma.config.ts` é necessário para comandos CLI do Prisma v7
+- Sub-folhas: `subLeaves` no `EditorView` deve vir de `leaf?.children` (do `useLeaf`), NÃO de `leaves.filter` (que só contém folhas raiz)
+- Para reordenação via drag & drop: usar `@dnd-kit` com update otimista nos caches + `onSettled` para rollback
+- Update otimista em drag & drop: invalidar ambos os caches (`["notebooks", notebookId, "leaves"]` e `["leaves", leafId]`) em `onSettled`
+- Altura do EditorView: usar `h-full min-h-0` em vez de `h-[calc(100vh-8rem)]` para respeitar o layout flex do `<main>`
 
 ## Para rodar o projeto
 
 ```bash
+# Usando os scripts (recomendado)
+./start.sh            # Inicia backend + frontend
+./start.sh --status   # Ver status dos serviços
+./stop.sh             # Para ambos
+
+# Ou manualmente:
 # Backend (NestJS)
 cd server
 npm install
@@ -206,3 +230,15 @@ npm run dev           # http://localhost:3000
 npm install
 npm run dev           # http://localhost:5173
 ```
+
+### Portas
+| Serviço | Porta |
+|---------|-------|
+| Backend (NestJS) | 3000 |
+| Frontend (Vite) | 5173 |
+| Health check | http://localhost:3000/api/health |
+
+### Logs
+- Backend: `server/logs/server.log`
+- Frontend: `logs/frontend.log`
+- PIDs: `.pids/backend.pid`, `.pids/frontend.pid`

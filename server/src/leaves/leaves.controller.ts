@@ -6,12 +6,14 @@ import {
   Body,
   Param,
   UseGuards,
+  Patch,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { LeavesService } from './leaves.service';
 import { CreateLeafDto } from './dto/create-leaf.dto';
 import { UpdateLeafDto } from './dto/update-leaf.dto';
+import { ReorderLeavesDto } from './dto/reorder-leaves.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller()
@@ -60,6 +62,14 @@ export class LeavesController {
     @Body() dto: UpdateLeafDto,
   ) {
     return this.leavesService.update(leafId, userId, dto);
+  }
+
+  @Patch('leaves/reorder')
+  reorder(
+    @CurrentUser('id') userId: string,
+    @Body() dto: ReorderLeavesDto,
+  ) {
+    return this.leavesService.reorder(userId, dto);
   }
 
   @Post('leaves/:leafId/summary')

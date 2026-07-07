@@ -39,15 +39,15 @@ export class LeavesService {
 
     return this.prisma.leaf.findMany({
       where: { notebookId, parentId: null, deletedAt: null, archivedAt: null },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
       include: {
         children: {
           where: { deletedAt: null },
-          orderBy: { createdAt: 'desc' },
+          orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
           include: {
             children: {
               where: { deletedAt: null },
-              orderBy: { createdAt: 'desc' },
+              orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
             },
           },
         },
@@ -76,7 +76,7 @@ export class LeavesService {
         },
         children: {
           where: { deletedAt: null },
-          orderBy: { createdAt: 'desc' },
+          orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
         },
         tags: {
           include: { tag: true },
@@ -108,6 +108,18 @@ export class LeavesService {
       if (!parentLeaf) throw new NotFoundException('Folha pai não encontrada');
     }
 
+    // Calcula a próxima posição entre os irmãos
+    const maxPosition = await this.prisma.leaf.aggregate({
+      where: {
+        notebookId,
+        parentId: data.parentId || null,
+        deletedAt: null,
+      },
+      _max: { position: true },
+    });
+
+    const nextPosition = (maxPosition._max.position ?? -1) + 1;
+
     const leaf = await this.prisma.leaf.create({
       data: {
         notebookId,
@@ -115,6 +127,7 @@ export class LeavesService {
         content: data.content || '',
         rawText: data.rawText || '',
         parentId: data.parentId || null,
+        position: nextPosition,
       },
     });
 
@@ -284,6 +297,36 @@ export class LeavesService {
     });
   }
 
+  async reorder(
+    userId: string,
+    data: { orderedIds: string[]; parentId?: string },
+  ) {
+    const { orderedIds, parentId } = data;
+
+    // Verifica se todas as folhas pertencem ao usuário
+    const leaves = await this.prisma.leaf.findMany({
+      where: {
+        id: { in: orderedIds },
+        notebook: { userId },
+      },
+    });
+
+    if (leaves.length !== orderedIds.length) {
+      throw new NotFoundException('Alguma(s) folha(s) não encontrada(s)');
+    }
+
+    // Atualiza posições em lote
+    const updates = orderedIds.map((id, index) =>
+      this.prisma.leaf.update({
+        where: { id },
+        data: { position: index },
+      }),
+    );
+
+    await this.prisma.$transaction(updates);
+    return { success: true };
+  }
+
   async getLeafHierarchy(notebookId: string, userId: string) {
     const notebook = await this.prisma.notebook.findFirst({
       where: { id: notebookId, userId },
@@ -292,7 +335,7 @@ export class LeavesService {
 
     const allLeaves = await this.prisma.leaf.findMany({
       where: { notebookId, deletedAt: null, archivedAt: null },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
       include: {
         tags: {
           include: { tag: true },

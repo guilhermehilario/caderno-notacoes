@@ -51,5 +51,13 @@ export const leafService = {
     const response = await api.get<Leaf[]>('/leaves/archived');
     return response.data;
   },
+
+  async reorderLeaves(orderedIds: string[], parentId?: string): Promise<{ success: boolean }> {
+    const response = await api.patch<{ success: boolean }>('/leaves/reorder', {
+      orderedIds,
+      parentId,
+    });
+    return response.data;
+  },
 };
 export default leafService;

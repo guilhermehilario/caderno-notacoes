@@ -28,6 +28,7 @@ import {
   ChevronDown,
   ChevronRight,
   ChevronUp,
+  GripVertical,
 } from "lucide-react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -38,6 +39,24 @@ import { useLeaf, useLeaves, useArchivedLeaves } from "../hooks/useLeaves";
 import { useLeafFlashcards } from "../../study/hooks/useFlashcards";
 import { useDebounce } from "../../../hooks/useDebounce";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  horizontalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import leafService from "../services/leafService";
 import studyService from "../../study/services/studyService";
 import { useToggleBookmark } from "../../bookmarks/hooks/useToggleBookmark";
 import { useSoftDeleteLeaf } from "../../trash/hooks/useTrash";
@@ -97,6 +116,72 @@ const EditorView: React.FC = () => {
   const [aiSidebarOpen, setAiSidebarOpen] = useState(true);
   const [editorExpanded, setEditorExpanded] = useState(false);
   const [subLeavesOpen, setSubLeavesOpen] = useState(false);
+
+  // ── Reorder sub-leaves via drag & drop ──
+  const reorderMutation = useMutation({
+    mutationFn: (orderedIds: string[]) =>
+      leafService.reorderLeaves(orderedIds, leafId),
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["notebooks", notebookId, "leaves"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["leaves", leafId],
+      });
+    },
+  });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const subLeaves = useMemo(
+    () => (leaf?.children as Leaf[]) ?? [],
+    [leaf],
+  );
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+
+      const oldIndex = subLeaves.findIndex((l) => l.id === active.id);
+      const newIndex = subLeaves.findIndex((l) => l.id === over.id);
+      if (oldIndex === -1 || newIndex === -1) return;
+
+      const reordered = arrayMove(subLeaves, oldIndex, newIndex);
+
+      // Atualiza os caches imediatamente para feedback visual instantâneo
+      const updatedLeaf = { ...leaf!, children: reordered };
+
+      queryClient.setQueryData<Leaf[]>(
+        ["notebooks", notebookId, "leaves"],
+        (old) => {
+          if (!old) return old;
+          return old.map((l) => {
+            if (l.id === leafId) {
+              return { ...l, children: reordered };
+            }
+            return l;
+          });
+        },
+      );
+
+      queryClient.setQueryData<Leaf>(
+        ["leaves", leafId],
+        () => updatedLeaf,
+      );
+
+      // Persiste a nova ordem no backend
+      reorderMutation.mutate(reordered.map((l) => l.id));
+    },
+    [subLeaves, leaf, notebookId, leafId, queryClient, reorderMutation],
+  );
 
   // Check if current page is archived
   const isArchived = leaf?.archivedAt != null;
@@ -362,7 +447,7 @@ const EditorView: React.FC = () => {
   }
 
   return (
-    <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
+    <div className="h-full min-h-0 flex flex-col gap-4">
       {/* Top Header */}
       <div className="flex items-center justify-between border-b border-slate-150 dark:border-dark-800 pb-3 flex-shrink-0">
         <div className="flex items-center gap-2">
@@ -673,8 +758,8 @@ const EditorView: React.FC = () => {
         )}
       </div>
 
-      {/* ── Barra de Sub-folhas (colapsável) ── */}
-      {leaves.filter((l) => l.parentId === leafId).length > 0 && (
+      {/* ── Barra de Sub-folhas (colapsável + drag & drop) ── */}
+      {subLeaves.length > 0 && (
         <div className="flex-shrink-0 border-t border-slate-100 dark:border-dark-800/60 pt-3 mt-1">
           <button
             type="button"
@@ -683,7 +768,7 @@ const EditorView: React.FC = () => {
           >
             <FileText className="h-4 w-4 text-slate-400 group-hover:text-brand-500 transition-colors" />
             <h3 className="text-sm font-heading font-bold text-slate-500 dark:text-dark-400 group-hover:text-slate-700 dark:group-hover:text-dark-200 transition-colors">
-              Sub-folhas ({leaves.filter((l) => l.parentId === leafId).length})
+              Sub-folhas ({subLeaves.length})
             </h3>
             {subLeavesOpen ? (
               <ChevronUp className="h-4 w-4 text-slate-400 ml-auto group-hover:text-slate-600 transition-colors" />
@@ -693,38 +778,29 @@ const EditorView: React.FC = () => {
           </button>
 
           {subLeavesOpen && (
-            <div className="flex gap-3 overflow-x-auto pb-2 max-h-[30vh] overflow-y-auto">
-              {leaves
-                .filter((l) => l.parentId === leafId)
-                .map((subLeaf) => (
-                  <button
-                    key={subLeaf.id}
-                    type="button"
-                    onClick={() =>
-                      navigate(
-                        `/notebooks/${notebookId}/leaves/${subLeaf.id}`
-                      )
-                    }
-                    className="flex-shrink-0 w-72 p-4 rounded-2xl bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 hover:border-brand-200 dark:hover:border-brand-900/40 hover:shadow-md transition-all text-left cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-dark-800 flex items-center justify-center text-slate-500 dark:text-dark-300 flex-shrink-0">
-                        <FileText className="h-4 w-4" />
-                      </div>
-                      <h4 className="font-heading font-semibold text-sm truncate text-slate-800 dark:text-dark-50">
-                        {subLeaf.title}
-                      </h4>
-                    </div>
-                    <p className="text-[10px] text-slate-400 dark:text-dark-400 flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {new Date(subLeaf.updatedAt).toLocaleDateString("pt-BR")}
-                    </p>
-                    <div className="mt-2 flex items-center gap-1 text-[10px] font-semibold text-brand-500">
-                      Abrir <ChevronRight className="h-3 w-3" />
-                    </div>
-                  </button>
-                ))}
-            </div>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={subLeaves.map((l) => l.id)}
+                strategy={horizontalListSortingStrategy}
+              >
+                <div className="flex gap-3 overflow-x-auto pb-2 max-h-[30vh] overflow-y-auto">
+                  {subLeaves.map((subLeaf) => (
+                    <SortableSubLeafCard
+                      key={subLeaf.id}
+                      subLeaf={subLeaf}
+                      notebookId={notebookId ?? ''}
+                      onNavigate={(id) =>
+                        navigate(`/notebooks/${notebookId}/leaves/${id}`)
+                      }
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           )}
         </div>
       )}
@@ -786,4 +862,78 @@ const EditorView: React.FC = () => {
     </div>
   );
 };
+
+// ── Componente de Sub-folha com suporte a drag & drop ──
+interface SortableSubLeafCardProps {
+  subLeaf: Leaf;
+  notebookId: string;
+  onNavigate: (id: string) => void;
+}
+
+const SortableSubLeafCard: React.FC<SortableSubLeafCardProps> = ({
+  subLeaf,
+  notebookId,
+  onNavigate,
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: subLeaf.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 50 : 'auto' as const,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex-shrink-0 w-72 rounded-2xl bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 hover:border-brand-200 dark:hover:border-brand-900/40 hover:shadow-md transition-all overflow-hidden"
+    >
+      <div className="flex items-stretch">
+        {/* Área de drag handle */}
+        <button
+          type="button"
+          className="flex items-center justify-center w-8 min-h-full bg-slate-50 dark:bg-dark-950/30 hover:bg-slate-100 dark:hover:bg-dark-800 text-slate-400 hover:text-slate-600 dark:hover:text-dark-300 transition-colors cursor-grab active:cursor-grabbing flex-shrink-0"
+          {...attributes}
+          {...listeners}
+          title="Arrastar para reordenar"
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+
+        {/* Conteúdo do card */}
+        <button
+          type="button"
+          onClick={() => onNavigate(subLeaf.id)}
+          className="flex-1 p-3 text-left cursor-pointer"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-dark-800 flex items-center justify-center text-slate-500 dark:text-dark-300 flex-shrink-0">
+              <FileText className="h-3.5 w-3.5" />
+            </div>
+            <h4 className="font-heading font-semibold text-sm truncate text-slate-800 dark:text-dark-50">
+              {subLeaf.title}
+            </h4>
+          </div>
+          <p className="text-[10px] text-slate-400 dark:text-dark-400 flex items-center gap-1">
+            <Calendar className="h-3 w-3" />
+            {new Date(subLeaf.updatedAt).toLocaleDateString("pt-BR")}
+          </p>
+          <div className="mt-1.5 flex items-center gap-1 text-[10px] font-semibold text-brand-500">
+            Abrir <ChevronRight className="h-3 w-3" />
+          </div>
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export default memo(EditorView);
