@@ -52,9 +52,21 @@ export const PlanningWeeklySummary: React.FC = () => {
     [events, weekKey],
   );
 
+  const { start: weekStart, end: weekEnd } = useMemo(() => getWeekBounds(), [weekKey]);
+
   const pendingGoals = useMemo(
     () => goals.filter((g) => g.progress < 100).slice(0, 5),
     [goals, weekKey],
+  );
+
+  // Goals due this week
+  const urgentGoals = useMemo(
+    () => goals.filter((g) => {
+      if (g.progress >= 100) return false;
+      if (!g.targetDate) return false;
+      return isDateInRange(g.targetDate, weekStart, weekEnd);
+    }),
+    [goals, weekStart, weekEnd],
   );
 
   const weeklyPomodoros = useMemo(
@@ -183,25 +195,50 @@ export const PlanningWeeklySummary: React.FC = () => {
             </div>
           </div>
 
+          {/* Urgent chip */}
+          {urgentGoals.length > 0 && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 mb-1 bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/30 rounded-lg">
+              <span className="text-[11px] text-rose-500">⏰</span>
+              <span className="text-[11px] font-semibold text-rose-600 dark:text-rose-400">
+                {urgentGoals.length} {urgentGoals.length === 1 ? 'meta vence' : 'metas vencem'} esta semana
+              </span>
+            </div>
+          )}
+
           {pendingGoals.length === 0 ? (
             <p className="text-xs text-slate-400 dark:text-dark-400 text-center py-3">
               Todas as metas concluídas! 🎉
             </p>
           ) : (
             <div className="flex flex-col gap-2">
-              {pendingGoals.map((goal) => (
-                <div key={goal.id} className="flex flex-col gap-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-slate-700 dark:text-dark-200 truncate flex-1 mr-2">
-                      {goal.title}
-                    </span>
-                    <span className="text-[11px] font-semibold text-amber-500 flex-shrink-0">
-                      {goal.progress}%
-                    </span>
+              {pendingGoals.map((goal) => {
+                const isUrgent = urgentGoals.some((ug) => ug.id === goal.id);
+                return (
+                  <div key={goal.id} className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-1.5 text-xs font-medium truncate flex-1 mr-2">
+                        {isUrgent && (
+                          <span className="text-rose-400 flex-shrink-0" title="Vence esta semana">⏰</span>
+                        )}
+                        <span className={`truncate ${isUrgent ? 'text-rose-700 dark:text-rose-300' : 'text-slate-700 dark:text-dark-200'}`}>
+                          {goal.title}
+                        </span>
+                      </span>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {isUrgent && (
+                          <span className="text-[10px] font-semibold text-rose-500">
+                            {new Date(goal.targetDate!).toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric' })}
+                          </span>
+                        )}
+                        <span className="text-[11px] font-semibold text-amber-500">
+                          {goal.progress}%
+                        </span>
+                      </div>
+                    </div>
+                    <ProgressBar progress={goal.progress} />
                   </div>
-                  <ProgressBar progress={goal.progress} />
-                </div>
-              ))}
+                );
+              })}
               {goals.filter((g) => g.progress < 100).length > 5 && (
                 <Link
                   to="/planning/metas"
