@@ -147,6 +147,10 @@ const router = createBrowserRouter([
       },
       {
         path: 'planning',
+        element: <Navigate to="/planning/agenda" replace />,
+      },
+      {
+        path: 'planning/:tab',
         element: <PlanningPage />,
       },
     ],
