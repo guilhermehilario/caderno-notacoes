@@ -4,6 +4,7 @@ import { useUIStore } from '../../store/uiStore';
 import { Sidebar } from './Sidebar.tsx';
 import { AppHeader } from './AppHeader.tsx';
 import { ToastContainer } from '../ui/Toast.tsx';
+import { usePlanningNotifications } from '../../modules/planning/hooks/usePlanningNotifications.ts';
 
 export const AppLayout: React.FC = () => {
   const { theme } = useUIStore();
@@ -16,6 +17,9 @@ export const AppLayout: React.FC = () => {
       document.documentElement.classList.remove('dark');
     }
   }, [theme]);
+
+  // Ativa notificações de planejamento (eventos, metas, pomodoro)
+  usePlanningNotifications();
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-50 text-slate-900 dark:bg-dark-950 dark:text-dark-50 transition-colors duration-200">
