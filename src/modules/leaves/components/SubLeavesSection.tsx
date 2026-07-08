@@ -14,7 +14,7 @@ import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  horizontalListSortingStrategy,
+  rectSortingStrategy,
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -62,7 +62,7 @@ const SortableSubLeafCard: React.FC<SubLeafCardProps> = ({
     <div
       ref={setNodeRef}
       style={style}
-      className="flex-shrink-0 w-72 rounded-2xl bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 hover:border-brand-200 dark:hover:border-brand-900/40 hover:shadow-md transition-all overflow-hidden"
+      className="min-w-0 rounded-2xl bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 hover:border-brand-200 dark:hover:border-brand-900/40 hover:shadow-md transition-all overflow-hidden"
     >
       <div className="flex items-stretch">
         {/* Área de drag handle */}
@@ -273,9 +273,9 @@ export const SubLeavesSection: React.FC<SubLeavesSectionProps> = ({
             >
               <SortableContext
                 items={subLeaves.map((l) => l.id)}
-                strategy={horizontalListSortingStrategy}
+                strategy={rectSortingStrategy}
               >
-                <div className="flex gap-3 overflow-x-auto pb-2 max-h-[30vh] overflow-y-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pb-2 max-h-[30vh] overflow-y-auto">
                   {subLeaves.map((subLeaf) => (
                     <SortableSubLeafCard
                       key={subLeaf.id}
