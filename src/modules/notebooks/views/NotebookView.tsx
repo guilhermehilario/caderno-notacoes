@@ -154,33 +154,46 @@ export const NotebookView: React.FC = () => {
 
   const handleOpenEditModal = () => {
     if (notebook) {
-      setEditValue("title", notebook.title);
-      setEditValue("description", notebook.description || "");
-      setSelectedColor(notebook.color || NOTEBOOK_COLORS[0]);
+      const currentColor = notebook.color || NOTEBOOK_COLORS[0];
+      resetEdit({
+        title: notebook.title,
+        description: notebook.description || "",
+        color: currentColor,
+      });
+      setSelectedColor(currentColor);
+      setActionError(null);
       setIsEditModalOpen(true);
     }
   };
 
   const onEditSubmit = async (data: CreateNotebookInput) => {
     try {
+      setActionError(null);
       await updateNotebook({
         ...data,
         color: selectedColor,
       });
       setIsEditModalOpen(false);
     } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Erro ao atualizar caderno';
+      setActionError(msg);
       console.error("Erro ao atualizar caderno:", error);
     }
   };
 
+  const [actionError, setActionError] = useState<string | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const handleDeleteNotebookConfirm = async () => {
     try {
+      setActionError(null);
       await softDeleteNotebook.mutateAsync(notebookId || "");
       setConfirmDeleteOpen(false);
       navigate("/dashboard");
     } catch (error) {
+      setConfirmDeleteOpen(false);
+      const msg = error instanceof Error ? error.message : 'Erro ao mover para lixeira';
+      setActionError(msg);
       console.error("Erro ao mover para lixeira:", error);
     }
   };
@@ -464,11 +477,42 @@ export const NotebookView: React.FC = () => {
           <ColorPicker
             colors={NOTEBOOK_COLORS}
             selectedColor={selectedColor}
-            onChange={setSelectedColor}
+            onChange={(color) => {
+              setSelectedColor(color);
+              setEditValue("color", color);
+            }}
             label="Cor de Identificação"
           />
+
+          {actionError && (
+            <div className="p-3 rounded-xl text-sm font-medium bg-rose-50 text-rose-600 border border-rose-100 dark:bg-rose-950/20 dark:text-rose-400">
+              {actionError}
+            </div>
+          )}
         </form>
       </Modal>
+
+      {/* Confirmar exclusão */}
+      <ConfirmDialog
+        isOpen={confirmDeleteOpen}
+        onClose={() => {
+          setConfirmDeleteOpen(false);
+          setActionError(null);
+        }}
+        onConfirm={handleDeleteNotebookConfirm}
+        title="Excluir Caderno?"
+        message="Tem certeza que deseja mover este caderno para a lixeira? Todas as folhas e flashcards associados também serão movidos."
+        confirmLabel="Sim, Mover para Lixeira"
+        cancelLabel="Cancelar"
+        variant="danger"
+      />
+
+      {/* Mensagem de erro global */}
+      {actionError && !isEditModalOpen && !confirmDeleteOpen && (
+        <div className="p-3 rounded-xl text-sm font-medium bg-rose-50 text-rose-600 border border-rose-100 dark:bg-rose-950/20 dark:text-rose-400 animate-in fade-in slide-in-from-top-2 duration-200">
+          {actionError}
+        </div>
+      )}
     </div>
   );
 };
