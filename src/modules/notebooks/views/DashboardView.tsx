@@ -133,11 +133,11 @@ export const DashboardView: React.FC = () => {
             >
               Cancelar
             </Button>
-            <Button onClick={handleSubmit(onSubmit)}>Criar Caderno</Button>
+            <Button type="submit" form="create-notebook-form">Criar Caderno</Button>
           </div>
         }
       >
-        <div className="flex flex-col gap-5">
+        <form id="create-notebook-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
           <Input
             label="Título do Caderno"
             placeholder="Ex: Engenharia de Software II, Cálculo III"
@@ -158,7 +158,7 @@ export const DashboardView: React.FC = () => {
             onChange={setSelectedColor}
             label="Cor de Identificação"
           />
-        </div>
+        </form>
       </Modal>
     </div>
   );

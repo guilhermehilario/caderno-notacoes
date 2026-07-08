@@ -1,46 +1,41 @@
-import React, { useState } from 'react';
-import {
-  User,
-  Settings,
-  LogOut,
-  ChevronRight,
-} from 'lucide-react';
-import { Modal } from '../../components/ui/Modal.tsx';
-import { Button } from '../../components/ui/Button.tsx';
-import { Input } from '../../components/ui/Input.tsx';
-import { useAuth } from '../auth/hooks/useAuth';
-import { api } from '../../core/api/client';
-import { useQueryClient } from '@tanstack/react-query';
-import {
-  AVATAR_CATEGORIES,
-  getAvatarUrl,
-} from './avatarCategories';
-import { AvatarSelector } from './AvatarSelector';
-import { SettingsTab } from './SettingsTab';
-import { PasswordChangeForm } from './PasswordChangeForm';
+import React, { useState } from "react";
+import { User, Settings, LogOut, ChevronRight } from "lucide-react";
+import { Modal } from "../../components/ui/Modal.tsx";
+import { Button } from "../../components/ui/Button.tsx";
+import { Input } from "../../components/ui/Input.tsx";
+import { useAuth } from "../auth/hooks/useAuth";
+import { api } from "../../core/api/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { AVATAR_CATEGORIES, getAvatarUrl } from "./avatarCategories";
+import { AvatarSelector } from "./AvatarSelector";
+import { SettingsTab } from "./SettingsTab";
+import { PasswordChangeForm } from "./PasswordChangeForm";
 
 interface ProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-type Tab = 'profile' | 'settings';
+type Tab = "profile" | "settings";
 
-export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
+export const ProfileModal: React.FC<ProfileModalProps> = ({
+  isOpen,
+  onClose,
+}) => {
   const { user, logout } = useAuth();
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState<Tab>('profile');
+  const [activeTab, setActiveTab] = useState<Tab>("profile");
 
   // Profile state
-  const [name, setName] = useState(user?.name || '');
+  const [name, setName] = useState(user?.name || "");
   const [selectedCategory, setSelectedCategory] = useState<string>(() => {
     if (user?.avatarUrl) {
       for (const cat of AVATAR_CATEGORIES) {
         if (user.avatarUrl.includes(`/${cat.style}/`)) return cat.id;
       }
     }
-    return 'adventurer';
+    return "adventurer";
   });
   const [selectedVariant, setSelectedVariant] = useState<string>(() => {
     if (user?.avatarUrl) {
@@ -53,7 +48,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         }
       }
     }
-    return 'adv-luna';
+    return "adv-luna";
   });
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
@@ -62,15 +57,22 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
     setSaving(true);
     setSaveMessage(null);
     try {
-      const currentCategory = AVATAR_CATEGORIES.find((c) => c.id === selectedCategory) || AVATAR_CATEGORIES[0];
-      const currentVariant = currentCategory.variants.find((v) => v.id === selectedVariant) || currentCategory.variants[0];
-      const avatarUrl = getAvatarUrl(currentCategory.style, currentVariant.seed);
-      await api.put('/auth/profile', { name, avatarUrl });
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
-      setSaveMessage('Perfil atualizado com sucesso!');
+      const currentCategory =
+        AVATAR_CATEGORIES.find((c) => c.id === selectedCategory) ||
+        AVATAR_CATEGORIES[0];
+      const currentVariant =
+        currentCategory.variants.find((v) => v.id === selectedVariant) ||
+        currentCategory.variants[0];
+      const avatarUrl = getAvatarUrl(
+        currentCategory.style,
+        currentVariant.seed,
+      );
+      await api.put("/auth/profile", { name, avatarUrl });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      setSaveMessage("Perfil atualizado com sucesso!");
       setTimeout(() => setSaveMessage(null), 3000);
     } catch {
-      setSaveMessage('Erro ao atualizar perfil');
+      setSaveMessage("Erro ao atualizar perfil");
     } finally {
       setSaving(false);
     }
@@ -82,25 +84,31 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="" size="lg" className="max-h-[90vh]">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title=""
+      size="lg"
+      className="max-h-[90vh]"
+    >
       {/* Tabs */}
       <div className="flex border-b border-slate-100 dark:border-dark-800/60 -mx-6 px-6 mb-6 sticky top-0 bg-white dark:bg-dark-900 z-10 rounded-t-2xl">
         <button
-          onClick={() => setActiveTab('profile')}
+          onClick={() => setActiveTab("profile")}
           className={`flex items-center gap-2 pb-4 px-4 font-heading font-bold text-sm tracking-wide border-b-2 transition-all cursor-pointer ${
-            activeTab === 'profile'
-              ? 'border-brand-500 text-brand-500'
-              : 'border-transparent text-slate-500 dark:text-dark-400 hover:text-slate-700'
+            activeTab === "profile"
+              ? "border-brand-500 text-brand-500"
+              : "border-transparent text-slate-500 dark:text-dark-400 hover:text-slate-700"
           }`}
         >
           <User className="h-4 w-4" /> Perfil
         </button>
         <button
-          onClick={() => setActiveTab('settings')}
+          onClick={() => setActiveTab("settings")}
           className={`flex items-center gap-2 pb-4 px-4 font-heading font-bold text-sm tracking-wide border-b-2 transition-all cursor-pointer ${
-            activeTab === 'settings'
-              ? 'border-brand-500 text-brand-500'
-              : 'border-transparent text-slate-500 dark:text-dark-400 hover:text-slate-700'
+            activeTab === "settings"
+              ? "border-brand-500 text-brand-500"
+              : "border-transparent text-slate-500 dark:text-dark-400 hover:text-slate-700"
           }`}
         >
           <Settings className="h-4 w-4" /> Configurações
@@ -108,19 +116,25 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
       </div>
 
       {/* ── CONTEÚDO: PERFIL ── */}
-      {activeTab === 'profile' && (
+      {activeTab === "profile" && (
         <div className="flex flex-col gap-7 max-h-[calc(90vh-12rem)] overflow-y-auto pr-1">
           {/* User info */}
           <div className="flex items-center gap-4">
             <div className="relative w-16 h-16 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center overflow-hidden border-2 border-brand-200 dark:border-brand-800 flex-shrink-0">
-              <img src={user?.avatarUrl || ''} alt="Avatar" className="w-full h-full object-cover" />
+              <img
+                src={user?.avatarUrl || ""}
+                alt="Avatar"
+                className="w-full h-full object-cover"
+              />
               <div className="absolute inset-0 rounded-full ring-2 ring-white/50 dark:ring-dark-900/50" />
             </div>
             <div>
               <h2 className="text-lg font-heading font-extrabold text-slate-900 dark:text-dark-50">
-                {user?.name || 'Meu Perfil'}
+                {user?.name || "Meu Perfil"}
               </h2>
-              <p className="text-xs text-slate-500 dark:text-dark-400 mt-0.5">{user?.email}</p>
+              <p className="text-xs text-slate-500 dark:text-dark-400 mt-0.5">
+                {user?.email}
+              </p>
             </div>
           </div>
 
@@ -145,16 +159,22 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
           {/* Save message */}
           {saveMessage && (
-            <div className={`p-3 rounded-xl text-sm font-medium ${
-              saveMessage.includes('sucesso')
-                ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400'
-                : 'bg-rose-50 text-rose-600 border border-rose-100 dark:bg-rose-950/20 dark:text-rose-400'
-            }`}>
+            <div
+              className={`p-3 rounded-xl text-sm font-medium ${
+                saveMessage.includes("sucesso")
+                  ? "bg-emerald-50 text-emerald-600 border border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400"
+                  : "bg-rose-50 text-rose-600 border border-rose-100 dark:bg-rose-950/20 dark:text-rose-400"
+              }`}
+            >
               {saveMessage}
             </div>
           )}
 
-          <Button onClick={handleSaveProfile} isLoading={saving} className="self-start">
+          <Button
+            onClick={handleSaveProfile}
+            isLoading={saving}
+            className="self-start"
+          >
             Salvar Alterações
           </Button>
 
@@ -172,8 +192,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                 <LogOut className="h-4 w-4" />
               </div>
               <div className="flex-1">
-                <span className="text-sm font-bold text-rose-600 dark:text-rose-400">Sair da conta</span>
-                <p className="text-[10px] text-rose-400 dark:text-rose-500/70">Fazer logout do aplicativo</p>
+                <span className="text-sm font-bold text-rose-600 dark:text-rose-400">
+                  Sair da conta
+                </span>
+                <p className="text-[10px] text-rose-400 dark:text-rose-500/70">
+                  Fazer logout do aplicativo
+                </p>
               </div>
               <ChevronRight className="h-4 w-4 text-rose-300 dark:text-rose-700" />
             </button>
@@ -182,7 +206,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
       )}
 
       {/* ── CONTEÚDO: CONFIGURAÇÕES ── */}
-      {activeTab === 'settings' && <SettingsTab />}
+      {activeTab === "settings" && <SettingsTab />}
     </Modal>
   );
 };

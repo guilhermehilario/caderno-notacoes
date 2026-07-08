@@ -309,11 +309,11 @@ export const NotebookView: React.FC = () => {
             >
               Cancelar
             </Button>
-            <Button onClick={handleSubmit(onSubmit)}>Criar e Editar</Button>
+            <Button type="submit" form="create-leaf-form">Criar e Editar</Button>
           </div>
         }
       >
-        <div className="flex flex-col gap-4">
+        <form id="create-leaf-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
           <Input
             label="Título da Folha"
             placeholder="Ex: Aula 01 - Introdução ao Protocolo HTTP"
@@ -347,7 +347,7 @@ export const NotebookView: React.FC = () => {
               {leaves.find((l) => l.id === parentLeafId)?.title || "..."}
             </p>
           )}
-        </div>
+        </form>
       </Modal>
 
       {/* Modal Criar Flashcard Manual */}
@@ -440,13 +440,13 @@ export const NotebookView: React.FC = () => {
             >
               Cancelar
             </Button>
-            <Button onClick={handleSubmitEdit(onEditSubmit)}>
+            <Button type="submit" form="edit-notebook-form">
               Salvar Alterações
             </Button>
           </div>
         }
       >
-        <div className="flex flex-col gap-5">
+        <form id="edit-notebook-form" onSubmit={handleSubmitEdit(onEditSubmit)} className="flex flex-col gap-5">
           <Input
             label="Título do Caderno"
             placeholder="Ex: Engenharia de Software II, Cálculo III"
@@ -467,7 +467,7 @@ export const NotebookView: React.FC = () => {
             onChange={setSelectedColor}
             label="Cor de Identificação"
           />
-        </div>
+        </form>
       </Modal>
     </div>
   );

@@ -9,8 +9,17 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   // ── CORS ──
-  const origin = process.env.NODE_ENV === 'production'
-    ? process.env.FRONTEND_URL || false
+  const nodeEnv = process.env.NODE_ENV || 'development';
+
+  if (nodeEnv === 'production' && !process.env.FRONTEND_URL) {
+    throw new Error(
+      '❌ FRONTEND_URL é obrigatória em produção. ' +
+      'Defina a variável de ambiente FRONTEND_URL com a URL do frontend (ex: https://meuapp.com).',
+    );
+  }
+
+  const origin = nodeEnv === 'production'
+    ? process.env.FRONTEND_URL!
     : true;
 
   app.enableCors({
@@ -36,10 +45,14 @@ async function bootstrap() {
   });
 
   const PORT = process.env.PORT || 3000;
+  const frontendUrl = process.env.FRONTEND_URL || `http://localhost:5173`;
+
   await app.listen(PORT, () => {
     console.log('=============================================');
     console.log(`  🚀 Servidor NestJS rodando em: http://localhost:${PORT}`);
     console.log(`  📡 Base da API: http://localhost:${PORT}/api`);
+    console.log(`  🔗 Frontend: ${frontendUrl}`);
+    console.log(`  🌐 Ambiente: ${nodeEnv}`);
     console.log('=============================================');
   });
 }

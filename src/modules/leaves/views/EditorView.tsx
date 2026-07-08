@@ -284,8 +284,15 @@ const EditorView: React.FC = () => {
     }
   };
 
-  if (isLoadingLeaf || (leaf && !contentReady)) {
+  // Mostra skeleton apenas na primeira carga (sem dados em cache)
+  if (!leaf && isLoadingLeaf) {
     return <EditorSkeleton />;
+  }
+
+  // Se tem dados em cache mas editor ainda sincronizando, mostra tela vazia
+  // (evita flash de skeleton desnecessário)
+  if (leaf && !contentReady) {
+    return null;
   }
 
   if (!leaf) {
