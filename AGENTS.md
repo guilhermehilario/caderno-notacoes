@@ -90,7 +90,57 @@ O usuário cria cadernos, folhas de anotação, gera resumos e flashcards por IA
 
 ## Histórico de alterações
 
-### Sessão 08/07/2026 — Correção de overflow horizontal e scroll lateral no EditorView e TagsManagementView
+### Sessão 08/07/2026 (Parte 1) — Correção de overflow horizontal e scroll lateral no EditorView e TagsManagementView
+
+**O que foi feito:** Correção completa de overflow horizontal em dois componentes principais, eliminação de scroll lateral indevido, e aumento da área de edição.
+
+#### Contexto do problema
+
+O app apresentava dois problemas de overflow:
+1. **TagsManagementView**: nomes de tag longos estouravam o card horizontalmente
+2. **EditorView**: scroll lateral aparecia mesmo com o editor vazio, e o texto podia vazar para fora do container
+
+A causa raiz do scroll lateral no EditorView era o comportamento do CSS onde `overflow-x: hidden` com `overflow-y: visible` (padrão) faz o navegador converter `overflow-y` para `auto`, criando uma scrollbar vertical.
+
+#### Mudanças realizadas
+
+| Área | Mudança | Detalhes |
+|------|---------|----------|
+| `src/modules/tags/views/TagsManagementView.tsx` | **Overflow de texto em tags** | Adicionado `min-w-0` + `truncate` + `min-w-0` no `<span>` + `flex-shrink-0` nos botões. Impede que nomes longos de tag estourem o card. |
+| `src/modules/leaves/views/EditorView.tsx` | **Aumento do container split pane** | `min-h-[500px]` → `min-h-[750px] lg:min-h-[90vh]`. Área do editor + IA aumentada em 50% no mínimo. |
+| `src/modules/leaves/views/EditorView.tsx` | **Overflow do split pane** | Adicionado `overflow-hidden` no split pane para cortar qualquer conteúdo que ultrapasse os limites. |
+| `src/modules/leaves/views/EditorView.tsx` | **Overflow do editor pane** | `overflow-x-hidden` → `overflow-hidden`. Corrige o CSS gotcha: `overflow-x: hidden` com `overflow-y: visible` faz o navegador converter `overflow-y` para `auto`, criando scrollbar. |
+| `src/modules/leaves/views/EditorView.tsx` | **Scroll do tiptap-editor** | `overflow-y-auto` → `overflow-y-hidden`. Remove scroll vertical do editor. Adicionado `pb-1.5` para margem inferior de ~6px. |
+| `src/components/layout/AppLayout.tsx` | **Scroll global** | `<main>`: `overflow-y-auto` → `overflow-y-auto overflow-x-hidden`. Impede scroll lateral no conteúdo principal do app. |
+
+#### Lições aprendidas (CSS Gotcha)
+
+**Problema:** `overflow-x: hidden` com `overflow-y: visible` (padrão) → navegador converte `overflow-y` para `auto`, criando scrollbar vertical inesperada.
+**Solução:** Sempre usar `overflow-hidden` (ambos os eixos) quando quiser cortar overflow em apenas um eixo, a menos que haja motivo explícito para manter o outro eixo em `visible`.
+**Regra:** No projeto, prefira `overflow-hidden` a `overflow-x-hidden` isoladamente, para evitar scrollbars fantasmas.
+
+### Sessão 08/07/2026 (Parte 2) — Refatoração do EditorView em hooks, sistema de toasts e correção de auto-save
+
+**O que foi feito:** Extração da lógica do EditorView (~550 → ~230 linhas), criação de sistema de toasts, correção de bug de auto-save 400, e toasts para todos os catches do projeto.
+
+#### Mudanças realizadas
+
+| Área | Mudança | Detalhes |
+|------|---------|----------|
+| `src/modules/leaves/hooks/useEditorContent.ts` | **Novo hook** | Editor TipTap, extensões, sync inicial do servidor, auto-save com debounce. ~200 linhas extraídas do EditorView. |
+| `src/modules/leaves/hooks/useEditorActions.ts` | **Novo hook** | UI state (sidebar/expansão), archive/delete, geração IA, anotações. ~160 linhas extraídas do EditorView. |
+| `src/modules/leaves/views/EditorView.tsx` | **Simplificado** | De ~550 linhas para ~230 linhas. Apenas renderização JSX + integração dos hooks. |
+| `src/modules/leaves/hooks/useEditorContent.ts` | **Bugfix 400** | Adicionado guard `if (!debouncedTitle) return` no auto-save para evitar salvar com título vazio (servidor rejeita com @MinLength(1)). Causa: debounce de 1500ms atrasava a propagação do título sincronizado. |
+| `src/store/toastStore.ts` | **Nova store** | Store Zustand para toasts com `addToast(message, type)` e auto-dismiss em 4s. |
+| `src/components/ui/Toast.tsx` | **Novo componente** | ToastContainer com animação slide-in, suporte success/error/info, botão de fechar. |
+| `src/components/layout/AppLayout.tsx` | **Toast integrado** | ToastContainer adicionado ao layout global. |
+| 8 arquivos (TrashView, TagsManagementView, NotebookView, etc.) | **Toasts em catches** | 15 catch blocks no projeto agora exibem toast de erro com a mensagem da API via `extractApiError`. |
+
+#### Lições aprendidas
+
+- **Debounce + sync**: Ao sincronizar dados do servidor com debounce, o valor debounced ainda reflete o estado antigo por N ms. É necessário guard para evitar salvar valores inválidos.
+- **Extração de hooks**: Separar lógica de estado em hooks torna o componente mais legível e testável, e reduz linhas em ~60%.
+- **Toast com Zustand**: Usar `getState()` para acessar a store fora de componentes React (ex: dentro de catch blocks) é o padrão correto com Zustand.
 
 **O que foi feito:** Correção completa de overflow horizontal em dois componentes principais, eliminação de scroll lateral indevido, e aumento da área de edição.
 

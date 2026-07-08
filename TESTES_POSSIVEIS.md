@@ -44,3 +44,24 @@
 - Verifique que o container do editor + IA ocupa pelo menos 750px de altura (mobile) ou 90vh (desktop).
 - Verifique que a última linha do texto tem um pequeno espaçamento (pb-1.5) antes da borda inferior.
 - Confirme que nenhum texto é cortado na borda inferior do container.
+
+## 10. Toast de erro
+- Force um erro na API (ex: pare o backend).
+- Realize uma ação que dispare erro no auto-save do editor.
+- Verifique que um toast vermelho aparece no canto inferior direito com a mensagem de erro.
+- Confirme que o toast desaparece após ~4 segundos.
+- Clique no X do toast para fechar manualmente.
+
+## 11. Toast em ações de gerenciamento
+- No Gerenciar Tags, tente criar uma tag com nome vazio.
+- Verifique que o toast de erro aparece.
+- Na Lixeira, tente restaurar/excluir item (com backend offline).
+- Verifique o toast de erro.
+- No Dashboard, tente criar caderno com backend offline.
+- Verifique o toast de erro.
+
+## 12. Auto-save sem erro 400
+- Abra uma folha existente.
+- Espere o sync inicial completar.
+- Verifique que NENHUM request 400 aparece no console.
+- Edite o conteúdo e confirme que o auto-save funciona normalmente (status "Salvo").

@@ -349,6 +349,10 @@ Em desenvolvimento, `origin: true` permite qualquer origem. Em produção, se `F
 | Scroll lateral no EditorView (CSS overflow gotcha) | ✅ Corrigido | 08/07/2026 |
 | Texto vazando do container do editor | ✅ Corrigido | 08/07/2026 |
 | Scroll lateral global no <main> (AppLayout) | ✅ Corrigido | 08/07/2026 |
+| God Component EditorView (~550 linhas) | ✅ Corrigido | 08/07/2026 |
+| 400 Bad Request no auto-save (título vazio) | ✅ Corrigido | 08/07/2026 |
+| CSS overflow-x-hidden sem overflow-y (CSS Gotcha audit) | ✅ Corrigido | 08/07/2026 |
+| console.log do token JWT no client.ts | ✅ Corrigido | Anterior a 08/07/2026 |
 
 ---
 
