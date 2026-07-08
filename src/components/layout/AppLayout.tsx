@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { useUIStore } from '../../store/uiStore';
 import { Sidebar } from './Sidebar.tsx';
 import { AppHeader } from './AppHeader.tsx';
+import { ToastContainer } from '../ui/Toast.tsx';
 
 export const AppLayout: React.FC = () => {
   const { theme } = useUIStore();
@@ -29,6 +30,7 @@ export const AppLayout: React.FC = () => {
           <Outlet />
         </main>
       </div>
+      <ToastContainer />
     </div>
   );
 };

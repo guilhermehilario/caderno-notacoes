@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback, startTransition } from "react";
+import { useToastStore } from "../../../store/toastStore";
+import { extractApiError } from "../../../utils/api-errors";
 import type { Editor } from "@tiptap/react";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -167,10 +169,12 @@ export function useEditorContent({
             editorStatus.setSaveStatus("saved");
           });
         })
-        .catch(() => {
+        .catch((err) => {
           startTransition(() => {
             editorStatus.setSaveStatus("error");
           });
+          const errorMessage = extractApiError(err, "Erro ao salvar. Tente novamente.");
+          useToastStore.getState().addToast(errorMessage, "error");
         })
         .finally(() => {
           saveInFlightRef.current = false;
