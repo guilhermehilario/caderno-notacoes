@@ -14,6 +14,7 @@ import BookmarksView from '../modules/bookmarks/views/BookmarksView.tsx';
 import TrashView from '../modules/trash/views/TrashView.tsx';
 import ArchivedLeavesView from '../modules/leaves/views/ArchivedLeavesView.tsx';
 import TodoListView from '../modules/todos/views/TodoListView.tsx';
+import PlanningView from '../modules/planning/views/PlanningView.tsx';
 
 /* ─── Componentes nomeados e memoizados para cada rota ────────────── */
 
@@ -75,6 +76,10 @@ const ArchivedPage = memo(function ArchivedPage() {
 
 const TodoListPage = memo(function TodoListPage() {
   return <TodoListView />;
+});
+
+const PlanningPage = memo(function PlanningPage() {
+  return <PlanningView />;
 });
 
 const DefaultRedirect = memo(function DefaultRedirect() {
@@ -139,6 +144,10 @@ const router = createBrowserRouter([
       {
         path: 'todos',
         element: <TodoListPage />,
+      },
+      {
+        path: 'planning',
+        element: <PlanningPage />,
       },
     ],
   },

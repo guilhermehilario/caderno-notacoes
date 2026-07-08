@@ -11,6 +11,7 @@ import { TagsModule } from './tags/tags.module';
 import { BookmarksModule } from './bookmarks/bookmarks.module';
 import { TrashModule } from './trash/trash.module';
 import { TodosModule } from './todos/todos.module';
+import { PlanningModule } from './planning/planning.module';
 import { AppController } from './app.controller';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
@@ -30,6 +31,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     BookmarksModule,
     TrashModule,
     TodosModule,
+    PlanningModule,
   ],
   controllers: [AppController],
   providers: [

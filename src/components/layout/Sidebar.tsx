@@ -12,6 +12,7 @@ import {
   Trash2,
   User as UserIcon,
   ChevronLeft,
+  Calendar,
 } from 'lucide-react';
 import { ProfileModal } from '../../modules/profile/ProfileModal.tsx';
 
@@ -21,6 +22,7 @@ const NAV_ITEMS = [
   { path: '/bookmarks', label: 'Marcadores', icon: BookmarkIcon },
   { path: '/archived', label: 'Arquivados', icon: Archive },
   { path: '/todos', label: 'Tarefas', icon: ListChecks },
+  { path: '/planning', label: 'Planejamento', icon: Calendar },
 ] as const;
 
 export const Sidebar: React.FC = () => {
