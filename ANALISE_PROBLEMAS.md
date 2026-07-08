@@ -345,6 +345,10 @@ Em desenvolvimento, `origin: true` permite qualquer origem. Em produção, se `F
 | Estudo sem refresh manual | ✅ Corrigido | 07/07/2026 |
 | Editor com altura fixa (80vh) | ✅ Corrigido | 07/07/2026 |
 | saveSession sem transação | ✅ Corrigido | 07/07/2026 |
+| Overflow horizontal em nomes de tag (TagsManagementView) | ✅ Corrigido | 08/07/2026 |
+| Scroll lateral no EditorView (CSS overflow gotcha) | ✅ Corrigido | 08/07/2026 |
+| Texto vazando do container do editor | ✅ Corrigido | 08/07/2026 |
+| Scroll lateral global no <main> (AppLayout) | ✅ Corrigido | 08/07/2026 |
 
 ---
 

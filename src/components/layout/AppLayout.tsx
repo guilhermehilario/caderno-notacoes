@@ -25,7 +25,7 @@ export const AppLayout: React.FC = () => {
         <AppHeader />
 
         {/* Content Outlet */}
-        <main className="flex-1 min-h-0 overflow-y-auto relative p-6 md:p-8">
+        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden relative p-6 md:p-8">
           <Outlet />
         </main>
       </div>

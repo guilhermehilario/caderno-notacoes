@@ -26,3 +26,21 @@
 ## 6. Cenário de erro de rede
 - Simule falha na API ao salvar ou submeter score.
 - Verifique que a interface exibe erro de forma discreta e não quebra a navegação.
+
+## 7. Overflow horizontal de texto
+- No Gerenciar Tags, crie uma tag com nome muito longo (ex: "Esta é uma tag com um nome extremamente longo para testar o overflow").
+- Verifique que o nome é truncado com reticências e não estoura o card.
+- Confirme que os botões de editar/excluir permanecem visíveis e funcionais.
+
+## 8. Scroll lateral no EditorView
+- Acesse o editor de uma folha.
+- Verifique que NÃO há barra de scroll horizontal visível, mesmo com conteúdo vazio.
+- Digite um parágrafo longo sem espaços (ex: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa").
+- Confirme que o texto quebra dentro do container e não cria scroll lateral.
+- Verifique que o painel de IA (AISidebar) também não tem scroll lateral.
+
+## 9. Espaçamento do editor
+- Acesse o editor de uma folha.
+- Verifique que o container do editor + IA ocupa pelo menos 750px de altura (mobile) ou 90vh (desktop).
+- Verifique que a última linha do texto tem um pequeno espaçamento (pb-1.5) antes da borda inferior.
+- Confirme que nenhum texto é cortado na borda inferior do container.

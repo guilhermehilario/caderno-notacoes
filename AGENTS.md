@@ -90,6 +90,35 @@ O usuário cria cadernos, folhas de anotação, gera resumos e flashcards por IA
 
 ## Histórico de alterações
 
+### Sessão 08/07/2026 — Correção de overflow horizontal e scroll lateral no EditorView e TagsManagementView
+
+**O que foi feito:** Correção completa de overflow horizontal em dois componentes principais, eliminação de scroll lateral indevido, e aumento da área de edição.
+
+#### Contexto do problema
+
+O app apresentava dois problemas de overflow:
+1. **TagsManagementView**: nomes de tag longos estouravam o card horizontalmente
+2. **EditorView**: scroll lateral aparecia mesmo com o editor vazio, e o texto podia vazar para fora do container
+
+A causa raiz do scroll lateral no EditorView era o comportamento do CSS onde `overflow-x: hidden` com `overflow-y: visible` (padrão) faz o navegador converter `overflow-y` para `auto`, criando uma scrollbar vertical.
+
+#### Mudanças realizadas
+
+| Área | Mudança | Detalhes |
+|------|---------|----------|
+| `src/modules/tags/views/TagsManagementView.tsx` | **Overflow de texto em tags** | Adicionado `min-w-0` + `truncate` + `min-w-0` no `<span>` + `flex-shrink-0` nos botões. Impede que nomes longos de tag estourem o card. |
+| `src/modules/leaves/views/EditorView.tsx` | **Aumento do container split pane** | `min-h-[500px]` → `min-h-[750px] lg:min-h-[90vh]`. Área do editor + IA aumentada em 50% no mínimo. |
+| `src/modules/leaves/views/EditorView.tsx` | **Overflow do split pane** | Adicionado `overflow-hidden` no split pane para cortar qualquer conteúdo que ultrapasse os limites. |
+| `src/modules/leaves/views/EditorView.tsx` | **Overflow do editor pane** | `overflow-x-hidden` → `overflow-hidden`. Corrige o CSS gotcha: `overflow-x: hidden` com `overflow-y: visible` faz o navegador converter `overflow-y` para `auto`, criando scrollbar. |
+| `src/modules/leaves/views/EditorView.tsx` | **Scroll do tiptap-editor** | `overflow-y-auto` → `overflow-y-hidden`. Remove scroll vertical do editor. Adicionado `pb-1.5` para margem inferior de ~6px. |
+| `src/components/layout/AppLayout.tsx` | **Scroll global** | `<main>`: `overflow-y-auto` → `overflow-y-auto overflow-x-hidden`. Impede scroll lateral no conteúdo principal do app. |
+
+#### Lições aprendidas (CSS Gotcha)
+
+**Problema:** `overflow-x: hidden` com `overflow-y: visible` (padrão) → navegador converte `overflow-y` para `auto`, criando scrollbar vertical inesperada.
+**Solução:** Sempre usar `overflow-hidden` (ambos os eixos) quando quiser cortar overflow em apenas um eixo, a menos que haja motivo explícito para manter o outro eixo em `visible`.
+**Regra:** No projeto, prefira `overflow-hidden` a `overflow-x-hidden` isoladamente, para evitar scrollbars fantasmas.
+
 ### Sessão 07/07/2026 — Melhorias de layout, confiabilidade e documentação
 
 **O que foi feito:** Correção da altura do editor, melhoria da confiabilidade do backend, aprimoramento do resumo de estudos, revisão geral de layout e atualização de documentação.
@@ -173,6 +202,9 @@ O usuário cria cadernos, folhas de anotação, gera resumos e flashcards por IA
 - Para reordenação via drag & drop: usar `@dnd-kit` com update otimista nos caches + `onSettled` para rollback
 - Update otimista em drag & drop: invalidar ambos os caches (`["notebooks", notebookId, "leaves"]` e `["leaves", leafId]`) em `onSettled`
 - Altura do EditorView: usar `h-full min-h-0` em vez de `h-[calc(100vh-8rem)]` para respeitar o layout flex do `<main>`
+- **CSS Overflow Gotcha:** `overflow-x: hidden` com `overflow-y: visible` (padrão) faz o navegador converter `overflow-y` para `auto`, criando scrollbar vertical inesperada. Prefira `overflow-hidden` (ambos os eixos) quando quiser cortar overflow.
+- Para garantir que texto não vaze horizontalmente em layouts flex: sempre aplicar `min-w-0` + `truncate` no elemento de texto, e `overflow-hidden` no container pai mais próximo.
+- TagsManagementView requer `min-w-0` no `<span>` do nome da tag (não apenas no container pai) para que `truncate` funcione corretamente.
 
 ## Para rodar o projeto
 

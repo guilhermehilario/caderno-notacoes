@@ -349,10 +349,10 @@ const EditorView: React.FC = () => {
       />
 
       {/* Split Pane Editor / IA */}
-      <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-[700px] lg:min-h-[90vh] overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-[750px] lg:min-h-[90vh] overflow-hidden">
         {/* Lado Esquerdo - Editor */}
         <div
-          className={`flex-1 flex flex-col bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 rounded-3xl p-6 min-w-0 ${editorExpanded ? "lg:w-full" : ""}`}
+          className={`flex-1 flex flex-col bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 rounded-3xl p-6 min-w-0 overflow-hidden ${editorExpanded ? "lg:w-full" : ""}`}
         >
           <input
             type="text"
@@ -370,7 +370,7 @@ const EditorView: React.FC = () => {
             annotationTrigger={annotationTrigger}
           />
 
-          <div className="tiptap-editor flex-1 overflow-y-auto overflow-x-hidden text-slate-750 dark:text-dark-100 relative min-h-[400px] min-w-0 w-full max-w-full">
+          <div className="tiptap-editor flex-1 overflow-y-hidden overflow-x-hidden text-slate-750 dark:text-dark-100 relative min-h-[400px] min-w-0 w-full max-w-full pb-1.5">
             <EditorBubbleMenu editor={editor} />
             <EditorContent
               editor={editor}
