@@ -1,8 +1,32 @@
-/* Base ProseMirror dentro do container .tiptap-content */
+/* Container do editor — esconde overflow horizontal e garante largura */
+.tiptap-editor {
+  overflow-x: hidden !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+/* Garante que o elemento raiz do editor não ultrapasse o container */
+div.tiptap-content {
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Base ProseMirror — !important como última barreira contra conflitos de CSS */
 .tiptap-content .ProseMirror {
   outline: none;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
   height: 100%;
   min-height: 300px;
+  overflow-wrap: break-word !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  white-space: pre-wrap !important;
+  overflow-x: hidden !important;
   @apply leading-relaxed text-base caret-slate-800;
 }
 
@@ -13,6 +37,10 @@
 /* Paragraphs */
 .tiptap-content .ProseMirror p {
   @apply my-2;
+}
+
+.tiptap-content {
+  max-width: 100%;
 }
 
 .tiptap-content .ProseMirror p:first-child {

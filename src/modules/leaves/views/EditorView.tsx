@@ -157,7 +157,30 @@ const EditorView: React.FC = () => {
     content: "",
     onUpdate: handleEditorUpdate,
     immediatelyRender: false,
+    editorProps: {
+      attributes: {
+        style:
+          "overflow-wrap: break-word; word-break: break-word; overflow-wrap: anywhere; white-space: pre-wrap; width: 100%; max-width: 100%; box-sizing: border-box;",
+      },
+    },
   });
+
+  // Aplica estilos diretamente no DOM do ProseMirror após montagem
+  useEffect(() => {
+    if (!editor) return;
+    const editorDom = editor.view?.dom as HTMLElement | undefined;
+    if (!editorDom) return;
+
+    // Força os estilos de quebra de texto diretamente via JS
+    Object.assign(editorDom.style, {
+      overflowWrap: "break-word",
+      wordBreak: "break-word",
+      whiteSpace: "pre-wrap",
+      width: "100%",
+      maxWidth: "100%",
+      boxSizing: "border-box",
+    });
+  }, [editor]);
 
   // Click handler for annotations
   useEffect(() => {
@@ -326,7 +349,7 @@ const EditorView: React.FC = () => {
       />
 
       {/* Split Pane Editor / IA */}
-      <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-[500px]">
+      <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-[700px] lg:min-h-[90vh] overflow-hidden">
         {/* Lado Esquerdo - Editor */}
         <div
           className={`flex-1 flex flex-col bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 rounded-3xl p-6 min-w-0 ${editorExpanded ? "lg:w-full" : ""}`}
@@ -347,11 +370,18 @@ const EditorView: React.FC = () => {
             annotationTrigger={annotationTrigger}
           />
 
-          <div className="tiptap-editor flex-1 overflow-y-auto text-slate-750 dark:text-dark-100 relative min-h-[400px]">
+          <div className="tiptap-editor flex-1 overflow-y-auto overflow-x-hidden text-slate-750 dark:text-dark-100 relative min-h-[400px] min-w-0 w-full max-w-full">
             <EditorBubbleMenu editor={editor} />
             <EditorContent
               editor={editor}
               className="tiptap-content w-full h-full"
+              style={{
+                maxWidth: '100%',
+                overflowWrap: 'break-word',
+                wordBreak: 'break-word',
+                whiteSpace: 'pre-wrap',
+                boxSizing: 'border-box',
+              }}
             />
           </div>
         </div>

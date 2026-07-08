@@ -108,14 +108,14 @@ export const TagsManagementView: React.FC = () => {
               key={tag.id}
               className="flex items-center justify-between p-4 border border-slate-100 dark:border-dark-800"
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 min-w-0">
                 <div
                   className="w-4 h-4 rounded-full flex-shrink-0"
                   style={{ backgroundColor: tag.color }}
                 />
-                <span className="font-semibold text-slate-800 dark:text-dark-100">{tag.name}</span>
+                <span className="font-semibold text-slate-800 dark:text-dark-100 truncate min-w-0">{tag.name}</span>
               </div>
-              <div className="flex gap-1">
+              <div className="flex gap-1 flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => {
