@@ -11,6 +11,12 @@ import {
   List,
   ListOrdered,
   Link2,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+  IndentIncrease,
+  IndentDecrease,
 } from 'lucide-react';
 import { HeadingSelector } from './HeadingSelector';
 import { HighlightPopover } from './HighlightPopover';
@@ -159,6 +165,56 @@ const EditorBubbleMenuComponent: React.FC<EditorBubbleMenuProps> = ({ editor }) 
         title={`Lista numerada (${kbdShift('9')})`}
       >
         <ListOrdered className="h-3.5 w-3.5" />
+      </BubbleMenuItem>
+
+      <div className="w-px h-4 bg-slate-600 dark:bg-dark-600 mx-1" />
+
+      <BubbleMenuItem
+        onClick={() => editor.chain().focus().setTextAlign('left').run()}
+        isActive={editor.isActive({ textAlign: 'left' })}
+        title="Alinhar à esquerda"
+      >
+        <AlignLeft className="h-3.5 w-3.5" />
+      </BubbleMenuItem>
+
+      <BubbleMenuItem
+        onClick={() => editor.chain().focus().setTextAlign('center').run()}
+        isActive={editor.isActive({ textAlign: 'center' })}
+        title="Centralizar"
+      >
+        <AlignCenter className="h-3.5 w-3.5" />
+      </BubbleMenuItem>
+
+      <BubbleMenuItem
+        onClick={() => editor.chain().focus().setTextAlign('right').run()}
+        isActive={editor.isActive({ textAlign: 'right' })}
+        title="Alinhar à direita"
+      >
+        <AlignRight className="h-3.5 w-3.5" />
+      </BubbleMenuItem>
+
+      <BubbleMenuItem
+        onClick={() => editor.chain().focus().setTextAlign('justify').run()}
+        isActive={editor.isActive({ textAlign: 'justify' })}
+        title="Justificar"
+      >
+        <AlignJustify className="h-3.5 w-3.5" />
+      </BubbleMenuItem>
+
+      <div className="w-px h-4 bg-slate-600 dark:bg-dark-600 mx-1" />
+
+      <BubbleMenuItem
+        onClick={() => editor.chain().focus().indent().run()}
+        title="Aumentar recuo"
+      >
+        <IndentIncrease className="h-3.5 w-3.5" />
+      </BubbleMenuItem>
+
+      <BubbleMenuItem
+        onClick={() => editor.chain().focus().outdent().run()}
+        title="Diminuir recuo"
+      >
+        <IndentDecrease className="h-3.5 w-3.5" />
       </BubbleMenuItem>
     </BubbleMenu>
   );

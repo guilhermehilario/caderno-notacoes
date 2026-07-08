@@ -6,9 +6,16 @@ import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Highlight from "@tiptap/extension-highlight";
 import Placeholder from "@tiptap/extension-placeholder";
+import Underline from "@tiptap/extension-underline";
+import LinkExtension from "@tiptap/extension-link";
+import TextAlign from "@tiptap/extension-text-align";
 import { Annotation } from "../extensions/Annotation";
+import { Indent } from "../extensions/Indent";
 import { useDebounce } from "../../../hooks/useDebounce";
 import type { Leaf } from "../types";
+
+const DEBOUNCE_MS = 800;
+const SAVE_STATUS_IDLE_MS = 2000;
 
 interface UseEditorContentParams {
   leaf: Leaf | undefined;
@@ -32,6 +39,7 @@ interface UseEditorContentReturn {
   localContent: string;
   localRawText: string;
   contentReady: boolean;
+  flushSave: () => Promise<void>;
 }
 
 export function useEditorContent({
@@ -49,6 +57,9 @@ export function useEditorContent({
   const saveInFlightRef = useRef(false);
   const [contentReady, setContentReady] = useState(false);
 
+  // Refs para acesso aos valores mais recentes em event listeners (beforeunload, etc.)
+  const latestValuesRef = useRef({ title: "", content: "", rawText: "" });
+
   const extensions = useMemo(
     () => [
       StarterKit.configure({
@@ -56,7 +67,21 @@ export function useEditorContent({
         link: false,
         underline: false,
       }),
+      Underline,
+      LinkExtension.configure({
+        openOnClick: false,
+      }),
       Highlight.configure({ multicolor: true }),
+      TextAlign.configure({
+        types: ["heading", "paragraph"],
+        alignments: ["left", "center", "right", "justify"],
+        defaultAlignment: "left",
+      }),
+      Indent.configure({
+        types: ["paragraph", "heading", "blockquote"],
+        maxLevel: 4,
+        indentStep: 1.5,
+      }),
       Annotation,
       Placeholder.configure({
         placeholder: "Comece a digitar o conteúdo da sua aula aqui...",
@@ -132,11 +157,59 @@ export function useEditorContent({
     );
   }, [leaf, editor, editorStatus]);
 
-  const debouncedTitle = useDebounce(localTitle, 1500);
-  const debouncedContent = useDebounce(localContent, 1500);
-  const debouncedRawText = useDebounce(localRawText, 1500);
+  // Mantém latestValuesRef atualizado
+  useEffect(() => {
+    latestValuesRef.current = { title: localTitle, content: localContent, rawText: localRawText };
+  }, [localTitle, localContent, localRawText]);
 
-  // Auto-save com debounce: salva quando o usuário para de digitar por 1.5s
+  /** Salva imediatamente sem esperar debounce */
+  const flushSave = useCallback(async () => {
+    const { title, content, rawText } = latestValuesRef.current;
+    if (!initialSyncDoneRef.current || !title || title.length === 0) return;
+
+    const lastSaved = lastSavedRef.current;
+    if (title === lastSaved.title && content === lastSaved.content) return;
+    if (saveInFlightRef.current) return;
+
+    saveInFlightRef.current = true;
+    editorStatus.setSaveStatus("saving");
+
+    try {
+      await updateLeaf({ title, content, rawText });
+      lastSavedRef.current = { title, content };
+      editorStatus.setLastUpdate(new Date().toISOString());
+      editorStatus.setSaveStatus("saved");
+    } catch (err) {
+      editorStatus.setSaveStatus("error");
+      const errorMessage = extractApiError(err, "Erro ao salvar. Tente novamente.");
+      useToastStore.getState().addToast(errorMessage, "error");
+    } finally {
+      saveInFlightRef.current = false;
+    }
+  }, [updateLeaf, editorStatus]);
+
+  // ── Salvar ao perder foco (mudar de aba) ou desmontar (navegação) ──
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        flushSave();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      // Salva imediatamente ao desmontar o componente (navegação interna)
+      flushSave();
+    };
+  }, [flushSave]);
+
+  const debouncedTitle = useDebounce(localTitle, DEBOUNCE_MS);
+  const debouncedContent = useDebounce(localContent, DEBOUNCE_MS);
+  const debouncedRawText = useDebounce(localRawText, DEBOUNCE_MS);
+
+  // Auto-save com debounce: salva quando o usuário para de digitar
   useEffect(() => {
     if (!initialSyncDoneRef.current) return;
     // Impede salvar com título vazio (servidor rejeita com @MinLength(1))
@@ -168,6 +241,11 @@ export function useEditorContent({
           startTransition(() => {
             editorStatus.setSaveStatus("saved");
           });
+
+          // Volta ao status "idle" após 2s
+          setTimeout(() => {
+            editorStatus.setSaveStatus("idle");
+          }, SAVE_STATUS_IDLE_MS);
         })
         .catch((err) => {
           startTransition(() => {
@@ -189,5 +267,6 @@ export function useEditorContent({
     localContent,
     localRawText,
     contentReady,
+    flushSave,
   };
 }

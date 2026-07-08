@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import {
@@ -24,7 +24,10 @@ import {
   FileText,
   Calendar,
   GripVertical,
+  Plus,
 } from 'lucide-react';
+import { useToastStore } from '../../../store/toastStore';
+import { extractApiError } from '../../../utils/api-errors';
 import leafService from '../services/leafService';
 import type { Leaf } from '../types';
 
@@ -113,7 +116,8 @@ export const SubLeavesSection: React.FC<SubLeavesSectionProps> = ({
 }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [subLeavesOpen, setSubLeavesOpen] = React.useState(false);
+  const [subLeavesOpen, setSubLeavesOpen] = useState(false);
+  const [creatingSubLeaf, setCreatingSubLeaf] = useState(false);
   /** Guarda o estado anterior das sub-folhas para rollback em caso de erro */
   const prevChildrenRef = useRef<Leaf[] | null>(null);
 
@@ -196,59 +200,100 @@ export const SubLeavesSection: React.FC<SubLeavesSectionProps> = ({
     [subLeaves, leaf, notebookId, leafId, queryClient, reorderMutation],
   );
 
-  if (subLeaves.length === 0) return null;
+  const handleCreateSubLeaf = useCallback(async () => {
+    if (creatingSubLeaf) return;
+    setCreatingSubLeaf(true);
+    try {
+      const newLeaf = await leafService.createLeaf(notebookId, {
+        title: 'Nova sub-folha',
+        content: '',
+        rawText: '',
+        parentId: leafId,
+      });
+      navigate(`/notebooks/${notebookId}/leaves/${newLeaf.id}`);
+    } catch (err) {
+      useToastStore.getState().addToast(
+        extractApiError(err, 'Erro ao criar sub-folha.'),
+        'error',
+      );
+    } finally {
+      setCreatingSubLeaf(false);
+    }
+  }, [notebookId, leafId, navigate, creatingSubLeaf]);
 
   return (
     <div className="flex-shrink-0 border-t border-slate-100 dark:border-dark-800/60 pt-3 mt-1">
-      <button
-        type="button"
-        onClick={() => setSubLeavesOpen(!subLeavesOpen)}
-        className="flex items-center gap-2 w-full text-left cursor-pointer group pb-2"
-      >
-        <FileText className="h-4 w-4 text-slate-400 group-hover:text-brand-500 transition-colors" />
-        <h3 className="text-sm font-heading font-bold text-slate-500 dark:text-dark-400 group-hover:text-slate-700 dark:group-hover:text-dark-200 transition-colors">
-          Sub-folhas ({subLeaves.length})
-        </h3>
-        <div
-          className="ml-auto transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
-          style={{
-            transform: subLeavesOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
-          }}
+      <div className="flex items-center gap-2 pb-2">
+        <button
+          type="button"
+          onClick={() => setSubLeavesOpen(!subLeavesOpen)}
+          className="flex items-center gap-2 flex-1 text-left cursor-pointer group"
         >
-          <ChevronDown className="h-4 w-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
-        </div>
-      </button>
+          <FileText className="h-4 w-4 text-slate-400 group-hover:text-brand-500 transition-colors" />
+          <h3 className="text-sm font-heading font-bold text-slate-500 dark:text-dark-400 group-hover:text-slate-700 dark:group-hover:text-dark-200 transition-colors">
+            Sub-folhas ({subLeaves.length})
+          </h3>
+          {subLeaves.length > 0 && (
+            <div
+              className="transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+              style={{
+                transform: subLeavesOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
+              }}
+            >
+              <ChevronDown className="h-4 w-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
+            </div>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={handleCreateSubLeaf}
+          disabled={creatingSubLeaf}
+          className="flex items-center gap-1 text-xs font-semibold text-brand-500 hover:text-brand-600 dark:hover:text-brand-400 transition-colors py-1 px-2 rounded-lg hover:bg-brand-50 dark:hover:bg-brand-900/20 cursor-pointer disabled:opacity-50"
+          title="Criar sub-folha"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Nova
+        </button>
+      </div>
 
       <div
         className="grid transition-[grid-template-rows] duration-300 ease-out"
         style={{
-          gridTemplateRows: subLeavesOpen ? '1fr' : '0fr',
+          gridTemplateRows:
+            subLeaves.length > 0 && subLeavesOpen ? '1fr' : '0fr',
         }}
       >
         <div className="overflow-hidden min-h-0">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={subLeaves.map((l) => l.id)}
-              strategy={horizontalListSortingStrategy}
+          {subLeaves.length > 0 ? (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
             >
-              <div className="flex gap-3 overflow-x-auto pb-2 max-h-[30vh] overflow-y-auto">
-                {subLeaves.map((subLeaf) => (
-                  <SortableSubLeafCard
-                    key={subLeaf.id}
-                    subLeaf={subLeaf}
-                    notebookId={notebookId}
-                    onNavigate={(id) =>
-                      navigate(`/notebooks/${notebookId}/leaves/${id}`)
-                    }
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
+              <SortableContext
+                items={subLeaves.map((l) => l.id)}
+                strategy={horizontalListSortingStrategy}
+              >
+                <div className="flex gap-3 overflow-x-auto pb-2 max-h-[30vh] overflow-y-auto">
+                  {subLeaves.map((subLeaf) => (
+                    <SortableSubLeafCard
+                      key={subLeaf.id}
+                      subLeaf={subLeaf}
+                      notebookId={notebookId}
+                      onNavigate={(id) =>
+                        navigate(`/notebooks/${notebookId}/leaves/${id}`)
+                      }
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          ) : (
+            <p className="text-xs text-slate-400 dark:text-dark-400 pb-2">
+              Nenhuma sub-folha ainda. Clique em "Nova" acima para criar uma.
+            </p>
+          )}
         </div>
       </div>
     </div>

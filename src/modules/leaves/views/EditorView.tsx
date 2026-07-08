@@ -51,12 +51,18 @@ const EditorView: React.FC = () => {
   const isArchived = leaf?.archivedAt != null;
 
   // ── Hook: Editor + Autosave ──
-  const { editor, localTitle, setLocalTitle, localRawText, contentReady } =
-    useEditorContent({
-      leaf,
-      updateLeaf,
-      editorStatus,
-    });
+  const {
+    editor,
+    localTitle,
+    setLocalTitle,
+    localRawText,
+    contentReady,
+    flushSave,
+  } = useEditorContent({
+    leaf,
+    updateLeaf,
+    editorStatus,
+  });
 
   // ── Hook: Ações (archive, delete, AI, anotações, UI) ──
   const {
