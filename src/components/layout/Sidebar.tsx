@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../../modules/auth/hooks/useAuth';
-import { useUIStore } from '../../store/uiStore';
+import React, { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../../modules/auth/hooks/useAuth";
+import { useUIStore } from "../../store/uiStore";
 import {
   Brain,
   LayoutDashboard,
@@ -20,24 +20,24 @@ import {
   Target,
   Timer,
   Settings,
-} from 'lucide-react';
-import { ProfileModal } from '../../modules/profile/ProfileModal.tsx';
+} from "lucide-react";
+import { ProfileModal } from "../../modules/profile/ProfileModal.tsx";
 
 const NAV_ITEMS = [
-  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/tags', label: 'Tags', icon: Tags },
-  { path: '/bookmarks', label: 'Marcadores', icon: BookmarkIcon },
-  { path: '/archived', label: 'Arquivados', icon: Archive },
-  { path: '/todos', label: 'Tarefas', icon: ListChecks },
+  { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { path: "/tags", label: "Tags", icon: Tags },
+  { path: "/bookmarks", label: "Marcadores", icon: BookmarkIcon },
+  { path: "/archived", label: "Arquivados", icon: Archive },
+  { path: "/todos", label: "Tarefas", icon: ListChecks },
 ] as const;
 
 const PLANNING_SUB_ITEMS = [
-  { path: '/planning/agenda', label: 'Agenda', icon: ListChecks },
-  { path: '/planning/calendar', label: 'Calendário', icon: CalendarDays },
-  { path: '/planning/cronograma', label: 'Cronograma', icon: Timeline },
-  { path: '/planning/metas', label: 'Metas', icon: Target },
-  { path: '/planning/pomodoro', label: 'Pomodoro', icon: Timer },
-  { path: '/planning/settings', label: 'Configurações', icon: Settings },
+  { path: "/planning/agenda", label: "Agenda", icon: ListChecks },
+  { path: "/planning/calendar", label: "Calendário", icon: CalendarDays },
+  { path: "/planning/cronograma", label: "Cronograma", icon: Timeline },
+  { path: "/planning/metas", label: "Metas", icon: Target },
+  { path: "/planning/pomodoro", label: "Pomodoro", icon: Timer },
+  { path: "/planning/settings", label: "Configurações", icon: Settings },
 ] as const;
 
 export const Sidebar: React.FC = () => {
@@ -46,8 +46,8 @@ export const Sidebar: React.FC = () => {
   const location = useLocation();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
-  const isTrashActive = location.pathname.startsWith('/trash');
-  const isPlanningActive = location.pathname.startsWith('/planning');
+  const isTrashActive = location.pathname.startsWith("/trash");
+  const isPlanningActive = location.pathname.startsWith("/planning");
   const [planningExpanded, setPlanningExpanded] = useState(isPlanningActive);
 
   // Auto-expand planning when navigating to a sub-item
@@ -60,7 +60,7 @@ export const Sidebar: React.FC = () => {
   return (
     <aside
       className={`bg-white dark:bg-dark-900 border-r border-slate-100 dark:border-dark-800/80 flex flex-col transition-all duration-300 relative z-20 ${
-        sidebarCollapsed ? 'w-20' : 'w-64'
+        sidebarCollapsed ? "w-20" : "w-64"
       }`}
     >
       {/* Header da Sidebar */}
@@ -74,7 +74,7 @@ export const Sidebar: React.FC = () => {
           </div>
           {!sidebarCollapsed && (
             <span className="font-heading font-extrabold text-lg tracking-tight whitespace-nowrap">
-              StudyNotes <span className="text-brand-500">AI</span>
+              Arandu
             </span>
           )}
         </Link>
@@ -86,9 +86,9 @@ export const Sidebar: React.FC = () => {
           const Icon = item.icon;
           // Dashboard fica ativo também nas rotas de notebook/leaf/study
           const isActive =
-            item.path === '/dashboard'
-              ? location.pathname === '/dashboard' ||
-                location.pathname.startsWith('/notebooks/')
+            item.path === "/dashboard"
+              ? location.pathname === "/dashboard" ||
+                location.pathname.startsWith("/notebooks/")
               : location.pathname.startsWith(item.path);
 
           return (
@@ -97,8 +97,8 @@ export const Sidebar: React.FC = () => {
               to={item.path}
               className={`flex items-center gap-3.5 px-3.5 py-3 rounded-xl font-medium transition-all duration-200 select-none ${
                 isActive
-                  ? 'bg-brand-500 text-white shadow-md shadow-brand-500/10'
-                  : 'text-slate-650 hover:bg-slate-100 dark:text-dark-300 dark:hover:bg-dark-800/60'
+                  ? "bg-brand-500 text-white shadow-md shadow-brand-500/10"
+                  : "text-slate-650 hover:bg-slate-100 dark:text-dark-300 dark:hover:bg-dark-800/60"
               }`}
             >
               <Icon className="h-5 w-5 flex-shrink-0" />
@@ -118,8 +118,8 @@ export const Sidebar: React.FC = () => {
               onClick={() => setPlanningExpanded(!planningExpanded)}
               className={`flex items-center gap-3.5 px-3.5 py-3 rounded-xl font-medium transition-all duration-200 select-none w-full text-left cursor-pointer ${
                 isPlanningActive
-                  ? 'bg-brand-500 text-white shadow-md shadow-brand-500/10'
-                  : 'text-slate-650 hover:bg-slate-100 dark:text-dark-300 dark:hover:bg-dark-800/60'
+                  ? "bg-brand-500 text-white shadow-md shadow-brand-500/10"
+                  : "text-slate-650 hover:bg-slate-100 dark:text-dark-300 dark:hover:bg-dark-800/60"
               }`}
             >
               <Calendar className="h-5 w-5 flex-shrink-0" />
@@ -143,8 +143,8 @@ export const Sidebar: React.FC = () => {
                       to={item.path}
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 select-none ${
                         isSubActive
-                          ? 'bg-brand-100 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400'
-                          : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:text-dark-400 dark:hover:text-dark-200 dark:hover:bg-dark-800/40'
+                          ? "bg-brand-100 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400"
+                          : "text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:text-dark-400 dark:hover:text-dark-200 dark:hover:bg-dark-800/40"
                       }`}
                     >
                       <SubIcon className="h-4 w-4 flex-shrink-0" />
@@ -161,8 +161,8 @@ export const Sidebar: React.FC = () => {
             to="/planning/agenda"
             className={`flex items-center justify-center gap-3.5 px-3.5 py-3 rounded-xl font-medium transition-all duration-200 select-none ${
               isPlanningActive
-                ? 'bg-brand-500 text-white shadow-md shadow-brand-500/10'
-                : 'text-slate-650 hover:bg-slate-100 dark:text-dark-300 dark:hover:bg-dark-800/60'
+                ? "bg-brand-500 text-white shadow-md shadow-brand-500/10"
+                : "text-slate-650 hover:bg-slate-100 dark:text-dark-300 dark:hover:bg-dark-800/60"
             }`}
           >
             <Calendar className="h-5 w-5 flex-shrink-0" />
@@ -177,8 +177,8 @@ export const Sidebar: React.FC = () => {
           to="/trash"
           className={`flex items-center gap-3.5 px-3.5 py-3 rounded-xl font-medium transition-all duration-200 select-none ${
             isTrashActive
-              ? 'bg-brand-500 text-white shadow-md shadow-brand-500/10'
-              : 'text-slate-650 hover:bg-slate-100 dark:text-dark-300 dark:hover:bg-dark-800/60'
+              ? "bg-brand-500 text-white shadow-md shadow-brand-500/10"
+              : "text-slate-650 hover:bg-slate-100 dark:text-dark-300 dark:hover:bg-dark-800/60"
           }`}
         >
           <Trash2 className="h-5 w-5 flex-shrink-0" />
@@ -205,7 +205,7 @@ export const Sidebar: React.FC = () => {
           {!sidebarCollapsed && (
             <div className="flex-grow overflow-hidden">
               <p className="text-sm font-semibold truncate text-slate-800 dark:text-dark-100">
-                {user?.name || 'Estudante'}
+                {user?.name || "Estudante"}
               </p>
               <p className="text-xs truncate text-slate-400 dark:text-dark-400">
                 {user?.email}

@@ -1,7 +1,7 @@
-import React from 'react';
-import { Brain } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { Card } from '../../components/ui/Card.tsx';
+import React from "react";
+import { Brain } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Card } from "../../components/ui/Card.tsx";
 
 interface AuthLayoutProps {
   title: string;
@@ -33,7 +33,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
             <Brain className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-3xl font-heading font-extrabold text-slate-900 dark:text-dark-50 tracking-tight m-0">
-            StudyNotes <span className="text-brand-500">AI</span>
+            Arandu
           </h1>
           <p className="text-slate-500 dark:text-dark-300 mt-2 text-center text-sm font-medium">
             Seu copiloto inteligente para resumos e flashcards
