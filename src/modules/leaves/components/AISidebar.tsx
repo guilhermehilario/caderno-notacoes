@@ -109,7 +109,7 @@ const AISidebarComponent: React.FC<AISidebarProps> = ({
                     onClick={onGenerateSummary}
                     isLoading={isGeneratingSummary}
                     leftIcon={<Sparkles className="h-4.5 w-4.5" />}
-                    disabled={!localRawText.trim()}
+                    disabled={!editor?.getText()?.trim()}
                   >
                     Gerar Resumo por IA
                   </Button>
@@ -141,7 +141,7 @@ const AISidebarComponent: React.FC<AISidebarProps> = ({
                     onClick={onGenerateFlashcards}
                     isLoading={isGeneratingFlashcards}
                     leftIcon={<Sparkles className="h-4.5 w-4.5" />}
-                    disabled={!localRawText.trim()}
+                    disabled={!editor?.getText()?.trim()}
                   >
                     Gerar Flashcards por IA
                   </Button>
