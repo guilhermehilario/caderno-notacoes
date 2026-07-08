@@ -4,6 +4,7 @@ import { useUIStore } from '../../store/uiStore';
 import { Sidebar } from './Sidebar.tsx';
 import { AppHeader } from './AppHeader.tsx';
 import { ToastContainer } from '../ui/Toast.tsx';
+import { PomodoroFloatingTimer } from '../../modules/planning/components/PomodoroFloatingTimer.tsx';
 import { usePlanningNotifications } from '../../modules/planning/hooks/usePlanningNotifications.ts';
 
 export const AppLayout: React.FC = () => {
@@ -35,6 +36,7 @@ export const AppLayout: React.FC = () => {
         </main>
       </div>
       <ToastContainer />
+      <PomodoroFloatingTimer />
     </div>
   );
 };

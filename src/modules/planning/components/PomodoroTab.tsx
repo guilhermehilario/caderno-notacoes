@@ -3,24 +3,18 @@ import {
   Play,
   Pause,
   Square,
-  Plus,
   Trash2,
   Timer,
   RotateCcw,
   Loader2,
 } from 'lucide-react';
 import { usePomodoros, useCreatePomodoro, useUpdatePomodoro, useDeletePomodoro } from '../hooks/usePomodoro.ts';
+import { usePomodoroStore, formatPomodoroTime, POMODORO_DURATION, BREAK_DURATION } from '../../../store/pomodoroStore.ts';
 import { EmptyState } from '../../../components/ui/EmptyState.tsx';
 import { LoadingScreen } from '../../../components/ui/LoadingScreen.tsx';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog.tsx';
 import { useToastStore } from '../../../store/toastStore.ts';
 import { extractApiError } from '../../../utils/api-errors.ts';
-
-const POMODORO_DURATION = 25; // minutes
-const BREAK_DURATION = 5; // minutes
-
-type TimerMode = 'focus' | 'break';
-type TimerState = 'idle' | 'running' | 'paused';
 
 export const PomodoroTab: React.FC = () => {
   const { data: sessions = [], isLoading } = usePomodoros();
@@ -28,78 +22,47 @@ export const PomodoroTab: React.FC = () => {
   const updatePomodoro = useUpdatePomodoro();
   const deletePomodoro = useDeletePomodoro();
 
-  // Timer state
-  const [timerMode, setTimerMode] = useState<TimerMode>('focus');
-  const [timerState, setTimerState] = useState<TimerState>('idle');
-  const [timeLeft, setTimeLeft] = useState(POMODORO_DURATION * 60);
-  const [taskName, setTaskName] = useState('');
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Global store
+  const timerMode = usePomodoroStore((s) => s.timerMode);
+  const timerState = usePomodoroStore((s) => s.timerState);
+  const timeLeft = usePomodoroStore((s) => s.timeLeft);
+  const taskName = usePomodoroStore((s) => s.taskName);
+  const currentSessionId = usePomodoroStore((s) => s.currentSessionId);
+  const setTimerMode = usePomodoroStore((s) => s.setTimerMode);
+  const setTaskName = usePomodoroStore((s) => s.setTaskName);
+  const setTimeLeft = usePomodoroStore((s) => s.setTimeLeft);
+  const setCurrentSessionId = usePomodoroStore((s) => s.setCurrentSessionId);
+  const startTimer = usePomodoroStore((s) => s.startTimer);
+  const pauseTimer = usePomodoroStore((s) => s.pauseTimer);
+  const resetTimer = usePomodoroStore((s) => s.resetTimer);
 
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const prevTimeLeftRef = useRef(timeLeft);
 
-  // Cleanup interval on unmount
+  // ── Detect timer completion and switch modes ──
   useEffect(() => {
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, []);
+    const justHitZero = prevTimeLeftRef.current === 1 && timeLeft === 0 && timerState === 'idle';
+    const sessionExists = currentSessionId !== null;
 
-  const startTimer = useCallback(() => {
-    setTimerState('running');
-    intervalRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(intervalRef.current!);
-          intervalRef.current = null;
-
-          // Timer completed
-          if (timerMode === 'focus') {
-            // Save completed session
-            if (currentSessionId) {
-              updatePomodoro.mutate({ id: currentSessionId, input: { completed: true } });
-            } else {
-              createPomodoro.mutate({
-                taskName: taskName || undefined,
-                duration: POMODORO_DURATION,
-              });
-            }
-
-            setTimerMode('break');
-            setTimeLeft(BREAK_DURATION * 60);
-            setTimerState('idle');
-            setCurrentSessionId(null);
-          } else {
-            setTimerMode('focus');
-            setTimeLeft(POMODORO_DURATION * 60);
-            setTimerState('idle');
-          }
-
-          return 0;
+    if (justHitZero) {
+      if (timerMode === 'focus') {
+        // Save completed session
+        if (sessionExists) {
+          updatePomodoro.mutate({ id: currentSessionId, input: { completed: true } });
         }
-        return prev - 1;
-      });
-    }, 1000);
-  }, [timerMode, currentSessionId, taskName, createPomodoro, updatePomodoro]);
-
-  const pauseTimer = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+        // Switch to break mode
+        setTimerMode('break');
+        setTimeLeft(BREAK_DURATION * 60);
+        setCurrentSessionId(null);
+      } else {
+        // Switch back to focus
+        setTimerMode('focus');
+        setTimeLeft(POMODORO_DURATION * 60);
+      }
     }
-    setTimerState('paused');
-  }, []);
 
-  const resetTimer = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-    setTimerMode('focus');
-    setTimeLeft(POMODORO_DURATION * 60);
-    setTimerState('idle');
-    setCurrentSessionId(null);
-  }, []);
+    prevTimeLeftRef.current = timeLeft;
+  }, [timeLeft, timerState, timerMode, currentSessionId, updatePomodoro, setTimerMode, setTimeLeft, setCurrentSessionId]);
 
   const handleStartFocus = useCallback(async () => {
     try {
@@ -112,7 +75,19 @@ export const PomodoroTab: React.FC = () => {
     } catch (err) {
       useToastStore.getState().addToast(extractApiError(err, 'Erro ao iniciar pomodoro.'), 'error');
     }
-  }, [taskName, createPomodoro, startTimer]);
+  }, [taskName, createPomodoro, setCurrentSessionId, startTimer]);
+
+  const handleStart = useCallback(() => {
+    if (timerMode === 'focus') {
+      handleStartFocus();
+    } else {
+      startTimer();
+    }
+  }, [timerMode, handleStartFocus, startTimer]);
+
+  const handleReset = useCallback(() => {
+    resetTimer();
+  }, [resetTimer]);
 
   const handleDeleteSession = useCallback(
     (id: string) => {
@@ -121,11 +96,6 @@ export const PomodoroTab: React.FC = () => {
     },
     [deletePomodoro],
   );
-
-  // Format time as MM:SS
-  const minutes = Math.floor(timeLeft / 60);
-  const seconds = timeLeft % 60;
-  const timeDisplay = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
   const progressPercent = timerMode === 'focus'
     ? ((POMODORO_DURATION * 60 - timeLeft) / (POMODORO_DURATION * 60)) * 100
@@ -222,7 +192,7 @@ export const PomodoroTab: React.FC = () => {
               <span className={`text-5xl font-heading font-extrabold tracking-tight ${
                 timerMode === 'focus' ? 'text-slate-900 dark:text-dark-50' : 'text-emerald-600 dark:text-emerald-400'
               }`}>
-                {timeDisplay}
+                {formatPomodoroTime(timeLeft)}
               </span>
               <span className={`text-xs font-semibold mt-1 ${
                 timerMode === 'focus' ? 'text-slate-400 dark:text-dark-400' : 'text-emerald-500'
@@ -237,7 +207,7 @@ export const PomodoroTab: React.FC = () => {
             {timerState === 'idle' && (
               <button
                 type="button"
-                onClick={timerMode === 'focus' ? handleStartFocus : startTimer}
+                onClick={handleStart}
                 className="flex items-center gap-2 px-6 py-3 bg-violet-500 hover:bg-violet-600 text-white rounded-xl font-semibold text-sm transition-all cursor-pointer shadow-lg shadow-violet-500/20"
               >
                 <Play className="h-5 w-5 fill-current" />
@@ -266,7 +236,7 @@ export const PomodoroTab: React.FC = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={resetTimer}
+                  onClick={handleReset}
                   className="flex items-center gap-2 px-4 py-3 bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-dark-300 rounded-xl font-semibold text-sm transition-all cursor-pointer hover:bg-slate-200 dark:hover:bg-dark-700"
                 >
                   <RotateCcw className="h-4 w-4" />
@@ -276,7 +246,7 @@ export const PomodoroTab: React.FC = () => {
             {timerState === 'running' && (
               <button
                 type="button"
-                onClick={resetTimer}
+                onClick={handleReset}
                 className="flex items-center gap-2 px-4 py-3 bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-dark-300 rounded-xl font-semibold text-sm transition-all cursor-pointer hover:bg-slate-200 dark:hover:bg-dark-700"
                 title="Parar"
               >
