@@ -188,6 +188,17 @@ export function useLeaf(leafId: string) {
           return isSame ? old : flashcards;
         },
       );
+
+      // ✅ Recupera o notebookId do leaf para invalidar caches relacionados
+      const notebookId = leafQuery.data?.notebookId;
+      if (notebookId) {
+        // Invalida a lista de flashcards do caderno (NotebookView)
+        queryClient.invalidateQueries({
+          queryKey: ["notebook-flashcards", notebookId],
+        });
+        // Invalida as estatísticas do Dashboard
+        queryClient.invalidateQueries({ queryKey: ["study-stats"] });
+      }
     },
   });
 

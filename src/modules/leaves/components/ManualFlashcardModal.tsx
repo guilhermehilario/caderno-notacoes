@@ -39,6 +39,8 @@ export const ManualFlashcardModal: React.FC<ManualFlashcardModalProps> = ({
       queryClient.invalidateQueries({
         queryKey: ['notebook-flashcards', notebookId],
       });
+      // ✅ Invalida as estatísticas para refletir novos cards no Dashboard
+      queryClient.invalidateQueries({ queryKey: ['study-stats'] });
       handleClose();
     },
   });

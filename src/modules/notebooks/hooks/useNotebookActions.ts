@@ -95,6 +95,8 @@ export function useNotebookActions({
       queryClient.invalidateQueries({
         queryKey: ["notebook-flashcards", notebookId],
       });
+      // ✅ Invalida as estatísticas para refletir novos cards no Dashboard
+      queryClient.invalidateQueries({ queryKey: ["study-stats"] });
       setIsFlashcardModalOpen(false);
       resetFc();
       setSelectedLeafId("");

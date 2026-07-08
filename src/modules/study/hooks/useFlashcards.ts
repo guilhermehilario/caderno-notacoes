@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import studyService from "../services/studyService";
+import { useToastStore } from "../../../store/toastStore";
+import { extractApiError } from "../../../utils/api-errors";
 import type { Flashcard, StudyScore } from "../types";
 
 export function useLeafFlashcards(leafId: string) {
@@ -51,6 +53,15 @@ export function useSubmitCardScore(leafId?: string, notebookId?: string) {
             old,
         );
       }
+
+      // ✅ Invalida as estatísticas para refletir o progresso no Dashboard
+      queryClient.invalidateQueries({ queryKey: ["study-stats"] });
+    },
+    onError: (err) => {
+      useToastStore.getState().addToast(
+        extractApiError(err, "Erro ao salvar progresso do flashcard."),
+        "error",
+      );
     },
   });
 }
