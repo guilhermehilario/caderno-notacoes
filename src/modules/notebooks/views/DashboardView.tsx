@@ -64,14 +64,19 @@ export const DashboardView: React.FC = () => {
 
       {/* Top Welcome Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-950/20 flex items-center justify-center text-brand-500 flex-shrink-0">
+          <BookOpen className="h-5 w-5" />
+        </div>
         <div>
           <h1 className="text-3xl font-heading font-extrabold tracking-tight m-0 text-slate-900 dark:text-dark-50">
             Seus Cadernos
           </h1>
-          <p className="text-slate-500 dark:text-dark-350 mt-1">
+          <p className="text-slate-500 dark:text-dark-350 mt-0.5">
             Gerencie seus materiais universitários e crie resumos de forma organizada
           </p>
         </div>
+      </div>
         <div className="flex items-center gap-3 self-start md:self-auto">
           <Button
             variant="outline"
