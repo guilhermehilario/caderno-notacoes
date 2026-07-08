@@ -4,6 +4,8 @@ import { useArchivedLeaves } from '../hooks/useLeaves';
 import { Archive, FileText, Loader2, RotateCcw, BookOpen, Calendar } from 'lucide-react';
 import { Card } from '../../../components/ui/Card.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
+import { useToastStore } from '../../../store/toastStore';
+import { extractApiError } from '../../../utils/api-errors';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import leafService from '../services/leafService';
 
@@ -24,6 +26,7 @@ export const ArchivedLeavesView: React.FC = () => {
       await unarchiveMutation.mutateAsync(leafId);
     } catch (err) {
       console.error('Erro ao desarquivar:', err);
+      useToastStore.getState().addToast(extractApiError(err, 'Erro ao desarquivar folha.'), 'error');
     }
   };
 

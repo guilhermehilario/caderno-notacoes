@@ -15,6 +15,8 @@ import { ColorPicker } from '../../../components/ui/ColorPicker.tsx';
 import { EmptyState } from '../../../components/ui/EmptyState.tsx';
 import { LoadingScreen } from '../../../components/ui/LoadingScreen.tsx';
 import { NOTEBOOK_COLORS } from '../../notebooks/constants';
+import { useToastStore } from '../../../store/toastStore';
+import { extractApiError } from '../../../utils/api-errors';
 
 export const DashboardView: React.FC = () => {
   const { notebooks, isLoading, createNotebook } = useNotebooks();
@@ -47,6 +49,7 @@ export const DashboardView: React.FC = () => {
       setSelectedColor(NOTEBOOK_COLORS[0]);
     } catch (error) {
       console.error('Erro ao criar caderno:', error);
+      useToastStore.getState().addToast(extractApiError(error, 'Erro ao criar caderno.'), 'error');
     }
   };
 

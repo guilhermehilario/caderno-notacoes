@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog.tsx';
+import { useToastStore } from '../../../store/toastStore';
+import { extractApiError } from '../../../utils/api-errors';
 
 export const BookmarksView: React.FC = () => {
   const { data: bookmarks = [], isLoading } = useBookmarks();
@@ -19,6 +21,7 @@ export const BookmarksView: React.FC = () => {
       setConfirmDeleteId(null);
     } catch (err) {
       console.error('Erro ao remover marcador:', err);
+      useToastStore.getState().addToast(extractApiError(err, 'Erro ao remover marcador.'), 'error');
     }
   };
 

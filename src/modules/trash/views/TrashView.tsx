@@ -5,6 +5,8 @@ import { Trash2, RotateCcw, Loader2, BookOpen, FileText, AlertTriangle, Clock, X
 import { Card } from '../../../components/ui/Card.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog.tsx';
+import { useToastStore } from '../../../store/toastStore';
+import { extractApiError } from '../../../utils/api-errors';
 import type { TrashItem } from '../services/trashService';
 
 export const TrashView: React.FC = () => {
@@ -32,6 +34,7 @@ export const TrashView: React.FC = () => {
       }
     } catch (err) {
       console.error('Erro ao restaurar:', err);
+      useToastStore.getState().addToast(extractApiError(err, 'Erro ao restaurar item.'), 'error');
     }
   };
 
@@ -49,6 +52,7 @@ export const TrashView: React.FC = () => {
       setConfirmDeleteItem(null);
     } catch (err) {
       console.error('Erro ao excluir permanentemente:', err);
+      useToastStore.getState().addToast(extractApiError(err, 'Erro ao excluir permanentemente.'), 'error');
     }
   };
 
@@ -58,6 +62,7 @@ export const TrashView: React.FC = () => {
       setConfirmCleanOpen(false);
     } catch (err) {
       console.error('Erro ao limpar lixeira:', err);
+      useToastStore.getState().addToast(extractApiError(err, 'Erro ao limpar lixeira.'), 'error');
     }
   };
 

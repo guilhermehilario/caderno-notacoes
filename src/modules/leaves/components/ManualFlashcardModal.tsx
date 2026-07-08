@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Modal } from '../../../components/ui/Modal.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
+import { useToastStore } from '../../../store/toastStore';
+import { extractApiError } from '../../../utils/api-errors';
 import { Input } from '../../../components/ui/Input.tsx';
 import { TextArea } from '../../../components/ui/TextArea.tsx';
 import studyService from '../../study/services/studyService';
@@ -52,6 +54,7 @@ export const ManualFlashcardModal: React.FC<ManualFlashcardModalProps> = ({
       });
     } catch (err) {
       console.error('Erro ao criar flashcard manual:', err);
+      useToastStore.getState().addToast(extractApiError(err, 'Erro ao criar flashcard manual.'), 'error');
     }
   };
 

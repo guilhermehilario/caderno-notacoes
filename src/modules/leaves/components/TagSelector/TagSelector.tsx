@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useTags, useCreateTag, useLeafTags, useAddTagToLeaf, useRemoveTagFromLeaf } from '../../../tags/hooks/useTags';
 import { ChevronDown, Plus, X, Tag as TagIcon, Loader2 } from 'lucide-react';
 import { TAG_COLOR_MAP, TAG_COLORS_ARRAY, DEFAULT_TAG_COLOR, getTagColor } from '../../../tags/constants';
+import { useToastStore } from '../../../../store/toastStore';
+import { extractApiError } from '../../../../utils/api-errors';
 import type { Tag } from '../../../tags/types';
 
 interface TagSelectorProps {
@@ -36,6 +38,7 @@ export const TagSelector: React.FC<TagSelectorProps> = ({ leafId }) => {
       setNewTagName('');
     } catch (err) {
       console.error('Erro ao criar tag:', err);
+      useToastStore.getState().addToast(extractApiError(err, 'Erro ao criar tag.'), 'error');
     }
   };
 

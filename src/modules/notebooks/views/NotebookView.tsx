@@ -27,6 +27,8 @@ import { LeafCard } from "../components/LeafCard";
 import { NotebookHeader } from "../components/NotebookHeader";
 import { FlashcardsSection } from "../components/FlashcardsSection";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog.tsx";
+import { useToastStore } from "../../../store/toastStore";
+import { extractApiError } from "../../../utils/api-errors";
 
 export const NotebookView: React.FC = () => {
   const { notebookId } = useParams<{ notebookId: string }>();
@@ -133,6 +135,7 @@ export const NotebookView: React.FC = () => {
       });
     } catch (error) {
       console.error("Erro ao criar flashcard:", error);
+      useToastStore.getState().addToast(extractApiError(error, "Erro ao criar flashcard."), "error");
     }
   };
 
@@ -149,6 +152,7 @@ export const NotebookView: React.FC = () => {
       navigate(`/notebooks/${notebookId}/leaves/${newLeaf.id}`);
     } catch (error) {
       console.error("Erro ao criar folha:", error);
+      useToastStore.getState().addToast(extractApiError(error, "Erro ao criar folha."), "error");
     }
   };
 
@@ -178,6 +182,7 @@ export const NotebookView: React.FC = () => {
       const msg = error instanceof Error ? error.message : 'Erro ao atualizar caderno';
       setActionError(msg);
       console.error("Erro ao atualizar caderno:", error);
+      useToastStore.getState().addToast(extractApiError(error, "Erro ao atualizar caderno."), "error");
     }
   };
 
@@ -195,6 +200,7 @@ export const NotebookView: React.FC = () => {
       const msg = error instanceof Error ? error.message : 'Erro ao mover para lixeira';
       setActionError(msg);
       console.error("Erro ao mover para lixeira:", error);
+      useToastStore.getState().addToast(extractApiError(error, "Erro ao mover para lixeira."), "error");
     }
   };
 

@@ -6,6 +6,8 @@ import { Button } from '../../../components/ui/Button.tsx';
 import { Modal } from '../../../components/ui/Modal.tsx';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog.tsx';
 import { TAG_COLORS_ARRAY, DEFAULT_TAG_COLOR } from '../constants';
+import { useToastStore } from '../../../store/toastStore';
+import { extractApiError } from '../../../utils/api-errors';
 import type { Tag } from '../types';
 
 export const TagsManagementView: React.FC = () => {
@@ -29,6 +31,7 @@ export const TagsManagementView: React.FC = () => {
       setIsCreateOpen(false);
     } catch (err) {
       console.error('Erro ao criar tag:', err);
+      useToastStore.getState().addToast(extractApiError(err, 'Erro ao criar tag.'), 'error');
     }
   };
 
@@ -43,6 +46,7 @@ export const TagsManagementView: React.FC = () => {
       setEditingTag(null);
     } catch (err) {
       console.error('Erro ao atualizar tag:', err);
+      useToastStore.getState().addToast(extractApiError(err, 'Erro ao atualizar tag.'), 'error');
     }
   };
 
@@ -55,6 +59,7 @@ export const TagsManagementView: React.FC = () => {
       setConfirmDeleteId(null);
     } catch (err) {
       console.error('Erro ao excluir tag:', err);
+      useToastStore.getState().addToast(extractApiError(err, 'Erro ao excluir tag.'), 'error');
     }
   };
 

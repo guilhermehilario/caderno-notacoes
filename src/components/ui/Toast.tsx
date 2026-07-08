@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { CheckCircle2, AlertTriangle, X, Info } from 'lucide-react';
 import { useToastStore, type Toast } from '../../store/toastStore';
 
@@ -16,34 +16,15 @@ const toastStyles: Record<Toast['type'], string> = {
 
 const ToastItem: React.FC<{ toast: Toast }> = ({ toast }) => {
   const removeToast = useToastStore((s) => s.removeToast);
-  const [isExiting, setIsExiting] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsExiting(true), 3500);
-    return () => clearTimeout(timer);
-  }, []);
 
   const handleClose = () => {
-    setIsExiting(true);
-    setTimeout(() => removeToast(toast.id), 300);
+    removeToast(toast.id);
   };
-
-  // Se estiver saindo, aguarda animação antes de remover
-  useEffect(() => {
-    if (isExiting) {
-      const timer = setTimeout(() => removeToast(toast.id), 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isExiting, removeToast, toast.id]);
 
   return (
     <div
-      className={`flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg transition-all duration-300 ${
+      className={`flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg animate-in slide-in-from-right-4 fade-in duration-300 transition-all duration-300 ${
         toastStyles[toast.type]
-      } ${
-        isExiting
-          ? 'opacity-0 translate-x-4'
-          : 'opacity-100 translate-x-0 animate-in slide-in-from-right-4 fade-in duration-300'
       }`}
     >
       {toastIcons[toast.type]}
