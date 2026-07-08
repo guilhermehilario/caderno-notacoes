@@ -19,6 +19,7 @@ import {
   Trash2,
   Archive,
   ListChecks,
+  Calendar,
 } from 'lucide-react';
 import { useNotificationStore } from '../../store/notificationStore.ts';
 
@@ -31,6 +32,15 @@ const PAGE_CONFIG: Record<string, { title: string; icon: React.ComponentType<{ c
   '/trash': { title: 'Lixeira', icon: Trash2, subtitle: 'Itens excluídos aparecem aqui por 15 dias' },
   '/archived': { title: 'Arquivados', icon: Archive, subtitle: 'Folhas arquivadas' },
   '/todos': { title: 'Tarefas', icon: ListChecks, subtitle: 'Gerencie suas tarefas pendentes' },
+  '/planning': { title: 'Planejamento', icon: Calendar, subtitle: 'Organize seus estudos' },
+};
+
+const PLANNING_TAB_LABELS: Record<string, string> = {
+  agenda: 'Agenda',
+  calendar: 'Calendário',
+  cronograma: 'Cronograma',
+  metas: 'Metas',
+  pomodoro: 'Pomodoro',
 };
 
 const DEFAULT_PAGE = { title: 'Dashboard', icon: LayoutDashboard, subtitle: 'Gerencie suas anotações e estudos' };
@@ -110,6 +120,14 @@ export const AppHeader: React.FC = () => {
     if (path.includes('/trash')) parts.push({ label: 'Lixeira', path: '/trash' });
     if (path.includes('/archived')) parts.push({ label: 'Arquivados', path: '/archived' });
     if (path.includes('/todos')) parts.push({ label: 'Tarefas', path: '/todos' });
+    if (path.includes('/planning')) {
+      // Extract tab name from URL like /planning/agenda
+      const tabMatch = path.match(/\/planning\/(\w+)/);
+      const tabLabel = tabMatch && PLANNING_TAB_LABELS[tabMatch[1]]
+        ? PLANNING_TAB_LABELS[tabMatch[1]]
+        : 'Planejamento';
+      parts.push({ label: tabLabel, path });
+    }
 
     return parts;
   }, [location.pathname, pathIds, notebookName, leafName]);
@@ -125,6 +143,7 @@ export const AppHeader: React.FC = () => {
     if (path.includes('/trash')) return PAGE_CONFIG['/trash'];
     if (path.includes('/archived')) return PAGE_CONFIG['/archived'];
     if (path.includes('/todos')) return PAGE_CONFIG['/todos'];
+    if (path.includes('/planning')) return PAGE_CONFIG['/planning'];
     return DEFAULT_PAGE;
   }, [location.pathname]);
 
