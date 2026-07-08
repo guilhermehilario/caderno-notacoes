@@ -13,12 +13,12 @@
 - **Esforço:** Alto
 
 ### 2. Implementar testes automatizados
-- **Alvos prioritários:** Algoritmo SM-2 (`flashcards.service.ts`), hooks useEditorContent/useEditorActions, cálculo de stats (`study.service.ts`)
-- **Por quê:** Refatorações recentes (EditorView) mostram que sem testes, bugs passam despercebidos.
+- **Alvos prioritários:** Algoritmo SM-2 (`flashcards.service.ts`), hooks do planning, cálculo de stats (`study.service.ts`)
+- **Por quê:** Novas funcionalidades de planejamento aumentaram a superfície de possíveis bugs.
 - **Esforço:** Alto
 
 ### 3. Remover `console.log` do token JWT
-- **Arquivo:** `src/core/api/client.ts` (linha 90)
+- **Arquivo:** `src/core/api/client.ts`
 - **Descrição:** `console.log("access: ", accessToken)` vaza o token no console.
 - **Esforço:** Baixo
 
@@ -32,24 +32,23 @@
 ## 🟡 Alta Prioridade
 
 ### 5. Refatorar NotebookView (~450 linhas)
-- **Descrição:** Seguir o mesmo padrão usado no EditorView: extrair hooks customizados para reduzir o God Component.
+- **Descrição:** Seguir o mesmo padrão usado no EditorView: extrair hooks customizados.
 - **Referência:** Extração de `useEditorContent` e `useEditorActions` do EditorView.
 - **Esforço:** Alto
 
-### 6. Corrigir ESLint configurado incorretamente
-- **Arquivo:** `eslint.config.js`
-- **Descrição:** Regra `no-restricted-imports` ao contrário: proíbe imports sem extensão, mas o projeto usa extensão explícita.
-- **Esforço:** Baixo
-
-### 7. Corrigir link "Esqueceu a senha?"
-- **Arquivo:** `src/modules/auth/views/LoginView.tsx`
-- **Descrição:** Link aponta para `/forgot-password` que não existe.
-- **Solução:** Implementar fluxo de recuperação ou remover o link.
+### 6. Aplicar cor de destaque do Planning na UI
+- **Arquivo:** `src/store/planningSettingsStore.ts`, componentes do planning
+- **Descrição:** `accentColor` é salvo nas settings mas não é aplicado visualmente nos componentes.
+- **Solução:** Usar `accentColor` para classes dinâmicas (ex: `text-${accentColor}-500`) nos ícones e botões do planning.
 - **Esforço:** Médio
 
+### 7. Corrigir ESLint configurado incorretamente
+- **Arquivo:** `eslint.config.js`
+- **Descrição:** Regra `no-restricted-imports` ao contrário.
+- **Esforço:** Baixo
+
 ### 8. Adicionar toasts de sucesso nas operações
-- **Descrição:** Hoje só temos toasts de erro. Adicionar feedback positivo: "Caderno criado", "Tag excluída", etc.
-- **Ferramenta:** Usar o `useToastStore` já criado com `type: 'success'`.
+- **Descrição:** Hoje só temos toasts de erro. Adicionar feedback positivo: "Caderno criado", "Meta atualizada", etc.
 - **Esforço:** Médio
 
 ---
@@ -57,44 +56,54 @@
 ## 🟡 Média Prioridade
 
 ### 9. Unificar named exports (remover export default)
-- **Descrição:** Projeto mistura `export default` e named exports. Padronizar.
 - **Esforço:** Baixo
 
 ### 10. Extrair classes Tailwind massivas para CSS
-- **Arquivo:** `EditorView.tsx` (classes inline no EditorContent)
+- **Arquivo:** `EditorView.tsx`
 - **Esforço:** Médio
 
-### 11. Corrigir form aninhado nos modais
-- **Arquivos:** `DashboardView.tsx`, `NotebookView.tsx`
-- **Descrição:** Botão de submit do modal está fora do `<form>`.
-- **Esforço:** Baixo
-
-### 12. Skeleton exibido mesmo com cache
+### 11. Skeleton exibido mesmo com cache
 - **Arquivo:** `EditorView.tsx`
-- **Descrição:** `isLoadingLeaf` exibe skeleton mesmo quando leaf está em cache.
 - **Solução:** Usar `isFetching` + `isStale`.
 - **Esforço:** Baixo
+
+### 12. Adicionar notificações push (Service Worker)
+- **Descrição:** Notificações mesmo com o app fechado, usando Web Push API.
+- **Esforço:** Alto
 
 ---
 
 ## 🟢 Baixa Prioridade
 
 ### 13. Criar `.env.example`
-- **Descrição:** Documentar variáveis de ambiente necessárias.
 - **Esforço:** Baixo
 
 ### 14. Configurar Husky + lint-staged
-- **Descrição:** Rodar ESLint e TypeScript check antes de commits.
 - **Esforço:** Baixo
 
 ### 15. Validação de env no startup do backend
-- **Arquivo:** `server/src/main.ts`
-- **Descrição:** Servidor inicia mesmo sem `JWT_SECRET` ou `DATABASE_URL`.
 - **Esforço:** Baixo
 
-### 16. Remover `db.json.backup`
-- **Descrição:** Arquivo residual da migração Express → NestJS.
-- **Esforço:** Muito Baixo
+### 16. Atalhos de teclado para o Pomodoro
+- **Descrição:** Espaço para pausar/continuar, Esc para parar.
+- **Esforço:** Baixo
+
+### 17. Gráfico semanal de pomodoros no Dashboard
+- **Descrição:** Mini gráfico de barras por dia da semana no card de Pomodoro do resumo semanal.
+- **Esforço:** Médio
+
+---
+
+## ✅ Concluído na Sessão 08/07/2026
+
+- [x] Módulo de Planejamento (Agenda, Calendário, Cronograma, Metas, Pomodoro) com CRUD via API
+- [x] Sidebar com sub-menu expansível para Planejamento
+- [x] Mini timer flutuante do Pomodoro (canto inferior direito, visível em todas as páginas)
+- [x] Sistema de notificações (navegador + in-app + toast) para eventos, metas e pomodoro
+- [x] Configurações do Planejamento (cores, durações, toggles de notificação)
+- [x] Resumo semanal no Dashboard (eventos, metas pendentes, pomodoros da semana)
+- [x] Planejamento segue esquema de navegação (header, breadcrumbs) das outras telas
+- [x] Documentação atualizada (AGENTS.md, README.md, TESTES_POSSIVEIS.md, TASKS.md)
 
 ---
 
@@ -102,11 +111,11 @@
 
 | Prioridade | Qtd | Principais |
 |------------|-----|------------|
-| 🔴 Crítico | 3 | IA real, testes, CORS produção |
-| 🟡 Alta | 4 | NotebookView, ESLint, forgot password, toasts sucesso |
-| 🟡 Média | 4 | named exports, Tailwind CSS, forms, skeleton |
-| 🟢 Baixa | 4 | env.example, Husky, validação env, db.json |
+| 🔴 Crítico | 4 | IA real, testes, token JWT, CORS produção |
+| 🟡 Alta | 4 | NotebookView, cor destaque, ESLint, toasts sucesso |
+| 🟡 Média | 4 | named exports, Tailwind CSS, skeleton, push notifications |
+| 🟢 Baixa | 4 | env.example, Husky, validação env, atalhos teclado, gráfico |
 
 ---
 
-*Gerado em 08/07/2026 após refatoração do EditorView, sistema de toasts e correções de overflow.*
+*Gerado em 08/07/2026 — Sessão de implementação do módulo Planejamento.*

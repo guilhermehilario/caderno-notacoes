@@ -65,3 +65,83 @@
 - Espere o sync inicial completar.
 - Verifique que NENHUM request 400 aparece no console.
 - Edite o conteúdo e confirme que o auto-save funciona normalmente (status "Salvo").
+
+## 13. CRUD de eventos da agenda
+- Acesse Planejamento > Agenda.
+- Crie um evento com título e data.
+- Verifique que o evento aparece na lista.
+- Clique no círculo ao lado do evento para marcar como concluído.
+- Exclua o evento e confirme o diálogo.
+- Verifique que o sumiu da lista.
+
+## 14. Calendário mensal
+- Acesse Planejamento > Calendário.
+- Navegue entre meses usando as setas.
+- Verifique que eventos são indicados por bolinhas no calendário.
+- Clique em um dia e veja os eventos no painel lateral.
+- Marque um evento como concluído pelo painel lateral.
+
+## 15. Cronograma (timeline)
+- Acesse Planejamento > Cronograma.
+- Crie um marco com título, descrição e data.
+- Verifique que aparece na timeline visual.
+- Clique no botão de concluir e veja o item ir para a seção "Concluídos".
+
+## 16. Metas com progresso
+- Acesse Planejamento > Metas.
+- Crie uma meta com título, descrição e data alvo.
+- Use os botões rápidos (25%, 50%, 75%, 100%) para atualizar o progresso.
+- Verifique que a barra de progresso e a cor do botão mudam.
+- Complete a meta (100%) e veja ela ir para a seção "Concluídas".
+
+## 17. Timer Pomodoro
+- Acesse Planejamento > Pomodoro.
+- Digite um nome de tarefa e clique "Iniciar Foco".
+- Verifique que o timer começa a contar.
+- Clique em "Pausar" e depois "Continuar".
+- Clique em "Parar" e verifique que o timer reseta.
+
+## 18. Mini timer flutuante do Pomodoro
+- Inicie um pomodoro na página de Planejamento.
+- Navegue para outra página (Dashboard, Tags, etc.).
+- Verifique que o mini timer aparece no canto inferior direito com pause/stop.
+- Pause o timer pelo floating e verifique que o botão muda para "Continuar".
+- Pare o timer e verifique que ele desaparece.
+
+## 19. Sub-menu Planejamento na sidebar
+- Verifique que "Planejamento" aparece abaixo de "Tarefas" na sidebar.
+- Clique em Planejamento para expandir os sub-itens.
+- Clique em cada sub-item (Agenda, Calendário, Cronograma, Metas, Pomodoro, Configurações) e verifique que a rota muda.
+- Colapse a sidebar e verifique que apenas o ícone do calendário aparece.
+
+## 20. Notificações de eventos
+- Crie um evento na agenda com a data de hoje.
+- Aguarde até 1 minuto (ou recarregue a página).
+- Verifique que o sino de notificações no header mostra um badge.
+- Clique no sino e veja a notificação no painel.
+- (Se a permissão do navegador foi concedida) Verifique que uma notificação nativa aparece.
+
+## 21. Notificações de metas
+- Crie uma meta com data alvo para hoje ou nos próximos 3 dias.
+- Aguarde a verificação periódica.
+- Verifique a notificação no painel do sino.
+
+## 22. Configurações do Planejamento
+- Acesse Planejamento > Configurações.
+- Selecione uma cor de destaque diferente.
+- Ajuste a duração do foco para 30min usando os botões +/−.
+- Ajuste a duração da pausa para 10min.
+- Desative a notificação de eventos e verifique que não aparecem mais.
+- Clique em "Restaurar padrão" e verifique que a duração volta ao default.
+
+## 23. Resumo semanal no Dashboard
+- Acesse o Dashboard.
+- Verifique que a seção "Resumo da Semana" aparece com 3 cards.
+- Crie eventos/metas/pomodoros e veja os cards atualizarem.
+- Clique em "Ver planejamento" e confirme que navega para /planning/agenda.
+
+## 24. Persistência do timer entre páginas
+- Inicie um pomodoro.
+- Navegue para o Dashboard (ou outra página).
+- Volte para a página de Pomodoro.
+- Verifique que o timer continua rodando com o mesmo tempo restante.

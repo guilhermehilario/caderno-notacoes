@@ -55,13 +55,22 @@ server/
 │   │   ├── flashcards.controller.ts    → GET/PUT flashcards + POST review
 │   │   ├── flashcards.service.ts       → SM-2 com CAP 365 dias
 │   │   └── dto/                        → ReviewFlashcardDto, UpdateFlashcardDto
-│   └── study/
-│       ├── study.module.ts
-│       ├── study.controller.ts         → Sessões + stats
-│       ├── study.service.ts            → Persistência sessão + getStats
-│       └── dto/                        → SaveSessionDto
+│   ├── study/
+│   │   ├── study.module.ts
+│   │   ├── study.controller.ts         → Sessões + stats
+│   │   ├── study.service.ts            → Persistência sessão + getStats
+│   │   └── dto/                        → SaveSessionDto
+│   └── planning/
+│       ├── planning.module.ts          → Modulo de planejamento
+│       ├── events.controller.ts        → CRUD /planning/events (agenda + cronograma)
+│       ├── events.service.ts
+│       ├── goals.controller.ts         → CRUD /planning/goals (metas)
+│       ├── goals.service.ts
+│       ├── pomodoro.controller.ts      → CRUD /planning/pomodoro
+│       ├── pomodoro.service.ts
+│       └── dto/                        → Create/Update DTOs para events, goals, pomodoro
 ├── prisma/
-│   ├── schema.prisma                   → Modelos: User, Notebook, Leaf, Flashcard, StudySession, etc.
+│   ├── schema.prisma                   → Modelos: User, Notebook, Leaf, Flashcard, StudySession, Event, Goal, PomodoroSession, etc.
 │   ├── seed.ts                         → Script de migração db.json → SQLite
 │   └── migrations/                     → Migrações (init, tags, trash, position, etc.)
 ├── prisma.config.ts                    → Config Prisma v7
@@ -71,7 +80,7 @@ server/
 
 ## Objetivo principal do app
 
-O usuário cria cadernos, folhas de anotação, gera resumos e flashcards por IA e revisa os cards em uma sessão de estudo com repetição espaçada (SM-2).
+O usuário cria cadernos, folhas de anotação, gera resumos e flashcards por IA e revisa os cards em uma sessão de estudo com repetição espaçada (SM-2). Também conta com um módulo de **Planejamento** completo com agenda, calendário, cronograma, metas e pomodoro.
 
 ## Status atual do desenvolvimento
 
@@ -87,37 +96,46 @@ O usuário cria cadernos, folhas de anotação, gera resumos e flashcards por IA
 - ✅ Seção de sub-folhas colapsável no editor
 - ✅ Reordenação de sub-folhas por drag & drop (com @dnd-kit)
 - ✅ Scripts start.sh e stop.sh para gerenciar backend + frontend
+- ✅ Módulo de Planejamento (Agenda, Calendário, Cronograma, Metas, Pomodoro) com CRUD via API
+- ✅ Sidebar com sub-menu expansível para Planejamento
+- ✅ Sistema de notificações (navegador + in-app) para eventos, metas e pomodoro
+- ✅ Mini timer flutuante do pomodoro no canto inferior direito
+- ✅ Configurações do planejamento (cores, durações, toggles de notificação)
+- ✅ Resumo semanal no Dashboard
 
 ## Histórico de alterações
 
-### Sessão 08/07/2026 (Parte 1) — Correção de overflow horizontal e scroll lateral no EditorView e TagsManagementView
+### Sessão 08/07/2026 (Parte 3) — Módulo de Planejamento completo
 
-**O que foi feito:** Correção completa de overflow horizontal em dois componentes principais, eliminação de scroll lateral indevido, e aumento da área de edição.
-
-#### Contexto do problema
-
-O app apresentava dois problemas de overflow:
-1. **TagsManagementView**: nomes de tag longos estouravam o card horizontalmente
-2. **EditorView**: scroll lateral aparecia mesmo com o editor vazio, e o texto podia vazar para fora do container
-
-A causa raiz do scroll lateral no EditorView era o comportamento do CSS onde `overflow-x: hidden` com `overflow-y: visible` (padrão) faz o navegador converter `overflow-y` para `auto`, criando uma scrollbar vertical.
+**O que foi feito:** Implementação do módulo Planejamento com 5 sub-features, sidebar expansível, notificações, mini timer flutuante, configurações e resumo semanal.
 
 #### Mudanças realizadas
 
 | Área | Mudança | Detalhes |
 |------|---------|----------|
-| `src/modules/tags/views/TagsManagementView.tsx` | **Overflow de texto em tags** | Adicionado `min-w-0` + `truncate` + `min-w-0` no `<span>` + `flex-shrink-0` nos botões. Impede que nomes longos de tag estourem o card. |
-| `src/modules/leaves/views/EditorView.tsx` | **Aumento do container split pane** | `min-h-[500px]` → `min-h-[750px] lg:min-h-[90vh]`. Área do editor + IA aumentada em 50% no mínimo. |
-| `src/modules/leaves/views/EditorView.tsx` | **Overflow do split pane** | Adicionado `overflow-hidden` no split pane para cortar qualquer conteúdo que ultrapasse os limites. |
-| `src/modules/leaves/views/EditorView.tsx` | **Overflow do editor pane** | `overflow-x-hidden` → `overflow-hidden`. Corrige o CSS gotcha: `overflow-x: hidden` com `overflow-y: visible` faz o navegador converter `overflow-y` para `auto`, criando scrollbar. |
-| `src/modules/leaves/views/EditorView.tsx` | **Scroll do tiptap-editor** | `overflow-y-auto` → `overflow-y-hidden`. Remove scroll vertical do editor. Adicionado `pb-1.5` para margem inferior de ~6px. |
-| `src/components/layout/AppLayout.tsx` | **Scroll global** | `<main>`: `overflow-y-auto` → `overflow-y-auto overflow-x-hidden`. Impede scroll lateral no conteúdo principal do app. |
+| **Prisma Schema** | 3 novos modelos | `Event` (agenda/cronograma), `Goal` (metas), `PomodoroSession` |
+| **Backend Planning** | Módulo NestJS | EventsController/Service, GoalsController/Service, PomodoroController/Service + DTOs |
+| `app.module.ts` | PlanningModule registrado | |
+| `Sidebar.tsx` | Sub-menu expansível | Planejamento com 6 sub-itens: Agenda, Calendário, Cronograma, Metas, Pomodoro, Configurações |
+| `PlanningView.tsx` | Roteamento por URL | Substituído estado interno de tab por `useParams` |
+| `routes/index.tsx` | Rotas /planning/:tab | `/planning` → `/planning/agenda`, `/planning/settings`, `/planning/:tab` |
+| `AppHeader.tsx` | Navegação do Planning | PAGE_CONFIG + breadcrumbs + PLANNING_TAB_LABELS |
+| `src/modules/planning/` | 5 componentes de aba | AgendaTab, CalendarTab, CronogramaTab, MetasTab, PomodoroTab |
+| `src/store/pomodoroStore.ts` | Store global do timer | Timer com intervalo, tick, pause/reset — compartilhado entre páginas |
+| `PomodoroFloatingTimer.tsx` | Mini timer flutuante | Bottom-right, visível durante foco/pausa, com pause/stop |
+| `src/store/notificationStore.ts` | Store de notificações | Gerenciamento de notificações in-app com deduplicação |
+| `usePlanningNotifications.ts` | Hook de notificações | Verifica a cada 1min: eventos do dia, metas com prazo ≤3 dias, pomodoros concluídos. Usa Browser Notification API. Cache-first, API fallback. Respeita settings toggles. |
+| `src/store/planningSettingsStore.ts` | Store de configurações | Cor de destaque, durações pomodoro, toggles de notificação (persistida) |
+| `PlanningSettingsView.tsx` | Página de configurações | Seletor de cor, controles de duração ±, switches de notificação |
+| `PlanningWeeklySummary.tsx` | Resumo semanal | 3 cards no Dashboard: eventos da semana, metas pendentes, estatísticas pomodoro |
 
-#### Lições aprendidas (CSS Gotcha)
+#### Lições aprendidas
 
-**Problema:** `overflow-x: hidden` com `overflow-y: visible` (padrão) → navegador converte `overflow-y` para `auto`, criando scrollbar vertical inesperada.
-**Solução:** Sempre usar `overflow-hidden` (ambos os eixos) quando quiser cortar overflow em apenas um eixo, a menos que haja motivo explícito para manter o outro eixo em `visible`.
-**Regra:** No projeto, prefira `overflow-hidden` a `overflow-x-hidden` isoladamente, para evitar scrollbars fantasmas.
+- **Timer global**: Para persistir o timer entre páginas, extrair o estado e o intervalo para uma Zustand store. O componente de UI lê da store, e o PomodoroTab também.
+- **Notificações**: Usar `getState()` da store fora de componentes React para acessar settings em callbacks assíncronos.
+- **Cache-first, API-fallback**: Para o hook de notificações, tentar cache do React Query primeiro; se vazio, fazer chamada direta à API. Garante funcionamento em qualquer página.
+- **Sub-menu sidebar**: Accordion expansível com `React.useEffect` para auto-expandir ao navegar para sub-rotas. Quando colapsado, mostra apenas o ícone principal.
+- **Rotas com parâmetro**: `/planning/settings` deve vir antes de `/planning/:tab` no router para evitar que "settings" seja interpretado como tab.
 
 ### Sessão 08/07/2026 (Parte 2) — Refatoração do EditorView em hooks, sistema de toasts e correção de auto-save
 
@@ -130,62 +148,27 @@ A causa raiz do scroll lateral no EditorView era o comportamento do CSS onde `ov
 | `src/modules/leaves/hooks/useEditorContent.ts` | **Novo hook** | Editor TipTap, extensões, sync inicial do servidor, auto-save com debounce. ~200 linhas extraídas do EditorView. |
 | `src/modules/leaves/hooks/useEditorActions.ts` | **Novo hook** | UI state (sidebar/expansão), archive/delete, geração IA, anotações. ~160 linhas extraídas do EditorView. |
 | `src/modules/leaves/views/EditorView.tsx` | **Simplificado** | De ~550 linhas para ~230 linhas. Apenas renderização JSX + integração dos hooks. |
-| `src/modules/leaves/hooks/useEditorContent.ts` | **Bugfix 400** | Adicionado guard `if (!debouncedTitle) return` no auto-save para evitar salvar com título vazio (servidor rejeita com @MinLength(1)). Causa: debounce de 1500ms atrasava a propagação do título sincronizado. |
+| `src/modules/leaves/hooks/useEditorContent.ts` | **Bugfix 400** | Adicionado guard `if (!debouncedTitle) return` no auto-save para evitar salvar com título vazio (servidor rejeita com @MinLength(1)). |
 | `src/store/toastStore.ts` | **Nova store** | Store Zustand para toasts com `addToast(message, type)` e auto-dismiss em 4s. |
 | `src/components/ui/Toast.tsx` | **Novo componente** | ToastContainer com animação slide-in, suporte success/error/info, botão de fechar. |
 | `src/components/layout/AppLayout.tsx` | **Toast integrado** | ToastContainer adicionado ao layout global. |
-| 8 arquivos (TrashView, TagsManagementView, NotebookView, etc.) | **Toasts em catches** | 15 catch blocks no projeto agora exibem toast de erro com a mensagem da API via `extractApiError`. |
+| 8 arquivos | **Toasts em catches** | 15 catch blocks no projeto agora exibem toast de erro com a mensagem da API via `extractApiError`. |
 
 #### Lições aprendidas
 
 - **Debounce + sync**: Ao sincronizar dados do servidor com debounce, o valor debounced ainda reflete o estado antigo por N ms. É necessário guard para evitar salvar valores inválidos.
 - **Extração de hooks**: Separar lógica de estado em hooks torna o componente mais legível e testável, e reduz linhas em ~60%.
-- **Toast com Zustand**: Usar `getState()` para acessar a store fora de componentes React (ex: dentro de catch blocks) é o padrão correto com Zustand.
+- **Toast com Zustand**: Usar `getState()` para acessar a store fora de componentes React é o padrão correto com Zustand.
+
+### Sessão 08/07/2026 (Parte 1) — Correção de overflow horizontal e scroll lateral no EditorView e TagsManagementView
 
 **O que foi feito:** Correção completa de overflow horizontal em dois componentes principais, eliminação de scroll lateral indevido, e aumento da área de edição.
-
-#### Contexto do problema
-
-O app apresentava dois problemas de overflow:
-1. **TagsManagementView**: nomes de tag longos estouravam o card horizontalmente
-2. **EditorView**: scroll lateral aparecia mesmo com o editor vazio, e o texto podia vazar para fora do container
-
-A causa raiz do scroll lateral no EditorView era o comportamento do CSS onde `overflow-x: hidden` com `overflow-y: visible` (padrão) faz o navegador converter `overflow-y` para `auto`, criando uma scrollbar vertical.
-
-#### Mudanças realizadas
-
-| Área | Mudança | Detalhes |
-|------|---------|----------|
-| `src/modules/tags/views/TagsManagementView.tsx` | **Overflow de texto em tags** | Adicionado `min-w-0` + `truncate` + `min-w-0` no `<span>` + `flex-shrink-0` nos botões. Impede que nomes longos de tag estourem o card. |
-| `src/modules/leaves/views/EditorView.tsx` | **Aumento do container split pane** | `min-h-[500px]` → `min-h-[750px] lg:min-h-[90vh]`. Área do editor + IA aumentada em 50% no mínimo. |
-| `src/modules/leaves/views/EditorView.tsx` | **Overflow do split pane** | Adicionado `overflow-hidden` no split pane para cortar qualquer conteúdo que ultrapasse os limites. |
-| `src/modules/leaves/views/EditorView.tsx` | **Overflow do editor pane** | `overflow-x-hidden` → `overflow-hidden`. Corrige o CSS gotcha: `overflow-x: hidden` com `overflow-y: visible` faz o navegador converter `overflow-y` para `auto`, criando scrollbar. |
-| `src/modules/leaves/views/EditorView.tsx` | **Scroll do tiptap-editor** | `overflow-y-auto` → `overflow-y-hidden`. Remove scroll vertical do editor. Adicionado `pb-1.5` para margem inferior de ~6px. |
-| `src/components/layout/AppLayout.tsx` | **Scroll global** | `<main>`: `overflow-y-auto` → `overflow-y-auto overflow-x-hidden`. Impede scroll lateral no conteúdo principal do app. |
 
 #### Lições aprendidas (CSS Gotcha)
 
 **Problema:** `overflow-x: hidden` com `overflow-y: visible` (padrão) → navegador converte `overflow-y` para `auto`, criando scrollbar vertical inesperada.
 **Solução:** Sempre usar `overflow-hidden` (ambos os eixos) quando quiser cortar overflow em apenas um eixo, a menos que haja motivo explícito para manter o outro eixo em `visible`.
 **Regra:** No projeto, prefira `overflow-hidden` a `overflow-x-hidden` isoladamente, para evitar scrollbars fantasmas.
-
-### Sessão 07/07/2026 — Melhorias de layout, confiabilidade e documentação
-
-**O que foi feito:** Correção da altura do editor, melhoria da confiabilidade do backend, aprimoramento do resumo de estudos, revisão geral de layout e atualização de documentação.
-
-#### Mudanças realizadas
-
-| Área | Mudança | Detalhes |
-|------|---------|----------|
-| `src/components/layout/AppLayout.tsx` | **Altura do `<main>`** | `flex-grow` → `flex-1 min-h-0` para estabelecer altura explícita no flex container, permitindo que `h-full` nos filhos funcione corretamente. |
-| `src/modules/leaves/views/EditorView.tsx` | **Altura do editor** | `flex-grow` → `flex-1` no split pane e editor pane. Adicionado `[&_.ProseMirror]:h-full` e `min-h-[300px]` para o editor ocupar todo o espaço vertical disponível. |
-| `server/src/study/study.service.ts` | **Confiabilidade dos stats** | Cálculo de `reviewedToday` mais robusto (verifica `repetitions > 0 || interval > 0 || easeFactor != 2.5`). Adicionado `$transaction` no saveSession. Validação de tipos nos parâmetros. JSON parsing seguro com `safeJsonParse`. |
-| `src/modules/study/hooks/useStudyStats.ts` | **Hook exposto** | Agora expõe `refetch` e `isFetching` para refresh manual. |
-| `src/modules/study/components/StudyProgressSummary.tsx` | **Refresh manual** | Adicionado botão "Atualizar" com spinner e indicador de fetch. Melhor alinhamento dos componentes. |
-| `src/modules/notebooks/views/NotebookView.tsx` | **Layout** | Adicionado `flex-wrap` e `justify-end` no grupo de ações do cabeçalho para melhor responsividade. |
-| `AGENTS.md` | **Documentação** | Removido histórico obsoleto da migração Express e sessões anteriores. Mantido apenas o histórico atual e regras relevantes. |
-| `README.md` | **Documentação** | Simplificado para refletir o estado atual (NestJS + Prisma + SQLite). Removidas referências ao Express/db.json. |
-| `ANALISE_PROBLEMAS.md` | **Débitos técnicos** | Criada nova versão com problemas atuais após a migração para NestJS + Prisma.
 
 ## Rotas da API
 
@@ -238,6 +221,23 @@ A causa raiz do scroll lateral no EditorView era o comportamento do CSS onde `ov
 | DELETE | `/study-sessions/:notebookId` | Remover sessão |
 | GET | `/study/stats` | Estatísticas de progresso |
 
+### Planning (`/api/planning`, auth required)
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/planning/events?type=agenda` | Listar eventos (agenda ou cronograma) |
+| GET | `/planning/events/:id` | Detalhes do evento |
+| POST | `/planning/events` | Criar evento |
+| PUT | `/planning/events/:id` | Atualizar evento |
+| DELETE | `/planning/events/:id` | Excluir evento |
+| GET | `/planning/goals` | Listar metas |
+| POST | `/planning/goals` | Criar meta |
+| PUT | `/planning/goals/:id` | Atualizar meta |
+| DELETE | `/planning/goals/:id` | Excluir meta |
+| GET | `/planning/pomodoro` | Listar sessões pomodoro |
+| POST | `/planning/pomodoro` | Criar sessão |
+| PUT | `/planning/pomodoro/:id` | Atualizar sessão |
+| DELETE | `/planning/pomodoro/:id` | Excluir sessão |
+
 ## Regras importantes para futuras alterações
 
 - Não reintroduzir refetches agressivos em rotas de edição sem necessidade
@@ -248,13 +248,14 @@ A causa raiz do scroll lateral no EditorView era o comportamento do CSS onde `ov
 - Limpar timeouts e timers em `useEffect` de cleanup para evitar memory leaks
 - Ao adicionar novos módulos NestJS, importar `AuthModule` para disponibilizar o `JwtAuthGuard`
 - Dependências Prisma: o `prisma.config.ts` é necessário para comandos CLI do Prisma v7
-- Sub-folhas: `subLeaves` no `EditorView` deve vir de `leaf?.children` (do `useLeaf`), NÃO de `leaves.filter` (que só contém folhas raiz)
+- Sub-folhas: `subLeaves` no `EditorView` deve vir de `leaf?.children` (do `useLeaf`), NÃO de `leaves.filter`
 - Para reordenação via drag & drop: usar `@dnd-kit` com update otimista nos caches + `onSettled` para rollback
-- Update otimista em drag & drop: invalidar ambos os caches (`["notebooks", notebookId, "leaves"]` e `["leaves", leafId]`) em `onSettled`
 - Altura do EditorView: usar `h-full min-h-0` em vez de `h-[calc(100vh-8rem)]` para respeitar o layout flex do `<main>`
-- **CSS Overflow Gotcha:** `overflow-x: hidden` com `overflow-y: visible` (padrão) faz o navegador converter `overflow-y` para `auto`, criando scrollbar vertical inesperada. Prefira `overflow-hidden` (ambos os eixos) quando quiser cortar overflow.
-- Para garantir que texto não vaze horizontalmente em layouts flex: sempre aplicar `min-w-0` + `truncate` no elemento de texto, e `overflow-hidden` no container pai mais próximo.
-- TagsManagementView requer `min-w-0` no `<span>` do nome da tag (não apenas no container pai) para que `truncate` funcione corretamente.
+- **CSS Overflow Gotcha:** Prefira `overflow-hidden` a `overflow-x-hidden` isoladamente para evitar scrollbars fantasmas.
+- **Timer global:** Para persistir timer entre páginas, extrair estado e intervalo para uma Zustand store. Componentes de UI e o PomodoroTab leem da mesma store.
+- **Notificações com settings:** Usar `getState()` da store para acessar configurações em callbacks assíncronos (fora do React).
+- **Cache-first, API-fallback:** No hook de notificações, tentar cache do React Query primeiro; se vazio, fazer chamada direta à API.
+- **Sub-menu sidebar:** Accordion com `useEffect` para auto-expandir. Rotas com params: rota específica (`/planning/settings`) deve vir antes da genérica (`/planning/:tab`).
 
 ## Para rodar o projeto
 

@@ -6,7 +6,7 @@ Plataforma inteligente para gerenciamento de estudos, criação de resumos e fla
 
 ## 📖 Visão Geral
 
-O **Revisa Aula** é um aplicativo completo para estudantes organizarem cadernos acadêmicos, criar notas de aula (**Folhas / Leaves**), gerar resumos e flashcards com repetição espaçada (algoritmo SM-2).
+O **Revisa Aula** é um aplicativo completo para estudantes organizarem cadernos acadêmicos, criar notas de aula (**Folhas / Leaves**), gerar resumos e flashcards com repetição espaçada (algoritmo SM-2), e planejar os estudos com agenda, cronograma, metas e pomodoro.
 
 ---
 
@@ -47,7 +47,7 @@ revisa-aula/
 ├── src/                           # Frontend React
 │   ├── components/                # Componentes reutilizáveis
 │   │   ├── layout/                # AppLayout (sidebar + header)
-│   │   └── ui/                    # Button, Card, Input, Modal, Skeleton
+│   │   └── ui/                    # Button, Card, Input, Modal, Skeleton, Toast, etc.
 │   ├── core/api/                  # Cliente HTTP (axios + interceptors)
 │   ├── modules/                   # Módulos funcionais
 │   │   ├── auth/                  # Login, registro, sessão
@@ -58,9 +58,10 @@ revisa-aula/
 │   │   ├── tags/                  # Gerenciamento de tags
 │   │   ├── trash/                 # Lixeira (soft-delete)
 │   │   ├── history/               # Histórico de edições
-│   │   └── profile/               # Perfil + configurações
+│   │   ├── profile/               # Perfil + configurações
+│   │   └── planning/              # Planejamento (agenda, calendário, cronograma, metas, pomodoro)
 │   ├── routes/                    # React Router + guards
-│   ├── store/                     # Zustand stores
+│   ├── store/                     # Zustand stores (ui, toast, notification, pomodoro, planningSettings)
 │   ├── hooks/                     # Hooks globais
 │   ├── App.tsx                    # Componente raiz
 │   ├── index.css                  # Tailwind + tema OKLCH
@@ -79,9 +80,10 @@ revisa-aula/
 │   │   ├── study/                 # Sessões + estatísticas
 │   │   ├── bookmarks/             # Marcadores
 │   │   ├── tags/                  # Tags CRUD
-│   │   └── trash/                 # Lixeira + histórico
+│   │   ├── trash/                 # Lixeira + histórico
+│   │   └── planning/              # Eventos, Metas, Pomodoro (CRUD via API)
 │   ├── prisma/
-│   │   ├── schema.prisma          → Modelos
+│   │   ├── schema.prisma          → Modelos (User, Notebook, Leaf, Flashcard, Event, Goal, PomodoroSession, etc.)
 │   │   ├── seed.ts                → Migração db.json → SQLite
 │   │   └── migrations/            → Migrações
 │   ├── dev.db                     → SQLite
@@ -108,7 +110,12 @@ revisa-aula/
 10. **Lixeira** — Soft-delete com expiração de 15 dias
 11. **Histórico de edições** — Rastreamento de alterações
 12. **Modo escuro** — Tema claro/escuro com Tailwind v4
-13. **Scripts** — `start.sh` / `stop.sh` para gerenciamento
+13. **Planejamento** — Agenda, Calendário, Cronograma, Metas e Pomodoro com CRUD completo via API
+14. **Notificações** — Notificações nativas (Browser API) e in-app para eventos do dia, metas com prazo e pomodoros concluídos
+15. **Mini timer Pomodoro** — Timer flutuante no canto inferior direito visível em todas as páginas
+16. **Configurações do Planejamento** — Cores, durações do pomodoro e toggles de notificação
+17. **Resumo Semanal** — Cards no Dashboard com eventos, metas e pomodoros da semana
+18. **Scripts** — `start.sh` / `stop.sh` para gerenciamento
 
 ---
 
