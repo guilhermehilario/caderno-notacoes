@@ -1,5 +1,7 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import type { Editor } from "@tiptap/react";
+import { useToastStore } from "../../../store/toastStore";
+import { extractApiError } from "../../../utils/api-errors";
 
 interface UseEditorActionsParams {
   leafId: string;
@@ -72,7 +74,8 @@ export function useEditorActions({
       }
       queryClient.invalidateQueries({ queryKey: ["leaves", leafId] });
     } catch (err) {
-      console.error("Erro ao arquivar/desarquivar:", err);
+      const message = extractApiError(err, "Erro ao arquivar/desarquivar folha.");
+      useToastStore.getState().addToast(message, "error");
     }
   }, [leafId, isArchived, archiveLeaf, unarchiveLeaf, queryClient]);
 
@@ -86,7 +89,8 @@ export function useEditorActions({
       setConfirmDeleteOpen(false);
       navigate(`/notebooks/${notebookId}`);
     } catch (err) {
-      console.error("Erro ao excluir folha:", err);
+      const message = extractApiError(err, "Erro ao excluir folha.");
+      useToastStore.getState().addToast(message, "error");
     }
   }, [leafId, softDeleteLeaf, navigate, notebookId]);
 
@@ -99,7 +103,8 @@ export function useEditorActions({
     try {
       await generateAISummary();
     } catch (err) {
-      console.error("Erro ao gerar resumo:", err);
+      const message = extractApiError(err, "Erro ao gerar resumo.");
+      useToastStore.getState().addToast(message, "error");
     }
   }, [leafId, generateAISummary]);
 
@@ -108,7 +113,8 @@ export function useEditorActions({
     try {
       await generateAIFlashcards();
     } catch (err) {
-      console.error("Erro ao gerar flashcards:", err);
+      const message = extractApiError(err, "Erro ao gerar flashcards.");
+      useToastStore.getState().addToast(message, "error");
     }
   }, [leafId, generateAIFlashcards]);
 

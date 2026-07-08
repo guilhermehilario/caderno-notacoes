@@ -1,12 +1,7 @@
-import React, { useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { memo } from "react";
+import { useParams, Link } from "react-router-dom";
 import { Plus, FileText, Loader2 } from "lucide-react";
-import { useNotebook } from "../hooks/useNotebooks";
-import { useLeaves } from "../../leaves/hooks/useLeaves";
-import { useNotebookFlashcards } from "../../study/hooks/useFlashcards";
-import { useToggleBookmark } from "../../bookmarks/hooks/useToggleBookmark";
-import { useSoftDeleteNotebook } from "../../trash/hooks/useTrash";
-import { useEditorStatusStore } from "../../../store/editorStatusStore";
+import { useNotebookData } from "../hooks/useNotebookData";
 import { useNotebookActions } from "../hooks/useNotebookActions";
 import { useNotebookLeafCreation } from "../hooks/useNotebookLeafCreation";
 import { Button } from "../../../components/ui/Button.tsx";
@@ -23,22 +18,21 @@ import { NOTEBOOK_COLORS } from "../constants";
 
 export const NotebookView: React.FC = () => {
   const { notebookId } = useParams<{ notebookId: string }>();
-  const navigate = useNavigate();
 
-  const { notebook, isLoading: isLoadingNotebook, updateNotebook } =
-    useNotebook(notebookId || "");
-  const { leaves, isLoading: isLoadingLeaves, createLeaf } =
-    useLeaves(notebookId || "");
-  const { data: flashcards = [], isLoading: isLoadingFlashcards } =
-    useNotebookFlashcards(notebookId || "");
-  const { isBookmarked, toggleBookmark } = useToggleBookmark({
-    type: "notebook",
-    id: notebookId || "",
-    title: notebook?.title || "",
-    path: `/notebooks/${notebookId}`,
-  });
-  const softDeleteNotebook = useSoftDeleteNotebook();
-  const editorStatus = useEditorStatusStore();
+  // ── Data fetching centralizado ──
+  const {
+    navigate,
+    notebook,
+    isLoading,
+    updateNotebook,
+    leaves,
+    createLeaf,
+    flashcards,
+    isLoadingFlashcards,
+    isBookmarked,
+    toggleBookmark,
+    softDeleteNotebook,
+  } = useNotebookData({ notebookId: notebookId || "" });
 
   // ── Hook: Ações do notebook (editar, excluir, flashcards) ──
   const {
@@ -91,19 +85,8 @@ export const NotebookView: React.FC = () => {
     leaves,
   });
 
-  // Sincroniza editorStatus com o notebook carregado
-  useEffect(() => {
-    if (notebook) {
-      editorStatus.show();
-      editorStatus.setLastUpdate(notebook.updatedAt.toString());
-    }
-    return () => {
-      editorStatus.hide();
-    };
-  }, [notebook?.id, notebook?.updatedAt]);
-
   // ── Loading state ──
-  if (isLoadingNotebook || isLoadingLeaves) {
+  if (isLoading) {
     return (
       <div className="h-[60vh] flex items-center justify-center">
         <Loader2 className="h-10 w-10 animate-spin text-brand-500" />
@@ -399,4 +382,4 @@ export const NotebookView: React.FC = () => {
   );
 };
 
-export default NotebookView;
+export default memo(NotebookView);

@@ -124,15 +124,14 @@ export function useNotebookActions({
         setActionError(null);
         await updateNotebook({ ...data, color: selectedColor });
         setIsEditModalOpen(false);
-      } catch (error) {
-        const msg =
-          error instanceof Error ? error.message : "Erro ao atualizar caderno";
-        setActionError(msg);
-        console.error("Erro ao atualizar caderno:", error);
-        useToastStore
-          .getState()
-          .addToast(extractApiError(error, "Erro ao atualizar caderno."), "error");
-      }
+    } catch (error) {
+      const msg =
+        error instanceof Error ? error.message : "Erro ao atualizar caderno";
+      setActionError(msg);
+      useToastStore
+        .getState()
+        .addToast(extractApiError(error, "Erro ao atualizar caderno."), "error");
+    }
     },
     [updateNotebook, selectedColor],
   );
@@ -150,7 +149,6 @@ export function useNotebookActions({
           ? error.message
           : "Erro ao mover para lixeira";
       setActionError(msg);
-      console.error("Erro ao mover para lixeira:", error);
       useToastStore
         .getState()
         .addToast(
@@ -170,15 +168,14 @@ export function useNotebookActions({
           front: data.front,
           back: data.back,
         });
-      } catch (error) {
-        console.error("Erro ao criar flashcard:", error);
-        useToastStore
-          .getState()
-          .addToast(
-            extractApiError(error, "Erro ao criar flashcard."),
-            "error",
-          );
-      }
+    } catch (error) {
+      useToastStore
+        .getState()
+        .addToast(
+          extractApiError(error, "Erro ao criar flashcard."),
+          "error",
+        );
+    }
     },
     [notebookId, selectedLeafId, createFlashcardMutation],
   );

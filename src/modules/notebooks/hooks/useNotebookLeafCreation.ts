@@ -68,12 +68,11 @@ export function useNotebookLeafCreation({
         reset();
         setParentLeafId(undefined);
         navigate(`/notebooks/${notebookId}/leaves/${newLeaf.id}`);
-      } catch (error) {
-        console.error("Erro ao criar folha:", error);
-        useToastStore
-          .getState()
-          .addToast(extractApiError(error, "Erro ao criar folha."), "error");
-      }
+    } catch (error) {
+      useToastStore
+        .getState()
+        .addToast(extractApiError(error, "Erro ao criar folha."), "error");
+    }
     },
     [notebookId, createLeaf, parentLeafId, navigate, reset],
   );
