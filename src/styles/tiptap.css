@@ -20,13 +20,12 @@ div.tiptap-content {
   max-width: 100% !important;
   min-width: 0 !important;
   box-sizing: border-box !important;
-  height: 100%;
   min-height: 300px;
   overflow-wrap: break-word !important;
   overflow-wrap: anywhere !important;
   word-break: break-word !important;
   white-space: pre-wrap !important;
-  overflow: hidden !important;
+  overflow-x: hidden;
   @apply leading-relaxed text-base caret-slate-800;
 }
 

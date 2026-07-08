@@ -165,18 +165,21 @@ export function useEditorContent({
   /** Salva imediatamente sem esperar debounce */
   const flushSave = useCallback(async () => {
     const { title, content, rawText } = latestValuesRef.current;
-    if (!initialSyncDoneRef.current || !title || title.length === 0) return;
+    if (!initialSyncDoneRef.current) return;
+
+    // Se o título está vazio, usa o último título salvo para não sobrescrever no servidor
+    const titleToSave = title && title.length > 0 ? title : lastSavedRef.current.title;
 
     const lastSaved = lastSavedRef.current;
-    if (title === lastSaved.title && content === lastSaved.content) return;
+    if (titleToSave === lastSaved.title && content === lastSaved.content) return;
     if (saveInFlightRef.current) return;
 
     saveInFlightRef.current = true;
     editorStatus.setSaveStatus("saving");
 
     try {
-      await updateLeaf({ title, content, rawText });
-      lastSavedRef.current = { title, content };
+      await updateLeaf({ title: titleToSave, content, rawText });
+      lastSavedRef.current = { title: titleToSave, content };
       editorStatus.setLastUpdate(new Date().toISOString());
       editorStatus.setSaveStatus("saved");
     } catch (err) {
@@ -212,12 +215,17 @@ export function useEditorContent({
   // Auto-save com debounce: salva quando o usuário para de digitar
   useEffect(() => {
     if (!initialSyncDoneRef.current) return;
-    // Impede salvar com título vazio (servidor rejeita com @MinLength(1))
-    if (!debouncedTitle || debouncedTitle.length === 0) return;
 
     const lastSaved = lastSavedRef.current;
+
+    // Se o título está vazio, usa o último título salvo para não sobrescrever no servidor
+    const titleToSave =
+      debouncedTitle && debouncedTitle.length > 0
+        ? debouncedTitle
+        : lastSaved.title;
+
     if (
-      debouncedTitle !== lastSaved.title ||
+      titleToSave !== lastSaved.title ||
       debouncedContent !== lastSaved.content
     ) {
       if (saveInFlightRef.current) return;
@@ -228,13 +236,13 @@ export function useEditorContent({
       });
 
       void updateLeaf({
-        title: debouncedTitle,
+        title: titleToSave,
         content: debouncedContent,
         rawText: debouncedRawText,
       })
         .then(() => {
           lastSavedRef.current = {
-            title: debouncedTitle,
+            title: titleToSave,
             content: debouncedContent,
           };
           editorStatus.setLastUpdate(new Date().toISOString());
