@@ -6,6 +6,7 @@ import {
   Eye,
   HelpCircle,
   Brain,
+  CheckCircle,
 } from "lucide-react";
 import {
   useNotebookFlashcards,
