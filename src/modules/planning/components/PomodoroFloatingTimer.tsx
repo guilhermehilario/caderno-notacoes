@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pause, Square, Timer, Play } from 'lucide-react';
-import { usePomodoroStore, formatPomodoroTime, POMODORO_DURATION, BREAK_DURATION } from '../../../store/pomodoroStore.ts';
+import { usePomodoroStore, formatPomodoroTime } from '../../../store/pomodoroStore.ts';
+import { usePlanningSettingsStore } from '../../../store/planningSettingsStore.ts';
 
 export const PomodoroFloatingTimer: React.FC = () => {
   const timerMode = usePomodoroStore((s) => s.timerMode);
@@ -11,11 +12,14 @@ export const PomodoroFloatingTimer: React.FC = () => {
   const pauseTimer = usePomodoroStore((s) => s.pauseTimer);
   const resetTimer = usePomodoroStore((s) => s.resetTimer);
 
+  const pomodoroDuration = usePlanningSettingsStore((s) => s.pomodoroDuration);
+  const breakDuration = usePlanningSettingsStore((s) => s.breakDuration);
+
   // Only show when timer is running or paused
   if (timerState === 'idle') return null;
 
   const isBreak = timerMode === 'break';
-  const totalDuration = isBreak ? BREAK_DURATION * 60 : POMODORO_DURATION * 60;
+  const totalDuration = isBreak ? breakDuration * 60 : pomodoroDuration * 60;
   const progressPercent = ((totalDuration - timeLeft) / totalDuration) * 100;
 
   return (

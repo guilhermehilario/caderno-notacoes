@@ -1,10 +1,12 @@
 import { create } from 'zustand';
+import { usePlanningSettingsStore } from './planningSettingsStore.ts';
 
 export type TimerMode = 'focus' | 'break';
 export type TimerState = 'idle' | 'running' | 'paused';
 
-export const POMODORO_DURATION = 25; // minutes
-export const BREAK_DURATION = 5; // minutes
+// Default fallback values (override by planningSettingsStore)
+export const POMODORO_DURATION = 25;
+export const BREAK_DURATION = 5;
 
 interface PomodoroState {
   timerMode: TimerMode;
@@ -13,6 +15,8 @@ interface PomodoroState {
   taskName: string;
   currentSessionId: string | null;
   intervalId: ReturnType<typeof setInterval> | null;
+  lastPomodoroDuration: number; // saved at session start for session saving
+  lastBreakDuration: number;
 
   // Actions
   setTaskName: (name: string) => void;
@@ -23,7 +27,7 @@ interface PomodoroState {
   setCurrentSessionId: (id: string | null) => void;
   setTimeLeft: (seconds: number) => void;
   setTimerState: (state: TimerState) => void;
-  tick: () => boolean; // returns true if timer reached zero
+  tick: () => boolean;
   cleanup: () => void;
 }
 
@@ -34,6 +38,8 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => ({
   taskName: '',
   currentSessionId: null,
   intervalId: null,
+  lastPomodoroDuration: POMODORO_DURATION,
+  lastBreakDuration: BREAK_DURATION,
 
   setTaskName: (name) => set({ taskName: name }),
   setTimerMode: (mode) => set({ timerMode: mode }),
@@ -43,7 +49,6 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => ({
 
   startTimer: () => {
     const state = get();
-    // Clear existing interval if any
     if (state.intervalId) clearInterval(state.intervalId);
 
     set({ timerState: 'running' });
@@ -51,7 +56,6 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => ({
     const intervalId = setInterval(() => {
       const result = get().tick();
       if (result) {
-        // Timer reached zero — clear interval
         clearInterval(intervalId);
         set({ intervalId: null });
       }
@@ -62,21 +66,18 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => ({
 
   pauseTimer: () => {
     const { intervalId } = get();
-    if (intervalId) {
-      clearInterval(intervalId);
-    }
+    if (intervalId) clearInterval(intervalId);
     set({ intervalId: null, timerState: 'paused' });
   },
 
   resetTimer: () => {
     const { intervalId } = get();
-    if (intervalId) {
-      clearInterval(intervalId);
-    }
+    const settings = usePlanningSettingsStore.getState();
+    if (intervalId) clearInterval(intervalId);
     set({
       intervalId: null,
       timerMode: 'focus',
-      timeLeft: POMODORO_DURATION * 60,
+      timeLeft: settings.pomodoroDuration * 60,
       timerState: 'idle',
       currentSessionId: null,
       taskName: '',
@@ -87,7 +88,7 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => ({
     const { timeLeft } = get();
     if (timeLeft <= 1) {
       set({ timeLeft: 0, timerState: 'idle' });
-      return true; // timer completed
+      return true;
     }
     set({ timeLeft: timeLeft - 1 });
     return false;
@@ -95,16 +96,11 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => ({
 
   cleanup: () => {
     const { intervalId } = get();
-    if (intervalId) {
-      clearInterval(intervalId);
-    }
+    if (intervalId) clearInterval(intervalId);
     set({ intervalId: null });
   },
 }));
 
-/**
- * Helper to extract formatted time (MM:SS) from the store state.
- */
 export function formatPomodoroTime(totalSeconds: number): string {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;

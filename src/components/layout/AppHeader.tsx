@@ -41,6 +41,7 @@ const PLANNING_TAB_LABELS: Record<string, string> = {
   cronograma: 'Cronograma',
   metas: 'Metas',
   pomodoro: 'Pomodoro',
+  settings: 'Configurações',
 };
 
 const DEFAULT_PAGE = { title: 'Dashboard', icon: LayoutDashboard, subtitle: 'Gerencie suas anotações e estudos' };

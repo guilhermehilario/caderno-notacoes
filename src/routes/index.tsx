@@ -15,6 +15,7 @@ import TrashView from '../modules/trash/views/TrashView.tsx';
 import ArchivedLeavesView from '../modules/leaves/views/ArchivedLeavesView.tsx';
 import TodoListView from '../modules/todos/views/TodoListView.tsx';
 import PlanningView from '../modules/planning/views/PlanningView.tsx';
+import PlanningSettingsView from '../modules/planning/views/PlanningSettingsView.tsx';
 
 /* ─── Componentes nomeados e memoizados para cada rota ────────────── */
 
@@ -80,6 +81,10 @@ const TodoListPage = memo(function TodoListPage() {
 
 const PlanningPage = memo(function PlanningPage() {
   return <PlanningView />;
+});
+
+const PlanningSettingsPage = memo(function PlanningSettingsPage() {
+  return <PlanningSettingsView />;
 });
 
 const DefaultRedirect = memo(function DefaultRedirect() {
@@ -148,6 +153,10 @@ const router = createBrowserRouter([
       {
         path: 'planning',
         element: <Navigate to="/planning/agenda" replace />,
+      },
+      {
+        path: 'planning/settings',
+        element: <PlanningSettingsPage />,
       },
       {
         path: 'planning/:tab',

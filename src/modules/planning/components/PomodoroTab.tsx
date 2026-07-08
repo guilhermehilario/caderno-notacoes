@@ -9,7 +9,8 @@ import {
   Loader2,
 } from 'lucide-react';
 import { usePomodoros, useCreatePomodoro, useUpdatePomodoro, useDeletePomodoro } from '../hooks/usePomodoro.ts';
-import { usePomodoroStore, formatPomodoroTime, POMODORO_DURATION, BREAK_DURATION } from '../../../store/pomodoroStore.ts';
+import { usePomodoroStore, formatPomodoroTime } from '../../../store/pomodoroStore.ts';
+import { usePlanningSettingsStore } from '../../../store/planningSettingsStore.ts';
 import { EmptyState } from '../../../components/ui/EmptyState.tsx';
 import { LoadingScreen } from '../../../components/ui/LoadingScreen.tsx';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog.tsx';
@@ -36,6 +37,10 @@ export const PomodoroTab: React.FC = () => {
   const pauseTimer = usePomodoroStore((s) => s.pauseTimer);
   const resetTimer = usePomodoroStore((s) => s.resetTimer);
 
+  // Configurable durations from settings
+  const pomodoroDuration = usePlanningSettingsStore((s) => s.pomodoroDuration);
+  const breakDuration = usePlanningSettingsStore((s) => s.breakDuration);
+
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const prevTimeLeftRef = useRef(timeLeft);
 
@@ -52,23 +57,23 @@ export const PomodoroTab: React.FC = () => {
         }
         // Switch to break mode
         setTimerMode('break');
-        setTimeLeft(BREAK_DURATION * 60);
+        setTimeLeft(breakDuration * 60);
         setCurrentSessionId(null);
       } else {
         // Switch back to focus
         setTimerMode('focus');
-        setTimeLeft(POMODORO_DURATION * 60);
+        setTimeLeft(pomodoroDuration * 60);
       }
     }
 
     prevTimeLeftRef.current = timeLeft;
-  }, [timeLeft, timerState, timerMode, currentSessionId, updatePomodoro, setTimerMode, setTimeLeft, setCurrentSessionId]);
+  }, [timeLeft, timerState, timerMode, currentSessionId, updatePomodoro, setTimerMode, setTimeLeft, setCurrentSessionId, pomodoroDuration, breakDuration]);
 
   const handleStartFocus = useCallback(async () => {
     try {
       const session = await createPomodoro.mutateAsync({
         taskName: taskName || undefined,
-        duration: POMODORO_DURATION,
+        duration: pomodoroDuration,
       });
       setCurrentSessionId(session.id);
       startTimer();
@@ -98,8 +103,8 @@ export const PomodoroTab: React.FC = () => {
   );
 
   const progressPercent = timerMode === 'focus'
-    ? ((POMODORO_DURATION * 60 - timeLeft) / (POMODORO_DURATION * 60)) * 100
-    : ((BREAK_DURATION * 60 - timeLeft) / (BREAK_DURATION * 60)) * 100;
+    ? ((pomodoroDuration * 60 - timeLeft) / (pomodoroDuration * 60)) * 100
+    : ((breakDuration * 60 - timeLeft) / (breakDuration * 60)) * 100;
 
   const completedSessions = sessions.filter((s) => s.completed);
   const totalFocusMinutes = completedSessions.reduce((acc, s) => acc + s.duration, 0);
@@ -118,7 +123,7 @@ export const PomodoroTab: React.FC = () => {
               onClick={() => {
                 if (timerState === 'idle') {
                   setTimerMode('focus');
-                  setTimeLeft(POMODORO_DURATION * 60);
+                  setTimeLeft(pomodoroDuration * 60);
                 }
               }}
               className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
@@ -134,7 +139,7 @@ export const PomodoroTab: React.FC = () => {
               onClick={() => {
                 if (timerState === 'idle') {
                   setTimerMode('break');
-                  setTimeLeft(BREAK_DURATION * 60);
+                  setTimeLeft(breakDuration * 60);
                 }
               }}
               className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
