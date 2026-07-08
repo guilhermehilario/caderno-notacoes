@@ -1,9 +1,9 @@
-/* Container do editor — esconde overflow horizontal e garante largura */
+/* Container do editor — garante largura, só esconde overflow horizontal, scroll suave */
 .tiptap-editor {
-  overflow: hidden !important;
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
+  scroll-behavior: smooth;
 }
 
 /* Garante que o elemento raiz do editor não ultrapasse o container */
