@@ -17,6 +17,7 @@ import {
   Tags,
   Trash2,
   Archive,
+  ListChecks,
 } from 'lucide-react';
 
 const PAGE_CONFIG: Record<string, { title: string; icon: React.ComponentType<{ className?: string }>; subtitle: string }> = {
@@ -27,6 +28,7 @@ const PAGE_CONFIG: Record<string, { title: string; icon: React.ComponentType<{ c
   '/bookmarks': { title: 'Páginas Marcadas', icon: BookmarkIcon, subtitle: 'Acesse suas páginas favoritas' },
   '/trash': { title: 'Lixeira', icon: Trash2, subtitle: 'Itens excluídos aparecem aqui por 15 dias' },
   '/archived': { title: 'Arquivados', icon: Archive, subtitle: 'Folhas arquivadas' },
+  '/todos': { title: 'Tarefas', icon: ListChecks, subtitle: 'Gerencie suas tarefas pendentes' },
 };
 
 const DEFAULT_PAGE = { title: 'Dashboard', icon: LayoutDashboard, subtitle: 'Gerencie suas anotações e estudos' };
@@ -88,6 +90,7 @@ export const AppHeader: React.FC = () => {
     if (path.includes('/bookmarks')) parts.push({ label: 'Marcadores', path: '/bookmarks' });
     if (path.includes('/trash')) parts.push({ label: 'Lixeira', path: '/trash' });
     if (path.includes('/archived')) parts.push({ label: 'Arquivados', path: '/archived' });
+    if (path.includes('/todos')) parts.push({ label: 'Tarefas', path: '/todos' });
 
     return parts;
   }, [location.pathname, pathIds, notebookName, leafName]);
@@ -102,6 +105,7 @@ export const AppHeader: React.FC = () => {
     if (path.includes('/bookmarks')) return PAGE_CONFIG['/bookmarks'];
     if (path.includes('/trash')) return PAGE_CONFIG['/trash'];
     if (path.includes('/archived')) return PAGE_CONFIG['/archived'];
+    if (path.includes('/todos')) return PAGE_CONFIG['/todos'];
     return DEFAULT_PAGE;
   }, [location.pathname]);
 

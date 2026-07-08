@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTags, useCreateTag, useUpdateTag, useDeleteTag } from '../hooks/useTags';
-import { Plus, Edit2, Trash2, Loader2, TagIcon } from 'lucide-react';
+import { Plus, Edit2, Trash2, Loader2, Tags, TagIcon } from 'lucide-react';
 import { Card } from '../../../components/ui/Card.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
 import { Modal } from '../../../components/ui/Modal.tsx';
@@ -74,13 +74,18 @@ export const TagsManagementView: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto flex flex-col gap-6">
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-heading font-extrabold tracking-tight text-slate-900 dark:text-dark-50">
-            Gerenciar Tags
-          </h1>
-          <p className="text-slate-500 dark:text-dark-350 mt-1">
-            Crie, edite e exclua tags para classificar suas folhas de anotação
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-950/20 flex items-center justify-center text-brand-500 flex-shrink-0">
+            <Tags className="h-5 w-5" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-heading font-extrabold tracking-tight text-slate-900 dark:text-dark-50">
+              Gerenciar Tags
+            </h1>
+            <p className="text-slate-500 dark:text-dark-350 mt-0.5">
+              Crie, edite e exclua tags para classificar suas folhas de anotação
+            </p>
+          </div>
         </div>
         <Button
           onClick={() => {

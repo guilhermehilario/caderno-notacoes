@@ -8,6 +8,7 @@ import {
   BookmarkIcon,
   Archive,
   ListChecks,
+  Tags,
   Trash2,
   User as UserIcon,
   ChevronLeft,
@@ -16,6 +17,7 @@ import { ProfileModal } from '../../modules/profile/ProfileModal.tsx';
 
 const NAV_ITEMS = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/tags', label: 'Tags', icon: Tags },
   { path: '/bookmarks', label: 'Marcadores', icon: BookmarkIcon },
   { path: '/archived', label: 'Arquivados', icon: Archive },
   { path: '/todos', label: 'Tarefas', icon: ListChecks },
@@ -56,7 +58,12 @@ export const Sidebar: React.FC = () => {
       <nav className="flex-grow py-6 px-3 flex flex-col gap-2">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
-          const isActive = location.pathname.startsWith(item.path);
+          // Dashboard fica ativo também nas rotas de notebook/leaf/study
+          const isActive =
+            item.path === '/dashboard'
+              ? location.pathname === '/dashboard' ||
+                location.pathname.startsWith('/notebooks/')
+              : location.pathname.startsWith(item.path);
 
           return (
             <Link
