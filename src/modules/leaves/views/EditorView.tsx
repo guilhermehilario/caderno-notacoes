@@ -1,26 +1,14 @@
-import {
-  useState,
-  useEffect,
-  useRef,
-  useMemo,
-  useCallback,
-  startTransition,
-  memo,
-} from "react";
-import type { Editor } from "@tiptap/react";
+import { memo, useCallback } from "react";
 import { useParams, useNavigate, Link as RouterLink } from "react-router-dom";
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Highlight from "@tiptap/extension-highlight";
-import Placeholder from "@tiptap/extension-placeholder";
-import { Annotation } from "../extensions/Annotation";
+import { EditorContent } from "@tiptap/react";
 import { useLeaf } from "../hooks/useLeaves";
 import { useLeafFlashcards } from "../../study/hooks/useFlashcards";
-import { useDebounce } from "../../../hooks/useDebounce";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToggleBookmark } from "../../bookmarks/hooks/useToggleBookmark";
 import { useSoftDeleteLeaf } from "../../trash/hooks/useTrash";
 import { useEditorStatusStore } from "../../../store/editorStatusStore";
+import { useEditorContent } from "../hooks/useEditorContent";
+import { useEditorActions } from "../hooks/useEditorActions";
 import { EditorToolbar } from "../components/EditorToolbar";
 import { EditorBubbleMenu } from "../components/EditorBubbleMenu";
 import { AISidebar } from "../components/AISidebar";
@@ -29,7 +17,6 @@ import { EditorHeader } from "../components/EditorHeader";
 import { SubLeavesSection } from "../components/SubLeavesSection";
 import { ManualFlashcardModal } from "../components/ManualFlashcardModal";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog.tsx";
-import type { Leaf } from "../types";
 
 const EditorView: React.FC = () => {
   const { notebookId, leafId } = useParams<{
@@ -61,259 +48,50 @@ const EditorView: React.FC = () => {
   const queryClient = useQueryClient();
   const editorStatus = useEditorStatusStore();
 
-  const [aiSidebarOpen, setAiSidebarOpen] = useState(true);
-  const [editorExpanded, setEditorExpanded] = useState(false);
-
-  const handleExpandToggle = useCallback(() => {
-    setEditorExpanded((prev) => {
-      const expanding = !prev;
-      if (expanding) {
-        setAiSidebarOpen(false);
-      }
-      return expanding;
-    });
-  }, []);
-
   const isArchived = leaf?.archivedAt != null;
 
-  const handleArchiveToggle = async () => {
-    if (!leafId) return;
-    try {
-      if (isArchived) {
-        await unarchiveLeaf();
-      } else {
-        await archiveLeaf();
-      }
-      queryClient.invalidateQueries({ queryKey: ["leaves", leafId] });
-    } catch (err) {
-      console.error("Erro ao arquivar/desarquivar:", err);
-    }
-  };
+  // ── Hook: Editor + Autosave ──
+  const { editor, localTitle, setLocalTitle, localRawText, contentReady } =
+    useEditorContent({
+      leaf,
+      updateLeaf,
+      editorStatus,
+    });
 
-  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-
-  const handleDeleteConfirm = async () => {
-    if (!leafId) return;
-    try {
-      await softDeleteLeaf.mutateAsync(leafId);
-      setConfirmDeleteOpen(false);
-      navigate(`/notebooks/${notebookId}`);
-    } catch (err) {
-      console.error("Erro ao excluir folha:", err);
-    }
-  };
-
-  // ── Flashcard manual form ──
-  const [isFlashcardModalOpen, setIsFlashcardModalOpen] = useState(false);
-
-  // Estados locais para inputs editáveis do usuário
-  const [localTitle, setLocalTitle] = useState("");
-  const [localContent, setLocalContent] = useState("");
-  const [localRawText, setLocalRawText] = useState("");
-
-  const initialSyncDoneRef = useRef(false);
-  const serverContentRef = useRef("");
-  const lastSavedRef = useRef({ title: "", content: "" });
-  const saveInFlightRef = useRef(false);
-  const [contentReady, setContentReady] = useState(false);
-
-  const [annotationText, setAnnotationText] = useState<string | null>(null);
-  const annotationTrigger = useMemo(
-    () => (annotationText ? { text: annotationText } : null),
-    [annotationText],
-  );
-  const pendingRAF = useRef<number | null>(null);
-
-  const extensions = useMemo(
-    () => [
-      StarterKit.configure({
-        heading: { levels: [1, 2, 3] },
-        link: false,
-        underline: false,
-      }),
-      Highlight.configure({ multicolor: true }),
-      Annotation,
-      Placeholder.configure({
-        placeholder: "Comece a digitar o conteúdo da sua aula aqui...",
-      }),
-    ],
-    [],
-  );
-
-  const handleEditorUpdate = useCallback(
-    ({ editor: ed }: { editor: Editor }) => {
-      const currentHtml = ed.getHTML();
-      if (currentHtml === serverContentRef.current) return;
-
-      setLocalContent(currentHtml);
-      setLocalRawText(ed.getText());
-      editorStatus.setSaveStatus("saving");
-    },
-    [],
-  );
-
-  const editor = useEditor({
-    extensions,
-    content: "",
-    onUpdate: handleEditorUpdate,
-    immediatelyRender: false,
-    editorProps: {
-      attributes: {
-        style:
-          "overflow-wrap: break-word; word-break: break-word; overflow-wrap: anywhere; white-space: pre-wrap; width: 100%; max-width: 100%; box-sizing: border-box;",
-      },
-    },
+  // ── Hook: Ações (archive, delete, AI, anotações, UI) ──
+  const {
+    aiSidebarOpen,
+    setAiSidebarOpen,
+    editorExpanded,
+    handleExpandToggle,
+    handleArchiveToggle,
+    confirmDeleteOpen,
+    setConfirmDeleteOpen,
+    handleDeleteConfirm,
+    isFlashcardModalOpen,
+    setIsFlashcardModalOpen,
+    handleGenerateSummary,
+    handleGenerateFlashcards,
+    annotationTrigger,
+  } = useEditorActions({
+    leafId: leafId || "",
+    notebookId,
+    navigate,
+    queryClient,
+    isArchived,
+    archiveLeaf,
+    unarchiveLeaf,
+    softDeleteLeaf,
+    generateAISummary,
+    generateAIFlashcards,
+    editor,
   });
 
-  // Aplica estilos diretamente no DOM do ProseMirror após montagem
-  useEffect(() => {
-    if (!editor) return;
-    const editorDom = editor.view?.dom as HTMLElement | undefined;
-    if (!editorDom) return;
-
-    // Força os estilos de quebra de texto diretamente via JS
-    Object.assign(editorDom.style, {
-      overflowWrap: "break-word",
-      wordBreak: "break-word",
-      whiteSpace: "pre-wrap",
-      width: "100%",
-      maxWidth: "100%",
-      boxSizing: "border-box",
-    });
-  }, [editor]);
-
-  // Click handler for annotations
-  useEffect(() => {
-    if (!editor) return;
-    const editorDom = editor.view?.dom as HTMLElement | undefined;
-    if (!editorDom) return;
-
-    const handleClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement | null;
-      const spanEl = target?.closest?.(
-        "span.annotation-anchor[data-annotation]",
-      );
-      if (!spanEl) return;
-      const text = spanEl.getAttribute("data-annotation") || "";
-      if (!text) return;
-
-      if (pendingRAF.current !== null) cancelAnimationFrame(pendingRAF.current);
-      pendingRAF.current = requestAnimationFrame(() => {
-        pendingRAF.current = null;
-        if (!editor.isDestroyed) {
-          editor.chain().focus().extendMarkRange("annotation").run();
-          setAnnotationText(text);
-        }
-      });
-    };
-
-    editorDom.addEventListener("click", handleClick);
-    return () => {
-      editorDom.removeEventListener("click", handleClick);
-      if (pendingRAF.current !== null) {
-        cancelAnimationFrame(pendingRAF.current);
-        pendingRAF.current = null;
-      }
-    };
-  }, [editor]);
-
-  // Single sync effect
-  useEffect(() => {
-    if (!leaf || !editor || initialSyncDoneRef.current) return;
-
-    const serverContent = leaf.content || "";
-    serverContentRef.current = serverContent;
-    lastSavedRef.current = { title: leaf.title, content: serverContent };
-
-    editor.commands.setContent(serverContent);
-
-    startTransition(() => {
-      setLocalTitle(leaf.title);
-      setLocalContent(serverContent);
-      setLocalRawText(leaf.rawText || "");
-      setContentReady(true);
-    });
-
-    initialSyncDoneRef.current = true;
-    editorStatus.show();
-    editorStatus.setLastUpdate(
-      typeof leaf.updatedAt === "string"
-        ? leaf.updatedAt
-        : leaf.updatedAt.toISOString(),
-    );
-  }, [leaf, editor]);
-
-  const debouncedTitle = useDebounce(localTitle, 1500);
-  const debouncedContent = useDebounce(localContent, 1500);
-  const debouncedRawText = useDebounce(localRawText, 1500);
-
-  // Auto-save effect
-  useEffect(() => {
-    if (!initialSyncDoneRef.current) return;
-
-    const lastSaved = lastSavedRef.current;
-    if (
-      debouncedTitle !== lastSaved.title ||
-      debouncedContent !== lastSaved.content
-    ) {
-      if (saveInFlightRef.current) return;
-
-      saveInFlightRef.current = true;
-      startTransition(() => {
-        editorStatus.setSaveStatus("saving");
-      });
-
-      void updateLeaf({
-        title: debouncedTitle,
-        content: debouncedContent,
-        rawText: debouncedRawText,
-      })
-        .then(() => {
-          lastSavedRef.current = {
-            title: debouncedTitle,
-            content: debouncedContent,
-          };
-          editorStatus.setLastUpdate(new Date().toISOString());
-          startTransition(() => {
-            editorStatus.setSaveStatus("saved");
-          });
-        })
-        .catch(() => {
-          startTransition(() => {
-            editorStatus.setSaveStatus("error");
-          });
-        })
-        .finally(() => {
-          saveInFlightRef.current = false;
-        });
-    }
-  }, [debouncedTitle, debouncedContent, debouncedRawText, updateLeaf]);
-
-  const handleGenerateSummary = async () => {
-    if (!leafId) return;
-    try {
-      await generateAISummary();
-    } catch (err) {
-      console.error("Erro ao gerar resumo:", err);
-    }
-  };
-
-  const handleGenerateFlashcards = async () => {
-    if (!leafId) return;
-    try {
-      await generateAIFlashcards();
-    } catch (err) {
-      console.error("Erro ao gerar flashcards:", err);
-    }
-  };
-
-  // Mostra skeleton apenas na primeira carga (sem dados em cache)
+  // ── Renderização Condicional ──
   if (!leaf && isLoadingLeaf) {
     return <EditorSkeleton />;
   }
 
-  // Se tem dados em cache mas editor ainda sincronizando, mostra tela vazia
-  // (evita flash de skeleton desnecessário)
   if (leaf && !contentReady) {
     return null;
   }
@@ -376,11 +154,11 @@ const EditorView: React.FC = () => {
               editor={editor}
               className="tiptap-content w-full h-full"
               style={{
-                maxWidth: '100%',
-                overflowWrap: 'break-word',
-                wordBreak: 'break-word',
-                whiteSpace: 'pre-wrap',
-                boxSizing: 'border-box',
+                maxWidth: "100%",
+                overflowWrap: "break-word",
+                wordBreak: "break-word",
+                whiteSpace: "pre-wrap",
+                boxSizing: "border-box",
               }}
             />
           </div>
