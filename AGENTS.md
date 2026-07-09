@@ -124,6 +124,9 @@ O usuário cria cadernos, folhas de anotação, gera resumos e flashcards por IA
 | `NotebookView.tsx` | **Modais extraídos** | `CreateLeafModal.tsx` e `EditNotebookModal.tsx` criados. NotebookView reduzido de ~385 para ~210 linhas. |
 | `usePlanningNotifications.ts` | **console.warn removido** | 4 ocorrências de `console.warn` substituídas por catch silencioso. |
 | `src/modules/history/` | **Módulo órfão deletado** | `historyService.ts` não era importado por nenhum arquivo e chamava APIs já removidas do backend. |
+| `CreateLeafModal.tsx` e `EditNotebookModal.tsx` | **Bugfix FieldErrors** | `import { FieldErrors }` causava erro `[MISSING_EXPORT]` no Vite. Corrigido para `import type { FieldErrors }` — types devem ser importados com `import type`. |
+| `server/src/trash/trash.module.ts` | **Restauração EditHistoryService** | Após remover o service do módulo, `NotebooksService` quebrou pois dependia dele. Restaurado como provider/export. Apenas o **controller** foi removido (era o verdadeiro código morto). |
+| Testes de fluxo | **Bateria completa de testes** | 15 endpoints testados via curl, typecheck frontend/backend, build Vite, todos OK. Exceto `DELETE /api/notebooks/:id` (nunca implementado — soft-delete é via `POST /api/trash/notebooks/:id`). |
 
 #### Lições aprendidas
 
@@ -131,6 +134,8 @@ O usuário cria cadernos, folhas de anotação, gera resumos e flashcards por IA
 - **Código morto em módulos:** Módulos NestJS podem conter controllers/services registrados mas nunca importados pelo módulo raiz. Verificar `app.module.ts` antes de assumir que estão ativos.
 - **Extração de modais:** Quando um componente tem múltiplos modais inline, extrair cada modal para um arquivo separado reduz o componente principal em ~45% e simplifica a leitura.
 - **Temporal Dead Zone em refs:** Ao declarar `useRef(fn)` antes da definição de `const fn = useCallback(...)`, o valor inicial será `undefined`. Solução: inicializar com `useRef<FnType>(null)` e usar optional chaining `ref.current?.()`.
+- **Type-only imports:** Tipos de bibliotecas externas (ex: `FieldErrors` do `react-hook-form`) devem ser importados com `import type` em vez de `import` para evitar erros de runtime no Vite.
+- **NestJS DI:** Ao remover providers de módulos NestJS, verificar se outros módulos dependem deles. Um service pode ser usado mesmo que seu módulo pareça "morto".
 
 ### Sessão 08/07/2026 (Parte 3) — Módulo de Planejamento completo
 
@@ -200,6 +205,36 @@ O usuário cria cadernos, folhas de anotação, gera resumos e flashcards por IA
 ## Rotas da API
 
 ### Auth (`/api/auth`)
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| POST | `/auth/register` | Registrar novo usuário |
+| POST | `/auth/login` | Login |
+| POST | `/auth/logout` | Logout (limpa cookie) |
+| POST | `/auth/refresh` | Renovar access token |
+| GET | `/auth/profile` | Perfil do usuário (auth) |
+
+### Notebooks (`/api/notebooks`, auth required)
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/notebooks` | Listar cadernos |
+| GET | `/notebooks/:id` | Detalhes do caderno |
+| POST | `/notebooks` | Criar caderno |
+| PUT | `/notebooks/:id` | Atualizar caderno |
+
+> ⚠️ `DELETE /api/notebooks/:id` **não está implementado.** O soft-delete é feito via `POST /api/trash/notebooks/:id`.
+
+### Trash (`/api/trash`, auth required)
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/trash` | Listar itens na lixeira |
+| POST | `/trash/notebooks/:id` | Mover caderno para lixeira |
+| POST | `/trash/leaves/:id` | Mover folha para lixeira |
+| POST | `/trash/notebooks/:id/restore` | Restaurar caderno |
+| POST | `/trash/leaves/:id/restore` | Restaurar folha |
+| DELETE | `/trash/notebooks/:id` | Excluir permanentemente caderno |
+| DELETE | `/trash/leaves/:id` | Excluir permanentemente folha |
+
+### Leaves (auth required)
 | Método | Rota | Descrição |
 |--------|------|-----------|
 | POST | `/auth/register` | Registrar novo usuário |

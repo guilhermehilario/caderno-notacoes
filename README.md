@@ -51,17 +51,20 @@ revisa-aula/
 │   ├── core/api/                  # Cliente HTTP (axios + interceptors)
 │   ├── modules/                   # Módulos funcionais
 │   │   ├── auth/                  # Login, registro, sessão
-│   │   ├── notebooks/             # Dashboard + CRUD cadernos
+│   │   ├── notebooks/             # Dashboard + CRUD cadernos (CreateLeafModal, EditNotebookModal)
 │   │   ├── leaves/                # Editor TipTap + anotações
 │   │   ├── study/                 # Flashcards + SM-2 + estatísticas
 │   │   ├── bookmarks/             # Marcadores
 │   │   ├── tags/                  # Gerenciamento de tags
 │   │   ├── trash/                 # Lixeira (soft-delete)
 │   │   ├── profile/               # Perfil + configurações
-│   │   └── planning/              # Planejamento (agenda, calendário, cronograma, metas, pomodoro)
+│   │   ├── todos/                 # Tarefas
+│   │   ├── planning/              # Planejamento (agenda, calendário, cronograma, metas, pomodoro)
+│   │   ├── questions/             # Questões de estudo
+│   │   └── mock-exams/            # Simulados
 │   ├── routes/                    # React Router + guards
-│   ├── store/                     # Zustand stores (ui, toast, notification, pomodoro, planningSettings)
-│   ├── hooks/                     # Hooks globais
+│   ├── store/                     # Zustand stores (ui, toast, notification, pomodoro, planningSettings, editorStatus)
+│   ├── hooks/                     # Hooks globais (useDebounce)
 │   ├── App.tsx                    # Componente raiz
 │   ├── index.css                  # Tailwind + tema OKLCH
 │   └── main.tsx                   # Entry point
@@ -79,8 +82,12 @@ revisa-aula/
 │   │   ├── study/                 # Sessões + estatísticas
 │   │   ├── bookmarks/             # Marcadores
 │   │   ├── tags/                  # Tags CRUD
-│   │   ├── trash/                 # Lixeira + histórico
-│   │   └── planning/              # Eventos, Metas, Pomodoro (CRUD via API)
+│   │   ├── trash/                 # Lixeira + EditHistoryService
+│   │   ├── planning/              # Eventos, Metas, Pomodoro (CRUD via API)
+│   │   ├── questions/             # Questões
+│   │   ├── mock-exams/            # Simulados
+│   │   ├── studies/               # Estudos
+│   │   └── todos/                 # Tarefas
 │   ├── prisma/
 │   │   ├── schema.prisma          → Modelos (User, Notebook, Leaf, Flashcard, Event, Goal, PomodoroSession, etc.)
 │   │   ├── seed.ts                → Migração db.json → SQLite
@@ -89,6 +96,9 @@ revisa-aula/
 │   └── .env
 ├── AGENTS.md                      → Documentação técnica
 ├── ANALISE_PROBLEMAS.md           → Débitos técnicos
+├── PADROES.md                     → Guia de padronização de código
+├── TESTES_POSSIVEIS.md            → Cenários de teste manual
+├── TASKS.md                       → Próximas tarefas
 ├── start.sh / stop.sh             → Scripts de gerenciamento
 └── package.json
 ```
@@ -108,7 +118,7 @@ revisa-aula/
 9. **Tags + Bookmarks** — Classificação e favoritos
 10. **Lixeira** — Soft-delete com expiração de 15 dias
 11. **Modo escuro** — Tema claro/escuro com Tailwind v4
-13. **Planejamento** — Agenda, Calendário, Cronograma, Metas e Pomodoro com CRUD completo via API
+12. **Planejamento** — Agenda, Calendário, Cronograma, Metas e Pomodoro com CRUD completo via API
 14. **Notificações** — Notificações nativas (Browser API) e in-app para eventos do dia, metas com prazo e pomodoros concluídos
 15. **Mini timer Pomodoro** — Timer flutuante no canto inferior direito visível em todas as páginas
 16. **Configurações do Planejamento** — Cores, durações do pomodoro e toggles de notificação
