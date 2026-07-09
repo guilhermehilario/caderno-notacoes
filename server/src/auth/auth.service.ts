@@ -1,6 +1,13 @@
-import { Injectable, UnauthorizedException, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
+import { v4 as uuidv4 } from 'uuid';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../common/email/email.service';
 
@@ -11,6 +18,7 @@ export interface UserPublic {
   name: string;
   email: string;
   avatarUrl: string;
+  emailVerified: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -37,6 +45,7 @@ export class AuthService {
     email: string;
     password: string;
     avatarUrl: string;
+    emailVerified: boolean;
     createdAt: Date;
     updatedAt: Date;
   }): UserPublic {
@@ -62,7 +71,7 @@ export class AuthService {
     name: string,
     email: string,
     password: string,
-  ): Promise<{ user: UserPublic; accessToken: string; refreshToken: string }> {
+  ): Promise<{ message: string; email: string }> {
     if (!this.validateEmail(email)) {
       throw new UnauthorizedException('Formato de e-mail inválido');
     }
@@ -80,18 +89,37 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     const avatarUrl = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name)}`;
+    const verificationToken = uuidv4();
+    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
 
-    const newUser = await this.prisma.user.create({
+    await this.prisma.user.create({
       data: {
         name,
         email: email.toLowerCase(),
         password: hashedPassword,
         avatarUrl,
+        emailVerified: false,
+        verificationToken,
+        verificationTokenExpires,
       },
     });
 
-    const tokens = this.generateTokens(newUser.id);
-    return { user: this.stripPassword(newUser), ...tokens };
+    // Envia e-mail de verificação (não falha o registro se o email falhar)
+    try {
+      await this.emailService.sendVerificationEmail(
+        email.toLowerCase(),
+        name,
+        verificationToken,
+      );
+    } catch (error) {
+      console.error('Falha ao enviar e-mail de verificação', error);
+    }
+
+    return {
+      message:
+        'Conta criada com sucesso! Verifique seu e-mail para confirmar o cadastro.',
+      email: email.toLowerCase(),
+    };
   }
 
   async login(
@@ -110,8 +138,94 @@ export class AuthService {
       throw new UnauthorizedException('E-mail ou senha incorretos');
     }
 
+    if (!user.emailVerified) {
+      throw new UnauthorizedException(
+        'EMAIL_NOT_VERIFIED: Verifique seu e-mail antes de fazer login. Se não recebeu o e-mail, solicite um novo link de verificação.',
+      );
+    }
+
     const tokens = this.generateTokens(user.id);
     return { user: this.stripPassword(user), ...tokens };
+  }
+
+  async verifyEmail(token: string): Promise<{ message: string }> {
+    const user = await this.prisma.user.findFirst({
+      where: { verificationToken: token },
+    });
+
+    if (!user) {
+      throw new BadRequestException(
+        'Token de verificação inválido. Solicite um novo link.',
+      );
+    }
+
+    if (user.emailVerified) {
+      return { message: 'E-mail já verificado. Faça login para continuar.' };
+    }
+
+    if (
+      !user.verificationTokenExpires ||
+      user.verificationTokenExpires < new Date()
+    ) {
+      throw new BadRequestException(
+        'Token de verificação expirado. Solicite um novo link.',
+      );
+    }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerified: true,
+        verificationToken: null,
+        verificationTokenExpires: null,
+      },
+    });
+
+    return { message: 'E-mail verificado com sucesso! Faça login para continuar.' };
+  }
+
+  async resendVerification(email: string): Promise<{ message: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+
+    if (!user) {
+      // Não revela se o e-mail existe ou não por segurança
+      return {
+        message:
+          'Se o e-mail estiver cadastrado, um novo link de verificação será enviado.',
+      };
+    }
+
+    if (user.emailVerified) {
+      return { message: 'Este e-mail já foi verificado. Faça login para continuar.' };
+    }
+
+    const verificationToken = uuidv4();
+    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        verificationToken,
+        verificationTokenExpires,
+      },
+    });
+
+    try {
+      await this.emailService.sendVerificationEmail(
+        user.email,
+        user.name,
+        verificationToken,
+      );
+    } catch (error) {
+      console.error('Falha ao reenviar e-mail de verificação', error);
+      throw new Error('Erro ao enviar e-mail. Tente novamente mais tarde.');
+    }
+
+    return {
+      message: 'Novo link de verificação enviado para seu e-mail.',
+    };
   }
 
   async refresh(
@@ -128,6 +242,12 @@ export class AuthService {
 
       if (!user) {
         throw new UnauthorizedException('Usuário não encontrado');
+      }
+
+      if (!user.emailVerified) {
+        throw new UnauthorizedException(
+          'EMAIL_NOT_VERIFIED: Verifique seu e-mail antes de continuar.',
+        );
       }
 
       // Gera NOVO par de tokens (rotação completa)
@@ -150,6 +270,12 @@ export class AuthService {
 
     if (!user) {
       throw new UnauthorizedException('Usuário não encontrado');
+    }
+
+    if (!user.emailVerified) {
+      throw new UnauthorizedException(
+        'EMAIL_NOT_VERIFIED: Verifique seu e-mail para acessar o perfil.',
+      );
     }
 
     return this.stripPassword(user);

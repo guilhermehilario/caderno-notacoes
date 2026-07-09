@@ -21,6 +21,16 @@ export const authService = {
     return response.data;
   },
 
+  async verifyEmail(token: string): Promise<{ message: string }> {
+    const response = await api.post<{ message: string }>('/auth/verify-email', { token });
+    return response.data;
+  },
+
+  async resendVerification(email: string): Promise<{ message: string }> {
+    const response = await api.post<{ message: string }>('/auth/resend-verification', { email });
+    return response.data;
+  },
+
   async sendDeleteConfirmation(): Promise<{ message: string; token: string }> {
     const response = await api.post<{ message: string; token: string }>(
       '/auth/send-delete-confirmation',

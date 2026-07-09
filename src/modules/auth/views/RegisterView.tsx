@@ -28,8 +28,9 @@ export const RegisterView: React.FC = () => {
   const onSubmit = async (data: RegisterInput) => {
     setApiError(null);
     try {
-      await registerUser(data);
-      navigate('/dashboard');
+      const result = await registerUser(data);
+      // Redireciona para tela de verificação de e-mail
+      navigate(`/verify-email?email=${encodeURIComponent(data.email)}`);
     } catch (error) {
       setApiError(extractApiError(error, 'Erro ao criar conta. Tente novamente mais tarde.'));
     }

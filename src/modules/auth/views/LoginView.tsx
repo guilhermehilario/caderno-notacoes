@@ -15,6 +15,7 @@ export const LoginView: React.FC = () => {
   const { login, isLoggingIn } = useAuth();
   const navigate = useNavigate();
   const [apiError, setApiError] = React.useState<string | null>(null);
+  const [isEmailNotVerified, setIsEmailNotVerified] = React.useState(false);
 
   const {
     register,
@@ -27,11 +28,21 @@ export const LoginView: React.FC = () => {
 
   const onSubmit = async (data: LoginInput) => {
     setApiError(null);
+    setIsEmailNotVerified(false);
     try {
       await login(data);
       navigate('/dashboard');
     } catch (error) {
-      setApiError(extractApiError(error, 'E-mail ou senha incorretos. Tente novamente.'));
+      const errorMsg = extractApiError(error, 'E-mail ou senha incorretos. Tente novamente.');
+      // Detecta erro específico de e-mail não verificado
+      if (errorMsg.includes('EMAIL_NOT_VERIFIED')) {
+        setIsEmailNotVerified(true);
+        setApiError(
+          'Seu e-mail ainda não foi verificado. Verifique sua caixa de entrada ou solicite um novo link.',
+        );
+      } else {
+        setApiError(errorMsg);
+      }
     }
   };
 
@@ -52,6 +63,20 @@ export const LoginView: React.FC = () => {
       }
     >
       <ApiErrorAlert message={apiError} />
+
+      {isEmailNotVerified && (
+        <div className="mb-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+          <p className="text-sm text-amber-800 dark:text-amber-300">
+            Clique no link enviado para seu e-mail para verificar sua conta.
+          </p>
+          <Link
+            to="/verify-email"
+            className="text-sm font-medium text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 underline underline-offset-2 mt-1 inline-block"
+          >
+            Reenviar link de verificação
+          </Link>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
         <Input
