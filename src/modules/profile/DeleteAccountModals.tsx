@@ -12,7 +12,7 @@ interface DeleteAccountModalsProps {
 
 export const DeleteAccountModals: React.FC<DeleteAccountModalsProps> = ({
   userEmail,
-  onStartDelete,
+  onComplete,
 }) => {
   const {
     deleteStep,
@@ -111,7 +111,8 @@ export const DeleteAccountModals: React.FC<DeleteAccountModalsProps> = ({
               <strong className="text-slate-700 dark:text-dark-200">
                 {userEmail}
               </strong>
-              . Você precisará digitar o código recebido para concluir a exclusão.
+              . Você precisará digitar o código recebido para concluir a
+              exclusão.
             </p>
           </div>
 
