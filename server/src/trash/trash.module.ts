@@ -1,12 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TrashService } from './trash.service';
 import { TrashController } from './trash.controller';
-import { EditHistoryService } from './edit-history.service';
-import { EditHistoryController } from './edit-history.controller';
 
 @Module({
-  controllers: [TrashController, EditHistoryController],
-  providers: [TrashService, EditHistoryService],
-  exports: [TrashService, EditHistoryService],
+  controllers: [TrashController],
+  providers: [TrashService],
+  exports: [TrashService],
 })
 export class TrashModule {}

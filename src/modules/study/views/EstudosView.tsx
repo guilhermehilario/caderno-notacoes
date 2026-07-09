@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import notebookService from "../../notebooks/services/notebookService";
-import studiesService from "../services/studiesService";
+import { studyService } from "../services/studyService";
 import { Card } from "../../../components/ui/Card.tsx";
 import { Button } from "../../../components/ui/Button.tsx";
 import { EmptyState } from "../../../components/ui/EmptyState.tsx";
@@ -80,13 +80,13 @@ export const EstudosView: React.FC = () => {
 
   const { data: studyContent, isLoading: contentLoading } = useQuery({
     queryKey: ["studies", "content", selectedNotebook],
-    queryFn: () => studiesService.getContent(selectedNotebook || undefined),
+    queryFn: () => studyService.getContent(selectedNotebook || undefined),
     staleTime: 30_000,
   });
 
   const { data: stats } = useQuery({
     queryKey: ["studies", "stats"],
-    queryFn: studiesService.getStats,
+    queryFn: studyService.getDashboardStats,
     staleTime: 30_000,
   });
 
