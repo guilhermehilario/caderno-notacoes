@@ -8,6 +8,7 @@ export function usePomodoros() {
   return useQuery({
     queryKey: POMODORO_KEY,
     queryFn: planningService.findAllPomodoros,
+    staleTime: 30_000,
   });
 }
 

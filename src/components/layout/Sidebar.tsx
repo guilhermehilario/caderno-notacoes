@@ -152,9 +152,6 @@ export const Sidebar: React.FC = () => {
           </Link>
         )}
 
-        {/* Divisor sutil */}
-        <div className="my-1 border-t border-slate-100 dark:border-dark-800/60" />
-
         {/* Demais itens (Tags, Marcadores, Arquivados, Tarefas) */}
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;

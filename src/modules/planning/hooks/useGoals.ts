@@ -8,6 +8,7 @@ export function useGoals() {
   return useQuery({
     queryKey: GOALS_KEY,
     queryFn: planningService.findAllGoals,
+    staleTime: 30_000,
   });
 }
 

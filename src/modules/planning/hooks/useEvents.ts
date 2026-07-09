@@ -8,6 +8,7 @@ export function useEvents(type?: string) {
   return useQuery({
     queryKey: [...EVENTS_KEY, type],
     queryFn: () => planningService.findAllEvents(type),
+    staleTime: 30_000,
   });
 }
 
