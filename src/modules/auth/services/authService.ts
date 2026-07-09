@@ -7,8 +7,8 @@ export const authService = {
     return response.data;
   },
 
-  async register(data: RegisterInput): Promise<AuthResponse> {
-    const response = await api.post<AuthResponse>('/auth/register', data);
+  async register(data: RegisterInput): Promise<{ message: string; email: string }> {
+    const response = await api.post<{ message: string; email: string }>('/auth/register', data);
     return response.data;
   },
 
@@ -18,6 +18,26 @@ export const authService = {
 
   async getProfile(): Promise<User> {
     const response = await api.get<User>('/auth/profile');
+    return response.data;
+  },
+
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    const response = await api.post<{ message: string }>('/auth/forgot-password', { email });
+    return response.data;
+  },
+
+  async resetPassword(token: string, password: string): Promise<{ message: string }> {
+    const response = await api.post<{ message: string }>('/auth/reset-password', { token, password });
+    return response.data;
+  },
+
+  async verifyEmail(token: string): Promise<{ message: string }> {
+    const response = await api.post<{ message: string }>('/auth/verify-email', { token });
+    return response.data;
+  },
+
+  async resendVerification(email: string): Promise<{ message: string }> {
+    const response = await api.post<{ message: string }>('/auth/resend-verification', { email });
     return response.data;
   },
 

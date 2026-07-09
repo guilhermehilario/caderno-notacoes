@@ -1,17 +1,16 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { User, Settings, LogOut, ChevronRight, AlertTriangle, Trash2, Mail } from "lucide-react";
+import { User, Settings, LogOut, ChevronRight, AlertTriangle, Trash2 } from "lucide-react";
 import { Modal } from "../../components/ui/Modal.tsx";
 import { Button } from "../../components/ui/Button.tsx";
 import { Input } from "../../components/ui/Input.tsx";
 import { useAuth } from "../auth/hooks/useAuth";
 import { api } from "../../core/api/client";
 import { useQueryClient } from "@tanstack/react-query";
-import authService from "../auth/services/authService";
-import { useToastStore } from "../../store/toastStore";
 import { AVATAR_CATEGORIES, getAvatarUrl } from "./avatarCategories";
 import { AvatarSelector } from "./AvatarSelector";
 import { SettingsTab } from "./SettingsTab";
 import { PasswordChangeForm } from "./PasswordChangeForm";
+import { DeleteAccountModals } from "./DeleteAccountModals";
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -28,6 +27,17 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<Tab>("profile");
+  const [showDeleteFlow, setShowDeleteFlow] = useState(false);
+
+  // Reseta o fluxo de exclusão ao fechar o modal
+  useEffect(() => {
+    if (!isOpen) setShowDeleteFlow(false);
+  }, [isOpen]);
+
+  // Sincroniza o campo de nome com o usuário do hook
+  useEffect(() => {
+    setName(user?.name || "");
+  }, [user?.name]);
 
   // Profile state
   const [name, setName] = useState(user?.name || "");
@@ -85,69 +95,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     onClose();
   };
 
-  // ── Delete Account State ──
-  const [deleting, setDeleting] = useState(false);
-  const [deleteStep, setDeleteStep] = useState<0 | 1 | 2 | 3>(0);
-  const [typedCode, setTypedCode] = useState("");
-  const [emailCode, setEmailCode] = useState("");
-  const [deleteToken, setDeleteToken] = useState<string | null>(null);
-  const [sendingEmail, setSendingEmail] = useState(false);
-
-  const [confirmationCode, setConfirmationCode] = useState(
-    "EXCLUIR-" +
-      Math.random().toString(36).substring(2, 6).toUpperCase() +
-      Math.random().toString(36).substring(2, 4).toUpperCase(),
-  );
-
-  useEffect(() => {
-    if (deleteStep === 1) {
-      setConfirmationCode(
-        "EXCLUIR-" +
-          Math.random().toString(36).substring(2, 6).toUpperCase() +
-          Math.random().toString(36).substring(2, 4).toUpperCase(),
-      );
-    }
-  }, [deleteStep]);
-
-  const handleSendEmailConfirmation = useCallback(async () => {
-    setSendingEmail(true);
-    try {
-      const result = await authService.sendDeleteConfirmation();
-      setDeleteToken(result.token);
-      setDeleteStep(3);
-    } catch {
-      useToastStore.getState().addToast(
-        "Erro ao enviar e-mail de confirmação. Verifique o SMTP.",
-        "error",
-      );
-    } finally {
-      setSendingEmail(false);
-    }
+  const handleDeleteComplete = useCallback(() => {
+    setShowDeleteFlow(false);
   }, []);
-
-  const handleConfirmDeleteWithCode = useCallback(async () => {
-    if (!deleteToken) return;
-    setDeleting(true);
-    try {
-      await authService.confirmDeletion(deleteToken, emailCode);
-      useToastStore.getState().addToast(
-        "Conta excluída permanentemente.",
-        "success",
-      );
-      logout();
-      // Redireciona para /login — a conta foi deletada, o usuário
-      // não pode mais acessar o app. Usa window.location para fazer
-      // um hard redirect que limpa todo o estado da SPA.
-      window.location.href = "/login";
-    } catch {
-      useToastStore.getState().addToast(
-        "Código inválido ou expirado. Solicite um novo código.",
-        "error",
-      );
-      setDeleting(false);
-      setEmailCode("");
-    }
-  }, [deleteToken, emailCode, logout, queryClient, onClose]);
 
   return (
     <>
@@ -258,10 +208,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               </div>
               <button
                 type="button"
-                onClick={() => {
-                  setTypedCode("");
-                  setDeleteStep(1);
-                }}
+                onClick={() => setShowDeleteFlow(true)}
                 className="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-rose-50/50 dark:bg-rose-950/10 border border-rose-200 dark:border-rose-900/30 hover:bg-rose-50 dark:hover:bg-rose-950/20 hover:border-rose-300 dark:hover:border-rose-800/40 transition-all cursor-pointer text-left group"
               >
                 <div className="w-9 h-9 rounded-lg bg-rose-100 dark:bg-rose-950/30 flex items-center justify-center text-rose-500 group-hover:scale-105 transition-transform">
@@ -307,206 +254,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         {activeTab === "settings" && <SettingsTab />}
       </Modal>
 
-      {/* ── STEP 1: Digitar código de confirmação na tela ── */}
-      <Modal
-        isOpen={deleteStep === 1}
-        onClose={() => {
-          setDeleteStep(0);
-          setTypedCode("");
-        }}
-        title="Confirmar Exclusão de Conta"
-        size="sm"
-      >
-        <div className="flex flex-col gap-5">
-          <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30">
-            <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-amber-700 dark:text-amber-300">
-              Esta ação irá remover permanentemente sua conta e todos os seus
-              dados. Esta ação não pode ser desfeita.
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-slate-700 dark:text-dark-200">
-              Digite o código abaixo para confirmar a exclusão:
-            </label>
-            <div className="px-4 py-3 rounded-xl bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-dark-700 text-center">
-              <span className="text-lg font-extrabold tracking-[0.25em] text-rose-600 dark:text-rose-400 select-all font-mono">
-                {confirmationCode}
-              </span>
-            </div>
-          </div>
-
-          <Input
-            value={typedCode}
-            onChange={(e) => setTypedCode(e.target.value)}
-            placeholder="Digite o código acima..."
-            className="text-center font-mono tracking-wider uppercase"
-          />
-
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setDeleteStep(0);
-                setTypedCode("");
-              }}
-              className="flex-1"
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="danger"
-              onClick={() => {
-                setTypedCode("");
-                setDeleteStep(2);
-              }}
-              disabled={typedCode !== confirmationCode}
-              className="flex-1"
-            >
-              Confirmar Exclusão
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* ── STEP 2: Confirmação Final + Enviar e-mail ── */}
-      <Modal
-        isOpen={deleteStep === 2}
-        onClose={() => {
-          setDeleteStep(0);
-          setTypedCode("");
-        }}
-        title="Última Confirmação"
-        size="sm"
-      >
-        <div className="flex flex-col gap-5">
-          <div className="flex items-start gap-3 p-4 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/30">
-            <AlertTriangle className="h-6 w-6 text-rose-500 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-bold text-rose-700 dark:text-rose-300 mb-1">
-                Tem certeza que deseja fazer a exclusão dessa conta?
-              </p>
-              <p className="text-sm text-rose-600 dark:text-rose-400/80">
-                Essa ação será definitiva e não terá como recuperar essa conta.
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-slate-50 dark:bg-dark-800/50 rounded-xl p-4 border border-slate-100 dark:border-dark-700">
-            <p className="text-xs text-slate-500 dark:text-dark-400 leading-relaxed">
-              Um e-mail de confirmação será enviado para{" "}
-              <strong className="text-slate-700 dark:text-dark-200">
-                {user?.email}
-              </strong>
-              . Você precisará digitar o código recebido para concluir a exclusão.
-            </p>
-          </div>
-
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setDeleteStep(0);
-                setTypedCode("");
-              }}
-              className="flex-1"
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleSendEmailConfirmation}
-              isLoading={sendingEmail}
-              className="flex-1"
-            >
-              {sendingEmail ? "Enviando..." : "Enviar E-mail de Confirmação"}
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* ── STEP 3: Digitar código recebido por e-mail ── */}
-      <Modal
-        isOpen={deleteStep === 3}
-        onClose={() => {
-          setDeleteStep(0);
-          setTypedCode("");
-          setEmailCode("");
-          setDeleteToken(null);
-        }}
-        title="Código de Confirmação"
-        size="sm"
-      >
-        <div className="flex flex-col gap-5">
-          <div className="flex items-start gap-3 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30">
-            <Mail className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
-                E-mail enviado!
-              </p>
-              <p className="text-sm text-emerald-600 dark:text-emerald-400/80 mt-0.5">
-                Enviamos um código de 6 dígitos para{" "}
-                <strong>{user?.email}</strong>. O código expira em 15 minutos.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-slate-700 dark:text-dark-200">
-              Código de confirmação
-            </label>
-            <Input
-              value={emailCode}
-              onChange={(e) => {
-                const digits = e.target.value.replace(/\D/g, "").slice(0, 6);
-                setEmailCode(digits);
-              }}
-              placeholder="000000"
-              className="text-center font-mono text-2xl tracking-[0.3em]"
-              maxLength={6}
-            />
-            <p className="text-xs text-slate-400 dark:text-dark-500 text-center">
-              Digite o código de 6 dígitos recebido no e-mail
-            </p>
-          </div>
-
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setDeleteStep(0);
-                setTypedCode("");
-                setEmailCode("");
-                setDeleteToken(null);
-              }}
-              className="flex-1"
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleConfirmDeleteWithCode}
-              isLoading={deleting}
-              disabled={emailCode.length !== 6}
-              className="flex-1"
-            >
-              {deleting ? "Excluindo..." : "Confirmar e Excluir Conta"}
-            </Button>
-          </div>
-
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={handleSendEmailConfirmation}
-              disabled={sendingEmail}
-              className="text-xs text-brand-500 hover:text-brand-600 dark:hover:text-brand-400 underline cursor-pointer disabled:opacity-50"
-            >
-              {sendingEmail ? "Reenviando..." : "Reenviar e-mail"}
-            </button>
-          </div>
-        </div>
-      </Modal>
+      {/* Delete Account Flow (3 modals) */}
+      {showDeleteFlow && (
+        <DeleteAccountModals
+          userEmail={user?.email}
+          onComplete={handleDeleteComplete}
+        />
+      )}
     </>
   );
 };

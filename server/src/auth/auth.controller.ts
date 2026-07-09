@@ -3,7 +3,6 @@ import {
   Post,
   Get,
   Put,
-  Delete,
   Body,
   Res,
   Req,
@@ -34,11 +33,9 @@ export class AuthController {
   @Post('register')
   async register(
     @Body() dto: RegisterDto,
-    @Res({ passthrough: true }) res: Response,
   ) {
     const result = await this.authService.register(dto.name, dto.email, dto.password);
-    this.setRefreshCookie(res, result.refreshToken);
-    return { user: result.user, accessToken: result.accessToken };
+    return result;
   }
 
   @Post('login')
@@ -86,6 +83,28 @@ export class AuthController {
       res.status(401);
       return { error: 'Refresh token inválido ou expirado' };
     }
+  }
+
+  @Post('forgot-password')
+  async forgotPassword(@Body() body: { email: string }) {
+    return this.authService.forgotPassword(body.email);
+  }
+
+  @Post('reset-password')
+  async resetPassword(
+    @Body() body: { token: string; password: string },
+  ) {
+    return this.authService.resetPassword(body.token, body.password);
+  }
+
+  @Post('verify-email')
+  async verifyEmail(@Body() body: { token: string }) {
+    return this.authService.verifyEmail(body.token);
+  }
+
+  @Post('resend-verification')
+  async resendVerification(@Body() body: { email: string }) {
+    return this.authService.resendVerification(body.email);
   }
 
   @Get('profile')

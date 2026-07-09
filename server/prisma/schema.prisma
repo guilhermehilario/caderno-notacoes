@@ -12,9 +12,14 @@ model User {
   name      String
   email     String   @unique
   password  String
-  avatarUrl String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  avatarUrl          String
+  emailVerified             Boolean  @default(false)
+  verificationToken         String?
+  verificationTokenExpires  DateTime?
+  resetPasswordToken        String?
+  resetPasswordTokenExpires DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   notebooks      Notebook[]
   studySessions  StudySession[]

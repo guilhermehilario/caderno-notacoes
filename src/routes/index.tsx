@@ -5,6 +5,9 @@ import PrivateRoute from './PrivateRoute.tsx';
 import PublicRoute from './PublicRoute.tsx';
 import LoginView from '../modules/auth/views/LoginView.tsx';
 import RegisterView from '../modules/auth/views/RegisterView.tsx';
+import VerifyEmailView from '../modules/auth/views/VerifyEmailView.tsx';
+import ForgotPasswordView from '../modules/auth/views/ForgotPasswordView.tsx';
+import ResetPasswordView from '../modules/auth/views/ResetPasswordView.tsx';
 import DashboardView from '../modules/notebooks/views/DashboardView.tsx';
 import NotebookView from '../modules/notebooks/views/NotebookView.tsx';
 import EditorView from '../modules/leaves/views/EditorView.tsx';
@@ -36,6 +39,30 @@ const RegisterPage = memo(function RegisterPage() {
   return (
     <PublicRoute>
       <RegisterView />
+    </PublicRoute>
+  );
+});
+
+const VerifyEmailPage = memo(function VerifyEmailPage() {
+  return (
+    <PublicRoute>
+      <VerifyEmailView />
+    </PublicRoute>
+  );
+});
+
+const ForgotPasswordPage = memo(function ForgotPasswordPage() {
+  return (
+    <PublicRoute>
+      <ForgotPasswordView />
+    </PublicRoute>
+  );
+});
+
+const ResetPasswordPage = memo(function ResetPasswordPage() {
+  return (
+    <PublicRoute>
+      <ResetPasswordView />
     </PublicRoute>
   );
 });
@@ -130,6 +157,18 @@ const router = createBrowserRouter([
   {
     path: '/register',
     element: <RegisterPage />,
+  },
+  {
+    path: '/verify-email',
+    element: <VerifyEmailPage />,
+  },
+  {
+    path: '/forgot-password',
+    element: <ForgotPasswordPage />,
+  },
+  {
+    path: '/reset-password',
+    element: <ResetPasswordPage />,
   },
   {
     path: '/',

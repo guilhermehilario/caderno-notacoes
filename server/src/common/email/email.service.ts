@@ -7,6 +7,7 @@ export class EmailService {
   private readonly logger = new Logger(EmailService.name);
   private transporter: nodemailer.Transporter | null = null;
   private isConfigured = false;
+  private readonly frontendUrl: string;
 
   constructor(private readonly configService: ConfigService) {
     const host = this.configService.get<string>('SMTP_HOST');
@@ -14,6 +15,9 @@ export class EmailService {
     const user = this.configService.get<string>('SMTP_USER');
     const pass = this.configService.get<string>('SMTP_PASS');
     const from = this.configService.get<string>('SMTP_FROM');
+
+    this.frontendUrl =
+      this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
 
     if (host && user && pass) {
       this.transporter = nodemailer.createTransport({
@@ -37,10 +41,10 @@ export class EmailService {
     html: string;
     text?: string;
   }): Promise<void> {
-    const from = this.configService.get<string>('SMTP_FROM') || 'noreply@revisaaula.app';
+    const from =
+      this.configService.get<string>('SMTP_FROM') || 'noreply@revisaaula.app';
 
     if (!this.isConfigured || !this.transporter) {
-      // Modo dev: loga no console em vez de enviar
       this.logger.log('━━━━━━━━━━━━ EMAIL (DEV MODE) ━━━━━━━━━━━━');
       this.logger.log(`To: ${options.to}`);
       this.logger.log(`From: ${from}`);
@@ -63,6 +67,57 @@ export class EmailService {
       this.logger.error('Failed to send email', error);
       throw new Error('Falha ao enviar e-mail de confirmação');
     }
+  }
+
+  async sendVerificationEmail(
+    to: string,
+    userName: string,
+    verificationToken: string,
+  ): Promise<void> {
+    const subject = 'Confirme seu e-mail - Revisa Aula';
+    const verificationUrl = `${this.frontendUrl}/verify-email?token=${verificationToken}`;
+
+    const html = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; background: #fafafa; border-radius: 16px;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h1 style="color: #1e293b; font-size: 24px; margin: 0;">Revisa Aula</h1>
+          <p style="color: #64748b; font-size: 14px; margin: 4px 0 0;">Confirmação de E-mail</p>
+        </div>
+
+        <div style="background: white; border-radius: 12px; padding: 24px; border: 1px solid #e2e8f0;">
+          <p style="color: #1e293b; font-size: 16px; line-height: 1.5;">Olá, <strong>${userName}</strong>!</p>
+
+          <p style="color: #475569; font-size: 14px; line-height: 1.6;">
+            Obrigado por criar sua conta no Revisa Aula! Para começar a usar, confirme seu endereço de e-mail clicando no botão abaixo:
+          </p>
+
+          <div style="text-align: center; margin: 24px 0;">
+            <a href="${verificationUrl}"
+               style="display: inline-block; background: #aa3bff; color: white; font-size: 16px; font-weight: 700; padding: 14px 32px; border-radius: 12px; text-decoration: none;">
+              Confirmar E-mail
+            </a>
+          </div>
+
+          <p style="color: #64748b; font-size: 13px; line-height: 1.5; text-align: center;">
+            Se o botão não funcionar, copie e cole o link abaixo no seu navegador:<br>
+            <span style="color: #aa3bff; font-size: 12px; word-break: break-all;">${verificationUrl}</span>
+          </p>
+
+          <p style="color: #94a3b8; font-size: 12px; margin-top: 20px; text-align: center;">
+            Este link expira em 24 horas.
+          </p>
+        </div>
+
+        <div style="text-align: center; margin-top: 16px;">
+          <p style="color: #94a3b8; font-size: 12px;">
+            Revisa Aula • App de Estudos Inteligente<br>
+            Se você não criou uma conta, ignore este e-mail.
+          </p>
+        </div>
+      </div>
+    `;
+
+    await this.sendEmail({ to, subject, html });
   }
 
   async sendDeleteConfirmationEmail(
@@ -109,6 +164,57 @@ export class EmailService {
           <p style="color: #94a3b8; font-size: 12px;">
             Revisa Aula • App de Estudos Inteligente<br>
             Se tiver dúvidas, entre em contato com nosso suporte.
+          </p>
+        </div>
+      </div>
+    `;
+
+    await this.sendEmail({ to, subject, html });
+  }
+
+  async sendPasswordResetEmail(
+    to: string,
+    userName: string,
+    resetToken: string,
+  ): Promise<void> {
+    const subject = 'Recuperação de Senha - Revisa Aula';
+    const resetUrl = `${this.frontendUrl}/reset-password?token=${resetToken}`;
+
+    const html = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; background: #fafafa; border-radius: 16px;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h1 style="color: #1e293b; font-size: 24px; margin: 0;">Revisa Aula</h1>
+          <p style="color: #64748b; font-size: 14px; margin: 4px 0 0;">Recuperação de Senha</p>
+        </div>
+
+        <div style="background: white; border-radius: 12px; padding: 24px; border: 1px solid #e2e8f0;">
+          <p style="color: #1e293b; font-size: 16px; line-height: 1.5;">Olá, <strong>${userName}</strong>!</p>
+
+          <p style="color: #475569; font-size: 14px; line-height: 1.6;">
+            Recebemos uma solicitação de redefinição de senha para sua conta no Revisa Aula.
+            Para criar uma nova senha, clique no botão abaixo:
+          </p>
+
+          <div style="text-align: center; margin: 24px 0;">
+            <a href="${resetUrl}"
+               style="display: inline-block; background: #aa3bff; color: white; font-size: 16px; font-weight: 700; padding: 14px 32px; border-radius: 12px; text-decoration: none;">
+              Redefinir Senha
+            </a>
+          </div>
+
+          <p style="color: #64748b; font-size: 13px; line-height: 1.5; text-align: center;">
+            Se o botão não funcionar, copie e cole o link abaixo no seu navegador:<br>
+            <span style="color: #aa3bff; font-size: 12px; word-break: break-all;">${resetUrl}</span>
+          </p>
+
+          <p style="color: #94a3b8; font-size: 12px; margin-top: 20px; text-align: center;">
+            Este link expira em 1 hora. Se você não solicitou a redefinição, ignore este e-mail.
+          </p>
+        </div>
+
+        <div style="text-align: center; margin-top: 16px;">
+          <p style="color: #94a3b8; font-size: 12px;">
+            Revisa Aula • App de Estudos Inteligente
           </p>
         </div>
       </div>
