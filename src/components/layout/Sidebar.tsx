@@ -20,7 +20,7 @@ import {
   Settings,
 } from "lucide-react";
 
-const DASHBOARD_ITEM = { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard } as const;
+const DASHBOARD_PATH = "/dashboard";
 
 const NAV_ITEMS = [
   { path: "/tags", label: "Tags", icon: Tags },
@@ -80,8 +80,10 @@ export const Sidebar: React.FC = () => {
       <nav className="flex-grow py-6 px-3 flex flex-col gap-2 overflow-y-auto">
         {/* Dashboard (sempre no topo) */}
         <Link
-          to={DASHBOARD_ITEM.path}
+          to={DASHBOARD_PATH}
           className={`flex items-center gap-3.5 px-3.5 py-3 rounded-xl font-medium transition-all duration-200 select-none ${
+            sidebarCollapsed ? "justify-center" : ""
+          } ${
             location.pathname === "/dashboard" ||
             location.pathname.startsWith("/notebooks/")
               ? "bg-brand-500 text-white shadow-md shadow-brand-500/10"
@@ -100,6 +102,8 @@ export const Sidebar: React.FC = () => {
               type="button"
               onClick={() => setPlanningExpanded(!planningExpanded)}
               className={`flex items-center gap-3.5 px-3.5 py-3 rounded-xl font-medium transition-all duration-200 select-none w-full text-left cursor-pointer ${
+                sidebarCollapsed ? "justify-center" : ""
+              } ${
                 isPlanningActive
                   ? "bg-brand-500 text-white shadow-md shadow-brand-500/10"
                   : "text-slate-650 hover:bg-slate-100 dark:text-dark-300 dark:hover:bg-dark-800/60"
@@ -130,7 +134,7 @@ export const Sidebar: React.FC = () => {
                           : "text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:text-dark-400 dark:hover:text-dark-200 dark:hover:bg-dark-800/40"
                       }`}
                     >
-                      <SubIcon className="h-4 w-4 flex-shrink-0" />
+                      <SubIcon className="h-5 w-5 flex-shrink-0" />
                       <span className="truncate">{item.label}</span>
                     </Link>
                   );
@@ -142,7 +146,7 @@ export const Sidebar: React.FC = () => {
           /* Collapsed: just show the icon, no sub-items */
           <Link
             to="/planning/agenda"
-            className={`flex items-center justify-center gap-3.5 px-3.5 py-3 rounded-xl font-medium transition-all duration-200 select-none ${
+            className={`flex items-center justify-center px-3.5 py-3 rounded-xl font-medium transition-all duration-200 select-none ${
               isPlanningActive
                 ? "bg-brand-500 text-white shadow-md shadow-brand-500/10"
                 : "text-slate-650 hover:bg-slate-100 dark:text-dark-300 dark:hover:bg-dark-800/60"
@@ -161,6 +165,8 @@ export const Sidebar: React.FC = () => {
               key={item.path}
               to={item.path}
               className={`flex items-center gap-3.5 px-3.5 py-3 rounded-xl font-medium transition-all duration-200 select-none ${
+                sidebarCollapsed ? "justify-center" : ""
+              } ${
                 isActive
                   ? "bg-brand-500 text-white shadow-md shadow-brand-500/10"
                   : "text-slate-650 hover:bg-slate-100 dark:text-dark-300 dark:hover:bg-dark-800/60"
@@ -181,6 +187,8 @@ export const Sidebar: React.FC = () => {
         <Link
           to="/trash"
           className={`flex items-center gap-3.5 px-3.5 py-3 rounded-xl font-medium transition-all duration-200 select-none ${
+            sidebarCollapsed ? "justify-center" : ""
+          } ${
             isTrashActive
               ? "bg-brand-500 text-white shadow-md shadow-brand-500/10"
               : "text-slate-650 hover:bg-slate-100 dark:text-dark-300 dark:hover:bg-dark-800/60"
