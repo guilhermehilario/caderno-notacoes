@@ -43,6 +43,19 @@ const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue = [];
 };
 
+/** Redireciona para /login com reload completo — usado fora da árvore React */
+function forceRedirectToLogin() {
+  if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+    window.location.href = '/login';
+  }
+}
+
+/** Força logout + redireciona para evitar estado quebrado */
+function forceLogoutAndRedirect() {
+  useAuthStore.getState().logout();
+  forceRedirectToLogin();
+}
+
 // Interceptor de Resposta para tratar erros 401 e atualizar token automaticamente
 api.interceptors.response.use(
   (response) => response,
@@ -56,10 +69,13 @@ api.interceptors.response.use(
       !originalRequest._retry
     ) {
       // 🔴 Se já estourou o limite de falhas consecutivas de refresh,
-      //    não tenta mais — só rejeita. Evita loop infinito.
+      //    o token é inválido e não há nada que possamos fazer.
+      //    Força logout + redirect imediatamente.
       if (refreshFailCount >= MAX_REFRESH_FAILURES) {
+        forceLogoutAndRedirect();
         return Promise.reject(error);
       }
+
       // Se já tentamos refresh recentemente, pula para evitar loop
       if (Date.now() - lastRefreshAttempt < REFRESH_COOLDOWN_MS) {
         return Promise.reject(error);
@@ -105,12 +121,13 @@ api.interceptors.response.use(
         //    para evitar que o app fique num estado quebrado com todos os
         //    endpoints retornando 401 infinitamente.
         const refreshStatus = (refreshError as { response?: { status?: number } })?.response?.status;
-        if (refreshStatus === 401 || refreshFailCount >= MAX_REFRESH_FAILURES) {
-          useAuthStore.getState().logout();
-          // Redireciona para /login se não estiver lá (fora da árvore React)
-          if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
-            window.location.href = '/login';
-          }
+
+        // 🔴 Também força logout quando o limite de falhas é atingido,
+        //    mesmo que o erro não seja 401 (ex: network error, timeout, 500).
+        //    Antes isso criava um estado quebrado onde o usuário ficava preso
+        //    no dashboard com token inválido e sem nunca ser redirecionado.
+        if (refreshFailCount >= MAX_REFRESH_FAILURES || refreshStatus === 401) {
+          forceLogoutAndRedirect();
         }
 
         return Promise.reject(refreshError);

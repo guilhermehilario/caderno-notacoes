@@ -140,14 +140,9 @@ export const EstudosView: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto flex flex-col gap-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-heading font-bold text-slate-800 dark:text-dark-50">
-          Estudos
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-dark-400 mt-1">
-          Escolha como deseja estudar hoje
-        </p>
-      </div>
+      <p className="text-sm text-slate-500 dark:text-dark-400">
+        Escolha como deseja estudar hoje
+      </p>
 
       {/* Stats Overview */}
       {stats && (

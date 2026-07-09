@@ -90,17 +90,9 @@ const TodoListView: React.FC = () => {
   return (
     <div className="max-w-3xl mx-auto flex flex-col gap-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-heading font-extrabold tracking-tight m-0 text-slate-900 dark:text-dark-50 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 flex items-center justify-center text-emerald-500">
-            <ListChecks className="h-6 w-6" />
-          </div>
-          Lista de Tarefas
-        </h1>
-        <p className="text-slate-500 dark:text-dark-350 mt-1 ml-[52px]">
-          Organize suas tarefas e acompanhe o que precisa ser feito
-        </p>
-      </div>
+      <p className="text-slate-500 dark:text-dark-350">
+        Organize suas tarefas e acompanhe o que precisa ser feito
+      </p>
 
       {/* Add Todo Form */}
       <div className="flex items-center gap-3">

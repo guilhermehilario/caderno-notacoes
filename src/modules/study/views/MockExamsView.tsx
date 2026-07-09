@@ -111,14 +111,9 @@ export const MockExamsView: React.FC = () => {
         </Button>
       </div>
 
-      <div>
-        <h1 className="text-2xl font-heading font-bold text-slate-800 dark:text-dark-50">
-          Simulados
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-dark-400 mt-1">
-          {notebookId ? "Simulados da matéria selecionada" : "Todos os simulados disponíveis"}
-        </p>
-      </div>
+      <p className="text-sm text-slate-500 dark:text-dark-400">
+        {notebookId ? "Simulados da matéria selecionada" : "Todos os simulados disponíveis"}
+      </p>
 
       {exams.length === 0 ? (
         <Card className="p-8 text-center">

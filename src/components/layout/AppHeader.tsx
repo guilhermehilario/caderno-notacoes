@@ -15,7 +15,6 @@ import { SaveStatusIndicator } from '../ui/SaveStatusIndicator.tsx';
 import {
   BookOpen,
   GraduationCap,
-  LayoutDashboard,
   BookmarkIcon,
   Tags,
   Trash2,
@@ -28,7 +27,7 @@ import { NotificationPanel } from '../ui/NotificationPanel.tsx';
 import { ProfileModal } from '../../modules/profile/ProfileModal.tsx';
 
 const PAGE_CONFIG: Record<string, { title: string; icon: React.ComponentType<{ className?: string }>; subtitle: string }> = {
-  '/dashboard': { title: 'Dashboard', icon: LayoutDashboard, subtitle: 'Visão geral dos seus estudos' },
+  '/dashboard': { title: 'Cadernos', icon: BookOpen, subtitle: 'Gerencie seus materiais universitários e crie resumos de forma organizada' },
   '/study': { title: 'Estudar Flashcards', icon: GraduationCap, subtitle: 'Revise seus flashcards com repetição espaçada' },
   '/leaves/': { title: 'Editor de Anotação', icon: BookOpen, subtitle: 'Edite suas anotações' },
   '/tags': { title: 'Gerenciar Tags', icon: Tags, subtitle: 'Gerencie suas tags' },
@@ -49,7 +48,7 @@ const PLANNING_TAB_LABELS: Record<string, string> = {
   settings: 'Configurações',
 };
 
-const DEFAULT_PAGE = { title: 'Dashboard', icon: LayoutDashboard, subtitle: 'Gerencie suas anotações e estudos' };
+const DEFAULT_PAGE = { title: 'Cadernos', icon: BookOpen, subtitle: 'Gerencie seus materiais universitários e crie resumos de forma organizada' };
 
 export const AppHeader: React.FC = () => {
   const navigate = useNavigate();
@@ -94,7 +93,7 @@ export const AppHeader: React.FC = () => {
 
     if (path === '/dashboard' || path === '/') return [];
 
-    parts.push({ label: 'Dashboard', path: '/dashboard' });
+    parts.push({ label: 'Cadernos', path: '/dashboard' });
 
     if (pathIds.notebookId) {
       parts.push({

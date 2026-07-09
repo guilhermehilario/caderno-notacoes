@@ -34,19 +34,9 @@ export const BookmarksView: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto flex flex-col gap-6">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/20 flex items-center justify-center text-amber-500 flex-shrink-0">
-          <BookmarkIcon className="h-5 w-5" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-heading font-extrabold tracking-tight text-slate-900 dark:text-dark-50">
-            Páginas Marcadas
-          </h1>
-          <p className="text-slate-500 dark:text-dark-350 mt-0.5">
-            Acesse rapidamente suas páginas favoritas
-          </p>
-        </div>
-      </div>
+      <p className="text-slate-500 dark:text-dark-350">
+        Acesse rapidamente suas páginas favoritas
+      </p>
 
       {bookmarks.length === 0 ? (
         <Card className="flex flex-col items-center justify-center text-center p-12 min-h-[30vh] border border-dashed border-slate-200 dark:border-dark-800">
