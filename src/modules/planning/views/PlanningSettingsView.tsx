@@ -1,4 +1,5 @@
 import React from 'react';
+import { PageContainer } from '../../../components/ui/PageContainer.tsx';
 import {
   Palette,
   Timer,
@@ -13,7 +14,7 @@ export const PlanningSettingsView: React.FC = () => {
   const settings = usePlanningSettingsStore();
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-8">
+    <PageContainer gap="8">
       {/* ── Cor de Destaque ── */}
       <section className="flex flex-col gap-4">
         <div className="flex items-center gap-2.5">
@@ -210,7 +211,7 @@ export const PlanningSettingsView: React.FC = () => {
       </section>
 
       <div className="pb-8" />
-    </div>
+    </PageContainer>
   );
 };
 

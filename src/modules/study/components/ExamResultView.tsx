@@ -1,5 +1,6 @@
 import React from "react";
 import { Timer, CheckCircle } from "lucide-react";
+import { PageContainer } from "../../../components/ui/PageContainer.tsx";
 import { Card } from "../../../components/ui/Card.tsx";
 import { Button } from "../../../components/ui/Button.tsx";
 import type { MockExam } from "../types";
@@ -25,7 +26,7 @@ export const ExamResultView: React.FC<ExamResultViewProps> = ({
   const percentage = total > 0 ? ((correctCount / total) * 100).toFixed(0) : "0";
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-6">
+    <PageContainer>
       <Card className="p-8 text-center">
         <div className="flex items-center justify-center mb-4">
           {Number(percentage) >= 70 ? (
@@ -95,7 +96,7 @@ export const ExamResultView: React.FC<ExamResultViewProps> = ({
           );
         })}
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

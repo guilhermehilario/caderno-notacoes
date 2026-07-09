@@ -11,6 +11,7 @@ import {
   Check,
 } from "lucide-react";
 import { useTodos, useCreateTodo, useUpdateTodo, useDeleteTodo } from "../hooks/useTodos";
+import { PageContainer } from "../../../components/ui/PageContainer.tsx";
 import { EmptyState } from "../../../components/ui/EmptyState.tsx";
 import { LoadingScreen } from "../../../components/ui/LoadingScreen.tsx";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog.tsx";
@@ -88,7 +89,7 @@ const TodoListView: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-6">
+    <PageContainer>
       {/* Header */}
       <p className="text-slate-500 dark:text-dark-350">
         Organize suas tarefas e acompanhe o que precisa ser feito
@@ -191,7 +192,7 @@ const TodoListView: React.FC = () => {
         confirmLabel="Excluir"
         confirmVariant="danger"
       />
-    </div>
+    </PageContainer>
   );
 };
 

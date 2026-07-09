@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useArchivedLeaves } from '../hooks/useLeaves';
 import { Archive, FileText, Loader2, RotateCcw, BookOpen, Calendar } from 'lucide-react';
+import { PageContainer } from '../../../components/ui/PageContainer.tsx';
 import { Card } from '../../../components/ui/Card.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
 import { useToastStore } from '../../../store/toastStore';
@@ -38,7 +39,7 @@ export const ArchivedLeavesView: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-6">
+    <PageContainer>
       <p className="text-slate-500 dark:text-dark-350">
         Folhas arquivadas que foram ocultadas do caderno
       </p>
@@ -104,7 +105,7 @@ export const ArchivedLeavesView: React.FC = () => {
           ))}
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 };
 

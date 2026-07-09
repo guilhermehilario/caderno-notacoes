@@ -10,6 +10,7 @@ import {
   X,
 } from "lucide-react";
 import { useMockExams, useDeleteMockExam } from "../hooks/useMockExams";
+import { PageContainer } from "../../../components/ui/PageContainer.tsx";
 import { Card } from "../../../components/ui/Card.tsx";
 import { Button } from "../../../components/ui/Button.tsx";
 import { EmptyState } from "../../../components/ui/EmptyState.tsx";
@@ -94,7 +95,7 @@ export const MockExamsView: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-6">
+    <PageContainer>
       <div className="flex items-center justify-between">
         <Link
           to="/studies"
@@ -196,7 +197,7 @@ export const MockExamsView: React.FC = () => {
         confirmLabel="Excluir"
         isLoading={deleteExam.isPending}
       />
-    </div>
+    </PageContainer>
   );
 };
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTags, useCreateTag, useUpdateTag, useDeleteTag } from '../hooks/useTags';
 import { Plus, Edit2, Trash2, Loader2, TagIcon } from 'lucide-react';
+import { PageContainer } from '../../../components/ui/PageContainer.tsx';
 import { Card } from '../../../components/ui/Card.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
 import { Modal } from '../../../components/ui/Modal.tsx';
@@ -69,7 +70,7 @@ export const TagsManagementView: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-6">
+    <PageContainer>
       <div className="flex justify-between items-center">
         <p className="text-slate-500 dark:text-dark-350">
           Crie, edite e exclua tags para classificar suas folhas de anotação
@@ -240,7 +241,7 @@ export const TagsManagementView: React.FC = () => {
         confirmLabel="Excluir"
         variant="danger"
       />
-    </div>
+    </PageContainer>
   );
 };
 

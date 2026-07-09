@@ -5,6 +5,7 @@ import { Plus, BookOpen, BarChart3 } from 'lucide-react';
 import { useNotebooks } from '../hooks/useNotebooks';
 import { CreateNotebookSchema } from '../types';
 import type { CreateNotebookInput } from '../types';
+import { PageContainer } from '../../../components/ui/PageContainer.tsx';
 import { NotebookCard } from '../components/NotebookCard.tsx';
 import { StudyProgressSummaryModal } from '../../../modules/study/components/StudyProgressSummaryModal.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
@@ -58,7 +59,7 @@ export const DashboardView: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-8">
+    <PageContainer gap="8">
       {/* Progresso dos Estudos Modal */}
       <StudyProgressSummaryModal
         isOpen={isProgressModalOpen}
@@ -161,7 +162,7 @@ export const DashboardView: React.FC = () => {
           />
         </form>
       </Modal>
-    </div>
+    </PageContainer>
   );
 };
 export default DashboardView;

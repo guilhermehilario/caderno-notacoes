@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTrash, useRestoreNotebook, useRestoreLeaf, usePermanentDeleteNotebook, usePermanentDeleteLeaf, useCleanTrash } from '../hooks/useTrash';
 import { Trash2, RotateCcw, Loader2, BookOpen, FileText, AlertTriangle, Clock, XCircle } from 'lucide-react';
+import { PageContainer } from '../../../components/ui/PageContainer.tsx';
 import { Card } from '../../../components/ui/Card.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog.tsx';
@@ -80,7 +81,7 @@ export const TrashView: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-6">
+    <PageContainer>
       <div className="flex justify-between items-center">
         <p className="text-slate-500 dark:text-dark-350">
           Itens excluídos são mantidos por 15 dias antes da exclusão permanente
@@ -196,7 +197,7 @@ export const TrashView: React.FC = () => {
         confirmLabel="Limpar Lixeira"
         variant="danger"
       />
-    </div>
+    </PageContainer>
   );
 };
 

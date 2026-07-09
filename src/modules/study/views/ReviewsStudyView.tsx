@@ -14,6 +14,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { studyService } from "../services/studyService";
 import { useSubmitCardScore } from "../hooks/useFlashcards";
+import { PageContainer } from "../../../components/ui/PageContainer.tsx";
 import { Card } from "../../../components/ui/Card.tsx";
 import { Button } from "../../../components/ui/Button.tsx";
 import { ScoreButtons } from "../components/ScoreButtons";
@@ -144,7 +145,7 @@ export const ReviewsStudyView: React.FC = () => {
       (studyContent?.flashcardsDue.length || 0) + Math.min(studyContent?.questions.length || 0, 10);
 
     return (
-      <div className="max-w-4xl mx-auto flex flex-col gap-6">
+      <PageContainer>
         <Link
           to="/studies"
           className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-dark-300 hover:text-brand-500 transition-colors w-fit"
@@ -189,14 +190,14 @@ export const ReviewsStudyView: React.FC = () => {
             </>
           )}
         </Card>
-      </div>
+      </PageContainer>
     );
   }
 
   // Session finished
   if (sessionFinished) {
     return (
-      <div className="max-w-4xl mx-auto flex flex-col gap-6">
+      <PageContainer>
         <Link
           to="/studies"
           className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-dark-300 hover:text-brand-500 transition-colors w-fit"
@@ -224,14 +225,14 @@ export const ReviewsStudyView: React.FC = () => {
             </Button>
           </div>
         </Card>
-      </div>
+      </PageContainer>
     );
   }
 
   // No items
   if (reviewCards.length === 0) {
     return (
-      <div className="max-w-4xl mx-auto flex flex-col gap-6">
+      <PageContainer>
         <Card className="p-8 text-center">
           <BookOpen className="h-12 w-12 mx-auto text-slate-300 dark:text-dark-600 mb-3" />
           <h3 className="text-lg font-heading font-bold text-slate-800 dark:text-dark-50 mb-1">
@@ -239,7 +240,7 @@ export const ReviewsStudyView: React.FC = () => {
           </h3>
           <Button onClick={() => navigate("/studies")}>Voltar</Button>
         </Card>
-      </div>
+      </PageContainer>
     );
   }
 
@@ -249,7 +250,7 @@ export const ReviewsStudyView: React.FC = () => {
   if (currentItem.type === "flashcard") {
     const card = currentItem.data as Flashcard;
     return (
-      <div className="max-w-4xl mx-auto flex flex-col gap-6">
+      <PageContainer>
         <div className="flex items-center justify-between">
           <button
             type="button"
@@ -298,7 +299,7 @@ export const ReviewsStudyView: React.FC = () => {
         </Card>
 
         {showResult && <ScoreButtons onScoreSelect={handleScoreSelect} />}
-      </div>
+      </PageContainer>
     );
   }
 
@@ -308,7 +309,7 @@ export const ReviewsStudyView: React.FC = () => {
   const isAnswerCorrect = selectedOption && selectedOption === question.correctAnswer;
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-6">
+    <PageContainer>
       <div className="flex items-center justify-between">
         <button
           type="button"
@@ -356,7 +357,7 @@ export const ReviewsStudyView: React.FC = () => {
           </div>
         )}
       </Card>
-    </div>
+    </PageContainer>
   );
 };
 

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ArrowLeft, Timer, HelpCircle } from "lucide-react";
+import { PageContainer } from "../../../components/ui/PageContainer.tsx";
 import { Card } from "../../../components/ui/Card.tsx";
 import { Button } from "../../../components/ui/Button.tsx";
 import { QuestionOption } from "../../../components/ui/QuestionOption.tsx";
@@ -41,17 +42,17 @@ export const ExamTakingView: React.FC<ExamTakingViewProps> = ({
 
   if (questions.length === 0) {
     return (
-      <div className="max-w-4xl mx-auto flex flex-col gap-6">
+      <PageContainer>
         <Card className="p-8 text-center">
           <p className="text-slate-500">Este simulado não possui questões.</p>
           <Button onClick={onBack} className="mt-4">Voltar</Button>
         </Card>
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-6">
+    <PageContainer>
       <div className="flex items-center justify-between">
         <button
           type="button"
@@ -103,7 +104,7 @@ export const ExamTakingView: React.FC<ExamTakingViewProps> = ({
           </Button>
         </div>
       </Card>
-    </div>
+    </PageContainer>
   );
 };
 

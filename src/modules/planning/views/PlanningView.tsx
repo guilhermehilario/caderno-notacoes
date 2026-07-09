@@ -7,6 +7,7 @@ import {
   Timer,
   ListChecks,
 } from 'lucide-react';
+import { PageContainer } from '../../../components/ui/PageContainer.tsx';
 import { AgendaTab } from '../components/AgendaTab.tsx';
 import { CalendarTab } from '../components/CalendarTab.tsx';
 import { CronogramaTab } from '../components/CronogramaTab.tsx';
@@ -43,7 +44,7 @@ export const PlanningView: React.FC = () => {
   const ActiveComponent = TAB_COMPONENTS[activeTab];
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-6">
+    <PageContainer>
       {/* Header */}
       <div>
         <p className="text-slate-500 dark:text-dark-350">
@@ -55,7 +56,7 @@ export const PlanningView: React.FC = () => {
       <div className="min-h-[60vh]">
         <ActiveComponent />
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

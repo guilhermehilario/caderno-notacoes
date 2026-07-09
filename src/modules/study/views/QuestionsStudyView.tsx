@@ -11,6 +11,7 @@ import {
   Shuffle,
 } from "lucide-react";
 import { useRandomQuestions } from "../hooks/useQuestions";
+import { PageContainer } from "../../../components/ui/PageContainer.tsx";
 import { Card } from "../../../components/ui/Card.tsx";
 import { Button } from "../../../components/ui/Button.tsx";
 import { EmptyState } from "../../../components/ui/EmptyState.tsx";
@@ -85,7 +86,7 @@ export const QuestionsStudyView: React.FC = () => {
   // Tela inicial - antes de começar
   if (!sessionStarted) {
     return (
-      <div className="max-w-4xl mx-auto flex flex-col gap-6">
+      <PageContainer>
         <Link
           to="/studies"
           className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-dark-300 hover:text-brand-500 transition-colors w-fit"
@@ -123,14 +124,14 @@ export const QuestionsStudyView: React.FC = () => {
             </Button>
           </Card>
         )}
-      </div>
+      </PageContainer>
     );
   }
 
   // Tela de resultado final
   if (isLastQuestion && showResult && selectedOption !== null) {
     return (
-      <div className="max-w-4xl mx-auto flex flex-col gap-6">
+      <PageContainer>
         <Link
           to="/studies"
           className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-dark-300 hover:text-brand-500 transition-colors w-fit"
@@ -166,14 +167,14 @@ export const QuestionsStudyView: React.FC = () => {
             </Button>
           </div>
         </Card>
-      </div>
+      </PageContainer>
     );
   }
 
   if (!currentQuestion) return null;
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-6">
+    <PageContainer>
       {/* Top Navigation */}
       <div className="flex items-center justify-between">
         <Link
@@ -241,7 +242,7 @@ export const QuestionsStudyView: React.FC = () => {
           </div>
         )}
       </Card>
-    </div>
+    </PageContainer>
   );
 };
 

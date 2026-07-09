@@ -14,6 +14,7 @@ import notebookService from "../../notebooks/services/notebookService";
 import studyService from "../services/studyService";
 import { useSubmitCardScore } from "../hooks/useFlashcards";
 import { useStudyStore } from "../studyStore";
+import { PageContainer } from "../../../components/ui/PageContainer.tsx";
 import { Card } from "../../../components/ui/Card.tsx";
 import { Button } from "../../../components/ui/Button.tsx";
 import { ScoreButtons } from "../components/ScoreButtons";
@@ -112,7 +113,7 @@ export const FlashcardsStudyView: React.FC = () => {
 
   if (sessionFinished || cards.length === 0) {
     return (
-      <div className="max-w-4xl mx-auto flex flex-col gap-6">
+      <PageContainer>
         <div className="flex items-center justify-between">
           <Link
             to="/studies"
@@ -151,12 +152,12 @@ export const FlashcardsStudyView: React.FC = () => {
             }}
           />
         )}
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-6">
+    <PageContainer>
       {/* Top Navigation */}
       <div className="flex items-center justify-between">
         <Link
@@ -229,7 +230,7 @@ export const FlashcardsStudyView: React.FC = () => {
       </Card>
 
       {showAnswer && <ScoreButtons onScoreSelect={handleScoreSelect} />}
-    </div>
+    </PageContainer>
   );
 };
 

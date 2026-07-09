@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useBookmarks, useDeleteBookmark } from '../hooks/useBookmarks';
 import { BookmarkIcon, Trash2, Loader2, BookOpen, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { PageContainer } from '../../../components/ui/PageContainer.tsx';
 import { Card } from '../../../components/ui/Card.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog.tsx';
@@ -33,7 +34,7 @@ export const BookmarksView: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-6">
+    <PageContainer>
       <p className="text-slate-500 dark:text-dark-350">
         Acesse rapidamente suas páginas favoritas
       </p>
@@ -95,7 +96,7 @@ export const BookmarksView: React.FC = () => {
         confirmLabel="Remover"
         variant="danger"
       />
-    </div>
+    </PageContainer>
   );
 };
 

@@ -3,6 +3,7 @@ import { Plus, FileText, Loader2 } from "lucide-react";
 import { useNotebookData } from "../hooks/useNotebookData";
 import { useNotebookActions } from "../hooks/useNotebookActions";
 import { useNotebookLeafCreation } from "../hooks/useNotebookLeafCreation";
+import { PageContainer } from "../../../components/ui/PageContainer.tsx";
 import { Button } from "../../../components/ui/Button.tsx";
 import { EmptyState } from "../../../components/ui/EmptyState.tsx";
 import { LeafCard } from "../components/LeafCard";
@@ -106,7 +107,7 @@ export const NotebookView: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-6">
+    <PageContainer>
       {/* Cabeçalho */}
       <NotebookHeader
         notebook={notebook}
@@ -244,6 +245,6 @@ export const NotebookView: React.FC = () => {
           {actionError}
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 };

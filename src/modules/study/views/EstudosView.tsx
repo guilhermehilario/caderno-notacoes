@@ -14,6 +14,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import notebookService from "../../notebooks/services/notebookService";
 import { studyService } from "../services/studyService";
+import { PageContainer } from "../../../components/ui/PageContainer.tsx";
 import { Card } from "../../../components/ui/Card.tsx";
 import { Button } from "../../../components/ui/Button.tsx";
 import { EmptyState } from "../../../components/ui/EmptyState.tsx";
@@ -138,7 +139,7 @@ export const EstudosView: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-6">
+    <PageContainer>
       {/* Header */}
       <p className="text-sm text-slate-500 dark:text-dark-400">
         Escolha como deseja estudar hoje
@@ -302,7 +303,7 @@ export const EstudosView: React.FC = () => {
           </div>
         </Card>
       )}
-    </div>
+    </PageContainer>
   );
 };
 

@@ -14,6 +14,7 @@ import {
 } from "../hooks/useFlashcards";
 import { useStudySessionPersistence } from "../hooks/useStudySessionPersistence";
 import { useStudyStore } from "../studyStore";
+import { PageContainer } from "../../../components/ui/PageContainer.tsx";
 import { Card } from "../../../components/ui/Card.tsx";
 import { Button } from "../../../components/ui/Button.tsx";
 import { SaveStatusIndicator } from "../../../components/ui/SaveStatusIndicator.tsx";
@@ -181,7 +182,7 @@ export const StudyView: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-6">
+    <PageContainer>
       {/* Top Navigation */}
       <div className="flex items-center justify-between">
         <Link
@@ -248,7 +249,7 @@ export const StudyView: React.FC = () => {
 
       {/* Rating Buttons - Show only when answer is revealed */}
       {showAnswer && <ScoreButtons onScoreSelect={handleScoreSelect} />}
-    </div>
+    </PageContainer>
   );
 };
 
