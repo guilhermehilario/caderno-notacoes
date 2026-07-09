@@ -17,6 +17,8 @@ import { useSubmitCardScore } from "../hooks/useFlashcards";
 import { Card } from "../../../components/ui/Card.tsx";
 import { Button } from "../../../components/ui/Button.tsx";
 import { ScoreButtons } from "../components/ScoreButtons";
+import { safeParseOptions } from "../../../utils/parse-options";
+import { QuestionOption } from "../../../components/ui/QuestionOption.tsx";
 import type { Flashcard, StudyScore } from "../types";
 
 type ReviewItemType = "flashcard" | "question";
@@ -302,16 +304,6 @@ export const ReviewsStudyView: React.FC = () => {
 
   // Render question
   const question = currentItem.data as any;
-  const options = safeParseOptions(question.options);
-
-  function safeParseOptions(optionsStr: string): string[] {
-    try {
-      const parsed = JSON.parse(optionsStr);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  }
 
   const isAnswerCorrect = selectedOption && selectedOption === question.correctAnswer;
 
@@ -340,40 +332,14 @@ export const ReviewsStudyView: React.FC = () => {
           {question.question}
         </p>
 
-        <div className="flex flex-col gap-2">
-          {options.map((option: string, idx: number) => {
-            const isSelected = selectedOption === option;
-            let optionClass =
-              "flex items-center gap-3 p-3.5 rounded-xl border text-sm font-medium transition-all duration-200 cursor-pointer";
-
-            if (!selectedOption) {
-              optionClass += " border-slate-200 dark:border-dark-700 hover:border-rose-300 dark:hover:border-rose-700 hover:bg-rose-50/50 dark:hover:bg-rose-950/10";
-            } else if (isSelected && isAnswerCorrect) {
-              optionClass += " border-emerald-500 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300";
-            } else if (isSelected && !isAnswerCorrect) {
-              optionClass += " border-rose-500 bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-300";
-            } else if (option === question.correctAnswer && selectedOption) {
-              optionClass += " border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/10 text-emerald-600 dark:text-emerald-400";
-            } else {
-              optionClass += " border-slate-200 dark:border-dark-700 opacity-50";
-            }
-
-            return (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => !selectedOption && setSelectedOption(option)}
-                className={optionClass}
-                disabled={!!selectedOption}
-              >
-                <span className="w-6 h-6 rounded-full bg-slate-100 dark:bg-dark-800 flex items-center justify-center text-xs font-bold text-slate-500 dark:text-dark-400 flex-shrink-0">
-                  {String.fromCharCode(65 + idx)}
-                </span>
-                <span>{option}</span>
-              </button>
-            );
-          })}
-        </div>
+        <QuestionOption
+          options={question.options}
+          selectedOption={selectedOption}
+          correctAnswer={question.correctAnswer}
+          showResult={!!selectedOption}
+          colorTheme="rose"
+          onSelect={(option) => !selectedOption && setSelectedOption(option)}
+        />
 
         {selectedOption && question.explanation && (
           <div className="mt-4 p-3.5 rounded-xl bg-slate-50 dark:bg-dark-800/50 border border-slate-100 dark:border-dark-700">
