@@ -3,6 +3,7 @@ import {
   Post,
   Get,
   Put,
+  Delete,
   Body,
   Res,
   Req,
@@ -113,5 +114,20 @@ export class AuthController {
       body.currentPassword,
       body.newPassword,
     );
+  }
+
+  @Delete('profile')
+  @UseGuards(JwtAuthGuard)
+  async deleteAccount(
+    @CurrentUser('id') userId: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    await this.authService.deleteAccount(userId);
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: this.isSecure,
+      sameSite: 'lax',
+    });
+    return { message: 'Conta excluída permanentemente' };
   }
 }

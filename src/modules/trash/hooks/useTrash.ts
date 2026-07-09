@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import trashService from '../services/trashService';
+import type { Leaf } from '../../leaves/types';
 
 export function useTrash() {
   return useQuery({
@@ -24,7 +25,40 @@ export function useSoftDeleteLeaf() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (leafId: string) => trashService.softDeleteLeaf(leafId),
-    onSuccess: () => {
+    onSuccess: (_, leafId) => {
+      // ⚡ Remove a folha do cache da sidebar e do pai
+      const leafData = queryClient.getQueryData<Leaf>(["leaves", leafId]);
+      if (leafData) {
+        // Remove da lista da sidebar
+        queryClient.setQueryData<Leaf[]>(
+          ["notebooks", leafData.notebookId, "leaves"],
+          (old) => old?.filter((l) => l.id !== leafId) ?? old,
+        );
+        // Decrementa contagem de folhas
+        queryClient.setQueryData(
+          ["notebooks", leafData.notebookId],
+          (old: { leavesCount: number } | undefined) => {
+            if (!old) return old;
+            return { ...old, leavesCount: Math.max(0, old.leavesCount - 1) };
+          },
+        );
+        // Remove do array children da folha pai
+        if (leafData.parentId) {
+          queryClient.setQueryData<Leaf>(
+            ["leaves", leafData.parentId],
+            (old) => {
+              if (!old) return old;
+              return {
+                ...old,
+                children: (old.children ?? []).filter((c) => c.id !== leafId),
+              };
+            },
+          );
+        }
+        queryClient.removeQueries({ queryKey: ["leaves", leafId] });
+        queryClient.removeQueries({ queryKey: ["leaves", leafId, "summary"] });
+      }
+
       queryClient.invalidateQueries({ queryKey: ['trash'] });
     },
   });
@@ -65,7 +99,30 @@ export function usePermanentDeleteLeaf() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (leafId: string) => trashService.permanentDeleteLeaf(leafId),
-    onSuccess: () => {
+    onSuccess: (_, leafId) => {
+      // ⚡ Remove a folha do cache da sidebar e do pai
+      const leafData = queryClient.getQueryData<Leaf>(["leaves", leafId]);
+      if (leafData) {
+        queryClient.setQueryData<Leaf[]>(
+          ["notebooks", leafData.notebookId, "leaves"],
+          (old) => old?.filter((l) => l.id !== leafId) ?? old,
+        );
+        if (leafData.parentId) {
+          queryClient.setQueryData<Leaf>(
+            ["leaves", leafData.parentId],
+            (old) => {
+              if (!old) return old;
+              return {
+                ...old,
+                children: (old.children ?? []).filter((c) => c.id !== leafId),
+              };
+            },
+          );
+        }
+        queryClient.removeQueries({ queryKey: ["leaves", leafId] });
+        queryClient.removeQueries({ queryKey: ["leaves", leafId, "summary"] });
+      }
+
       queryClient.invalidateQueries({ queryKey: ['trash'] });
     },
   });

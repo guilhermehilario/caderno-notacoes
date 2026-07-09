@@ -146,7 +146,10 @@ export function useLeaf(leafId: string) {
     mutationFn: () => leafService.deleteLeaf(leafId),
     onSuccess: () => {
       if (leafQuery.data) {
-        const notebookId = leafQuery.data.notebookId;
+        const leafData = leafQuery.data;
+        const notebookId = leafData.notebookId;
+        const parentId = leafData.parentId;
+
         // ⚡ Remove a folha do cache + decrementa contagem — sem refetch
         queryClient.setQueryData<Leaf[]>(
           ["notebooks", notebookId, "leaves"],
@@ -159,6 +162,18 @@ export function useLeaf(leafId: string) {
             return { ...old, leavesCount: Math.max(0, old.leavesCount - 1) };
           },
         );
+
+        // ⚡ Remove do array children da folha pai
+        if (parentId) {
+          queryClient.setQueryData<Leaf>(["leaves", parentId], (old) => {
+            if (!old) return old;
+            return {
+              ...old,
+              children: (old.children ?? []).filter((c) => c.id !== leafId),
+            };
+          });
+        }
+
         queryClient.removeQueries({ queryKey: ["leaves", leafId] });
         queryClient.removeQueries({ queryKey: ["leaves", leafId, "summary"] });
       }

@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
@@ -207,5 +207,19 @@ export class AuthService {
     });
 
     return { message: 'Senha alterada com sucesso' };
+  }
+
+  async deleteAccount(userId: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) throw new NotFoundException('Usuário não encontrado');
+
+    // O CASCADE do Prisma + SQLite remove automaticamente todos os
+    // registros relacionados: notebooks, folhas, flashcards, sessões,
+    // tags, bookmarks, histórico, todos, eventos, metas, pomodoros.
+    await this.prisma.user.delete({
+      where: { id: userId },
+    });
   }
 }

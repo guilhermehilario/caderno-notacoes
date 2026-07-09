@@ -20,5 +20,9 @@ export const authService = {
     const response = await api.get<User>('/auth/profile');
     return response.data;
   },
+
+  async deleteAccount(): Promise<void> {
+    await api.delete('/auth/profile');
+  },
 };
 export default authService;
