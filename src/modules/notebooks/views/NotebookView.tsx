@@ -1,4 +1,3 @@
-import { memo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Plus, FileText, Loader2 } from "lucide-react";
 import { useNotebookData } from "../hooks/useNotebookData";
@@ -248,5 +247,3 @@ export const NotebookView: React.FC = () => {
     </div>
   );
 };
-
-
