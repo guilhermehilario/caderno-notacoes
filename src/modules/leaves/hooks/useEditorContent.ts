@@ -13,6 +13,7 @@ import { Annotation } from "../extensions/Annotation";
 import { Indent } from "../extensions/Indent";
 import { useDebounce } from "../../../hooks/useDebounce";
 import { useAuthStore } from "../../../modules/auth/store";
+import { useEditorStatusStore } from "../../../store/editorStatusStore";
 import type { Leaf } from "../types";
 
 const DEBOUNCE_MS = 800;
@@ -64,6 +65,10 @@ export function useEditorContent({
   const latestValuesRef = useRef({ title: "", content: "", rawText: "" });
   const leafIdRef = useRef(leafId);
   leafIdRef.current = leafId;
+  // 🔴 Inicializa com null — flushSave/sendKeepaliveSave são definidos depois via useCallback
+  //    Evita ReferenceError (temporal dead zone). O useEffect de sync atualiza as refs após mount.
+  const flushSaveRef = useRef<(() => Promise<void>) | null>(null);
+  const sendKeepaliveSaveRef = useRef<(() => void) | null>(null);
 
   const extensions = useMemo(
     () => [
@@ -102,9 +107,9 @@ export function useEditorContent({
 
       setLocalContent(currentHtml);
       setLocalRawText(ed.getText());
-      editorStatus.setSaveStatus("saving");
+      useEditorStatusStore.getState().setSaveStatus("saving");
     },
-    [editorStatus],
+    [], // 🔴 Não depende de editorStatus — acessa store diretamente
   );
 
   const editor = useEditor({
@@ -167,6 +172,12 @@ export function useEditorContent({
     latestValuesRef.current = { title: localTitle, content: localContent, rawText: localRawText };
   }, [localTitle, localContent, localRawText]);
 
+  // Mantém refs das funções atualizadas para uso em effects com deps vazias
+  useEffect(() => {
+    flushSaveRef.current = flushSave;
+    sendKeepaliveSaveRef.current = sendKeepaliveSave;
+  });
+
   /** Salva imediatamente sem esperar debounce */
   const flushSave = useCallback(async () => {
     const { title, content, rawText } = latestValuesRef.current;
@@ -180,21 +191,21 @@ export function useEditorContent({
     if (saveInFlightRef.current) return;
 
     saveInFlightRef.current = true;
-    editorStatus.setSaveStatus("saving");
+    useEditorStatusStore.getState().setSaveStatus("saving");
 
     try {
       await updateLeaf({ title: titleToSave, content, rawText });
       lastSavedRef.current = { title: titleToSave, content };
-      editorStatus.setLastUpdate(new Date().toISOString());
-      editorStatus.setSaveStatus("saved");
+      useEditorStatusStore.getState().setLastUpdate(new Date().toISOString());
+      useEditorStatusStore.getState().setSaveStatus("saved");
     } catch (err) {
-      editorStatus.setSaveStatus("error");
+      useEditorStatusStore.getState().setSaveStatus("error");
       const errorMessage = extractApiError(err, "Erro ao salvar. Tente novamente.");
       useToastStore.getState().addToast(errorMessage, "error");
     } finally {
       saveInFlightRef.current = false;
     }
-  }, [updateLeaf, editorStatus]);
+  }, [updateLeaf]); // 🔴 Não depende de editorStatus — acessa o store diretamente para evitar loop
 
   /**
    * Envia um salvamento de emergência via fetch com keepalive.
@@ -236,17 +247,19 @@ export function useEditorContent({
   }, []);
 
   // ── Salvar ao perder foco (mudar de aba), fechar aba, ou desmontar ──
+  // NOTA: Não colocar flushSave/sendKeepaliveSave nas deps pq elas mudam
+  // de referência e fazem o cleanup (que chama flushSave) disparar em loop.
+  // Em vez disso, acessamos os valores via refs dentro dos handlers.
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
-        // Tenta o salvamento normal (axios) + garantia com keepalive
-        flushSave();
-        sendKeepaliveSave();
+        flushSaveRef.current?.();
+        sendKeepaliveSaveRef.current?.();
       }
     };
 
     const handleBeforeUnload = () => {
-      sendKeepaliveSave();
+      sendKeepaliveSaveRef.current?.();
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -256,9 +269,9 @@ export function useEditorContent({
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("beforeunload", handleBeforeUnload);
       // Salva imediatamente ao desmontar o componente (navegação interna)
-      flushSave();
+      flushSaveRef.current?.();
     };
-  }, [flushSave, sendKeepaliveSave]);
+  }, []); // 🔴 Dependências vazias — usa refs para evitar loop de cleanup
 
   const debouncedTitle = useDebounce(localTitle, DEBOUNCE_MS);
   const debouncedContent = useDebounce(localContent, DEBOUNCE_MS);
@@ -283,9 +296,7 @@ export function useEditorContent({
       if (saveInFlightRef.current) return;
 
       saveInFlightRef.current = true;
-      startTransition(() => {
-        editorStatus.setSaveStatus("saving");
-      });
+      useEditorStatusStore.getState().setSaveStatus("saving");
 
       void updateLeaf({
         title: titleToSave,
@@ -297,20 +308,16 @@ export function useEditorContent({
             title: titleToSave,
             content: debouncedContent,
           };
-          editorStatus.setLastUpdate(new Date().toISOString());
-          startTransition(() => {
-            editorStatus.setSaveStatus("saved");
-          });
+          useEditorStatusStore.getState().setLastUpdate(new Date().toISOString());
+          useEditorStatusStore.getState().setSaveStatus("saved");
 
           // Volta ao status "idle" após 2s
           setTimeout(() => {
-            editorStatus.setSaveStatus("idle");
+            useEditorStatusStore.getState().setSaveStatus("idle");
           }, SAVE_STATUS_IDLE_MS);
         })
         .catch((err) => {
-          startTransition(() => {
-            editorStatus.setSaveStatus("error");
-          });
+          useEditorStatusStore.getState().setSaveStatus("error");
           const errorMessage = extractApiError(err, "Erro ao salvar. Tente novamente.");
           useToastStore.getState().addToast(errorMessage, "error");
         })
@@ -318,7 +325,8 @@ export function useEditorContent({
           saveInFlightRef.current = false;
         });
     }
-  }, [debouncedTitle, debouncedContent, debouncedRawText, updateLeaf, editorStatus]);
+  }, [debouncedTitle, debouncedContent, debouncedRawText, updateLeaf]);
+  // 🔴 editorStatus removido das deps — acessa store diretamente via getState() para evitar loop
 
   return {
     editor,
