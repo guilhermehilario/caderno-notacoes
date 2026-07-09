@@ -3,11 +3,13 @@ import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useUIStore } from '../../store/uiStore';
 import { useEditorStatusStore } from '../../store/editorStatusStore';
 import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../../modules/auth/hooks/useAuth';
 import {
   Menu,
   ArrowLeft,
   Clock,
   Bell,
+  User as UserIcon,
 } from 'lucide-react';
 import { SaveStatusIndicator } from '../ui/SaveStatusIndicator.tsx';
 import {
@@ -22,6 +24,7 @@ import {
   Calendar,
 } from 'lucide-react';
 import { useNotificationStore } from '../../store/notificationStore.ts';
+import { ProfileModal } from '../../modules/profile/ProfileModal.tsx';
 
 const PAGE_CONFIG: Record<string, { title: string; icon: React.ComponentType<{ className?: string }>; subtitle: string }> = {
   '/dashboard': { title: 'Dashboard', icon: LayoutDashboard, subtitle: 'Visão geral dos seus estudos' },
@@ -63,11 +66,13 @@ export const AppHeader: React.FC = () => {
   const { toggleSidebar } = useUIStore();
   const queryClient = useQueryClient();
   const editorStatus = useEditorStatusStore();
+  const { user } = useAuth();
   const notificationCount = useNotificationStore((s) => s.count);
   const notifications = useNotificationStore((s) => s.notifications);
   const acknowledge = useNotificationStore((s) => s.acknowledge);
   const acknowledgeAll = useNotificationStore((s) => s.acknowledgeAll);
   const [showNotifications, setShowNotifications] = React.useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = React.useState(false);
   const notifRef = React.useRef<HTMLDivElement>(null);
 
   // Extrai IDs da rota para breadcrumbs
@@ -199,8 +204,21 @@ export const AppHeader: React.FC = () => {
         </div>
       </div>
 
-      {/* Notification Bell */}
-      <div className="flex items-center gap-3">
+      {/* Right section: lastUpdate - notifications - profile */}
+      <div className="flex items-center gap-2">
+        {/* Editor Status Info (última atualização) */}
+        {editorStatus.visible && (
+          <div className="flex items-center gap-3 text-xs font-semibold mr-1">
+            {editorStatus.lastUpdate && (
+              <span className="flex items-center gap-1.5 text-slate-400 dark:text-dark-400 whitespace-nowrap">
+                <Clock className="h-3.5 w-3.5" />
+                {new Date(editorStatus.lastUpdate).toLocaleString('pt-BR')}
+              </span>
+            )}
+            <SaveStatusIndicator status={editorStatus.saveStatus} />
+          </div>
+        )}
+
         {/* Notification Bell */}
         <div className="relative" ref={notifRef}>
           <button
@@ -292,19 +310,32 @@ export const AppHeader: React.FC = () => {
           )}
         </div>
 
-        {/* Editor Status Info */}
-        {editorStatus.visible && (
-          <div className="flex items-center gap-3 text-xs font-semibold">
-            {editorStatus.lastUpdate && (
-              <span className="flex items-center gap-1.5 text-slate-400 dark:text-dark-400">
-                <Clock className="h-3.5 w-3.5" />
-                {new Date(editorStatus.lastUpdate).toLocaleString('pt-BR')}
-              </span>
+        {/* Profile Button */}
+        <button
+          type="button"
+          onClick={() => setIsProfileModalOpen(true)}
+          className="flex items-center gap-2 p-1.5 pl-2 pr-2.5 rounded-xl text-slate-500 dark:text-dark-400 hover:bg-slate-100 dark:hover:bg-dark-800 transition-all cursor-pointer group ml-1"
+          title="Perfil"
+        >
+          <div className="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center text-brand-600 dark:text-brand-400 overflow-hidden flex-shrink-0 group-hover:ring-2 ring-brand-300 transition-all">
+            {user?.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt={user?.name || "Avatar"}
+                className="w-full h-full rounded-full object-cover"
+              />
+            ) : (
+              <UserIcon className="h-4 w-4" />
             )}
-            <SaveStatusIndicator status={editorStatus.saveStatus} />
           </div>
-        )}
+        </button>
       </div>
+
+      {/* Profile Modal */}
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+      />
     </header>
   );
 };

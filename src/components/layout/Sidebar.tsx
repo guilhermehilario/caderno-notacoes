@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "../../modules/auth/hooks/useAuth";
 import { useUIStore } from "../../store/uiStore";
 import {
   Brain,
@@ -10,7 +9,6 @@ import {
   ListChecks,
   Tags,
   Trash2,
-  User as UserIcon,
   ChevronLeft,
   ChevronDown,
   ChevronRight,
@@ -21,10 +19,10 @@ import {
   Timer,
   Settings,
 } from "lucide-react";
-import { ProfileModal } from "../../modules/profile/ProfileModal.tsx";
+
+const DASHBOARD_ITEM = { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard } as const;
 
 const NAV_ITEMS = [
-  { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { path: "/tags", label: "Tags", icon: Tags },
   { path: "/bookmarks", label: "Marcadores", icon: BookmarkIcon },
   { path: "/archived", label: "Arquivados", icon: Archive },
@@ -41,10 +39,8 @@ const PLANNING_SUB_ITEMS = [
 ] as const;
 
 export const Sidebar: React.FC = () => {
-  const { user } = useAuth();
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
   const location = useLocation();
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const isTrashActive = location.pathname.startsWith("/trash");
   const isPlanningActive = location.pathname.startsWith("/planning");
@@ -82,32 +78,19 @@ export const Sidebar: React.FC = () => {
 
       {/* Links de Navegação */}
       <nav className="flex-grow py-6 px-3 flex flex-col gap-2 overflow-y-auto">
-        {NAV_ITEMS.map((item) => {
-          const Icon = item.icon;
-          // Dashboard fica ativo também nas rotas de notebook/leaf/study
-          const isActive =
-            item.path === "/dashboard"
-              ? location.pathname === "/dashboard" ||
-                location.pathname.startsWith("/notebooks/")
-              : location.pathname.startsWith(item.path);
-
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex items-center gap-3.5 px-3.5 py-3 rounded-xl font-medium transition-all duration-200 select-none ${
-                isActive
-                  ? "bg-brand-500 text-white shadow-md shadow-brand-500/10"
-                  : "text-slate-650 hover:bg-slate-100 dark:text-dark-300 dark:hover:bg-dark-800/60"
-              }`}
-            >
-              <Icon className="h-5 w-5 flex-shrink-0" />
-              {!sidebarCollapsed && (
-                <span className="truncate">{item.label}</span>
-              )}
-            </Link>
-          );
-        })}
+        {/* Dashboard (sempre no topo) */}
+        <Link
+          to={DASHBOARD_ITEM.path}
+          className={`flex items-center gap-3.5 px-3.5 py-3 rounded-xl font-medium transition-all duration-200 select-none ${
+            location.pathname === "/dashboard" ||
+            location.pathname.startsWith("/notebooks/")
+              ? "bg-brand-500 text-white shadow-md shadow-brand-500/10"
+              : "text-slate-650 hover:bg-slate-100 dark:text-dark-300 dark:hover:bg-dark-800/60"
+          }`}
+        >
+          <LayoutDashboard className="h-5 w-5 flex-shrink-0" />
+          {!sidebarCollapsed && <span className="truncate">Dashboard</span>}
+        </Link>
 
         {/* ── Planejamento (expansível) ── */}
         {!sidebarCollapsed ? (
@@ -168,10 +151,35 @@ export const Sidebar: React.FC = () => {
             <Calendar className="h-5 w-5 flex-shrink-0" />
           </Link>
         )}
+
+        {/* Divisor sutil */}
+        <div className="my-1 border-t border-slate-100 dark:border-dark-800/60" />
+
+        {/* Demais itens (Tags, Marcadores, Arquivados, Tarefas) */}
+        {NAV_ITEMS.map((item) => {
+          const Icon = item.icon;
+          const isActive = location.pathname.startsWith(item.path);
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`flex items-center gap-3.5 px-3.5 py-3 rounded-xl font-medium transition-all duration-200 select-none ${
+                isActive
+                  ? "bg-brand-500 text-white shadow-md shadow-brand-500/10"
+                  : "text-slate-650 hover:bg-slate-100 dark:text-dark-300 dark:hover:bg-dark-800/60"
+              }`}
+            >
+              <Icon className="h-5 w-5 flex-shrink-0" />
+              {!sidebarCollapsed && (
+                <span className="truncate">{item.label}</span>
+              )}
+            </Link>
+          );
+        })}
       </nav>
 
       {/* Footer da Sidebar */}
-      <div className="p-3 border-t border-slate-50 dark:border-dark-800/60 flex flex-col gap-2">
+      <div className="p-3 border-t border-slate-50 dark:border-dark-800/60">
         {/* Botão Lixeira */}
         <Link
           to="/trash"
@@ -184,35 +192,6 @@ export const Sidebar: React.FC = () => {
           <Trash2 className="h-5 w-5 flex-shrink-0" />
           {!sidebarCollapsed && <span className="truncate">Lixeira</span>}
         </Link>
-
-        {/* Dados do usuário (clicável → abre modal de perfil) */}
-        <button
-          type="button"
-          onClick={() => setIsProfileModalOpen(true)}
-          className="flex items-center gap-3 p-2 rounded-xl bg-slate-50 dark:bg-dark-950/60 overflow-hidden hover:bg-slate-100 dark:hover:bg-dark-800/60 transition-colors cursor-pointer w-full text-left"
-        >
-          <div className="w-10 h-10 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center text-brand-600 dark:text-brand-400 flex-shrink-0">
-            {user?.avatarUrl ? (
-              <img
-                src={user.avatarUrl}
-                alt={user.name}
-                className="w-full h-full rounded-full object-cover"
-              />
-            ) : (
-              <UserIcon className="h-5 w-5" />
-            )}
-          </div>
-          {!sidebarCollapsed && (
-            <div className="flex-grow overflow-hidden">
-              <p className="text-sm font-semibold truncate text-slate-800 dark:text-dark-100">
-                {user?.name || "Estudante"}
-              </p>
-              <p className="text-xs truncate text-slate-400 dark:text-dark-400">
-                {user?.email}
-              </p>
-            </div>
-          )}
-        </button>
       </div>
 
       {/* Toggle Collapse Button */}
@@ -226,12 +205,6 @@ export const Sidebar: React.FC = () => {
           <ChevronLeft className="h-4 w-4" />
         )}
       </button>
-
-      {/* Profile/Settings Modal */}
-      <ProfileModal
-        isOpen={isProfileModalOpen}
-        onClose={() => setIsProfileModalOpen(false)}
-      />
     </aside>
   );
 };

@@ -66,6 +66,9 @@ export const DashboardView: React.FC = () => {
         onClose={() => setIsProgressModalOpen(false)}
       />
 
+      {/* Weekly Planning Summary */}
+      <PlanningWeeklySummary />
+
       {/* Top Welcome Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -98,9 +101,6 @@ export const DashboardView: React.FC = () => {
           </Button>
         </div>
       </div>
-
-      {/* Weekly Planning Summary */}
-      <PlanningWeeklySummary />
 
       {/* Notebook Grid */}
       {notebooks.length === 0 ? (
