@@ -41,12 +41,12 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
         </div>
 
         {/* Card */}
-        <Card className="glass shadow-2xl p-8 border border-white/20 dark:border-white/5 rounded-3xl">
-          <h2 className="text-xl font-heading font-bold text-slate-900 dark:text-dark-50 mb-6">
+        <Card className="glass shadow-2xl px-6 py-6 sm:px-8 sm:py-8 border border-white/20 dark:border-white/5 rounded-3xl">
+          <h2 className="text-xl font-heading font-bold text-slate-900 dark:text-dark-50 mb-5">
             {title}
           </h2>
           {children}
-          <div className="mt-8 text-center text-sm text-slate-500 dark:text-dark-300">
+          <div className="mt-6 text-center text-sm text-slate-500 dark:text-dark-300">
             {footer}
           </div>
         </Card>

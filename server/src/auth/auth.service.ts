@@ -337,6 +337,87 @@ export class AuthService {
     return { message: 'Senha alterada com sucesso' };
   }
 
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+
+    // Não revela se o e-mail existe ou não por segurança
+    if (!user) {
+      return {
+        message:
+          'Se o e-mail estiver cadastrado, enviaremos um link de recuperação.',
+      };
+    }
+
+    const resetToken = uuidv4();
+    const resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetPasswordToken: resetToken,
+        resetPasswordTokenExpires: resetTokenExpires,
+      },
+    });
+
+    try {
+      await this.emailService.sendPasswordResetEmail(
+        user.email,
+        user.name,
+        resetToken,
+      );
+    } catch (error) {
+      console.error('Falha ao enviar e-mail de recuperação', error);
+      throw new Error('Erro ao enviar e-mail de recuperação. Tente novamente mais tarde.');
+    }
+
+    return {
+      message: 'Se o e-mail estiver cadastrado, enviaremos um link de recuperação.',
+    };
+  }
+
+  async resetPassword(
+    token: string,
+    newPassword: string,
+  ): Promise<{ message: string }> {
+    const user = await this.prisma.user.findFirst({
+      where: { resetPasswordToken: token },
+    });
+
+    if (!user) {
+      throw new BadRequestException(
+        'Token de recuperação inválido. Solicite um novo link.',
+      );
+    }
+
+    if (
+      !user.resetPasswordTokenExpires ||
+      user.resetPasswordTokenExpires < new Date()
+    ) {
+      throw new BadRequestException(
+        'Token de recuperação expirado. Solicite um novo link.',
+      );
+    }
+
+    if (newPassword.length < 6) {
+      throw new BadRequestException('A nova senha deve ter no mínimo 6 caracteres');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetPasswordToken: null,
+        resetPasswordTokenExpires: null,
+      },
+    });
+
+    return { message: 'Senha redefinida com sucesso! Faça login com sua nova senha.' };
+  }
+
   async sendDeleteConfirmation(userId: string): Promise<{ message: string; token: string }> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },

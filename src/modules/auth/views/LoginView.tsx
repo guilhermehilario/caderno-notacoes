@@ -92,7 +92,12 @@ export const LoginView: React.FC = () => {
             <label className="text-sm font-medium text-slate-700 dark:text-dark-200">
               Senha
             </label>
-            {/* Funcionalidade de recuperação de senha não implementada ainda */}
+            <Link
+              to="/forgot-password"
+              className="text-xs text-brand-500 hover:text-brand-600 font-medium transition-colors"
+            >
+              Esqueceu a senha?
+            </Link>
           </div>
           <Input
             type="password"
