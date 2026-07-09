@@ -60,6 +60,7 @@ const EditorView: React.FC = () => {
     flushSave,
   } = useEditorContent({
     leaf,
+    leafId: leafId || "",
     updateLeaf,
     editorStatus,
   });

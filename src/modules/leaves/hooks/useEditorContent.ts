@@ -12,6 +12,7 @@ import TextAlign from "@tiptap/extension-text-align";
 import { Annotation } from "../extensions/Annotation";
 import { Indent } from "../extensions/Indent";
 import { useDebounce } from "../../../hooks/useDebounce";
+import { useAuthStore } from "../../../modules/auth/store";
 import type { Leaf } from "../types";
 
 const DEBOUNCE_MS = 800;
@@ -19,6 +20,7 @@ const SAVE_STATUS_IDLE_MS = 2000;
 
 interface UseEditorContentParams {
   leaf: Leaf | undefined;
+  leafId: string;
   updateLeaf: (data: {
     title: string;
     content: string;
@@ -44,6 +46,7 @@ interface UseEditorContentReturn {
 
 export function useEditorContent({
   leaf,
+  leafId,
   updateLeaf,
   editorStatus,
 }: UseEditorContentParams): UseEditorContentReturn {
@@ -59,6 +62,8 @@ export function useEditorContent({
 
   // Refs para acesso aos valores mais recentes em event listeners (beforeunload, etc.)
   const latestValuesRef = useRef({ title: "", content: "", rawText: "" });
+  const leafIdRef = useRef(leafId);
+  leafIdRef.current = leafId;
 
   const extensions = useMemo(
     () => [
@@ -191,22 +196,69 @@ export function useEditorContent({
     }
   }, [updateLeaf, editorStatus]);
 
-  // ── Salvar ao perder foco (mudar de aba) ou desmontar (navegação) ──
+  /**
+   * Envia um salvamento de emergência via fetch com keepalive.
+   * Usado como garantia quando o navegador está prestes a suspender a aba
+   * (visibilitychange) ou fechar a página (beforeunload).
+   * O keepalive diz ao navegador para não abortar a requisição mesmo que
+   * a página seja descarregada antes da resposta chegar.
+   */
+  const sendKeepaliveSave = useCallback(() => {
+    const { title, content, rawText } = latestValuesRef.current;
+    if (!initialSyncDoneRef.current) return;
+
+    const titleToSave = title && title.length > 0 ? title : lastSavedRef.current.title;
+    const lastSaved = lastSavedRef.current;
+    if (titleToSave === lastSaved.title && content === lastSaved.content) return;
+
+    const currentLeafId = leafIdRef.current;
+    if (!currentLeafId) return;
+
+    const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+    const accessToken = useAuthStore.getState().accessToken;
+
+    fetch(`${baseUrl}/leaves/${currentLeafId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
+      body: JSON.stringify({
+        title: titleToSave,
+        content,
+        rawText,
+      }),
+      keepalive: true,
+      credentials: "include",
+    }).catch(() => {
+      // Silencia erros — é um salvamento best-effort de emergência
+    });
+  }, []);
+
+  // ── Salvar ao perder foco (mudar de aba), fechar aba, ou desmontar ──
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
+        // Tenta o salvamento normal (axios) + garantia com keepalive
         flushSave();
+        sendKeepaliveSave();
       }
     };
 
+    const handleBeforeUnload = () => {
+      sendKeepaliveSave();
+    };
+
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("beforeunload", handleBeforeUnload);
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
       // Salva imediatamente ao desmontar o componente (navegação interna)
       flushSave();
     };
-  }, [flushSave]);
+  }, [flushSave, sendKeepaliveSave]);
 
   const debouncedTitle = useDebounce(localTitle, DEBOUNCE_MS);
   const debouncedContent = useDebounce(localContent, DEBOUNCE_MS);
