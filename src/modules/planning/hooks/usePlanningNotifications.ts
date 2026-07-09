@@ -26,8 +26,8 @@ function sendBrowserNotification(title: string, body: string) {
   if (Notification.permission !== 'granted') return;
   try {
     new Notification(title, { body, icon: '/vite.svg', silent: false });
-  } catch (err) {
-    console.warn('[Notificações] Erro ao enviar notificação nativa:', err);
+  } catch {
+    // Silencia erro — notificação nativa é best-effort
   }
 }
 
@@ -76,8 +76,8 @@ export function usePlanningNotifications() {
             useToastStore.getState().addToast(`${title} ${message}`, 'info');
           }
         }
-      } catch (err) {
-        console.warn('[Notificações] Erro ao verificar eventos:', err);
+      } catch {
+        // Silencia — falha na verificação de eventos não deve quebrar o app
       }
     }
 
@@ -128,8 +128,8 @@ export function usePlanningNotifications() {
             useToastStore.getState().addToast(`${title} ${message}`, 'info');
           }
         }
-      } catch (err) {
-        console.warn('[Notificações] Erro ao verificar metas:', err);
+      } catch {
+        // Silencia — falha na verificação de metas não deve quebrar o app
       }
     }
 
@@ -164,8 +164,8 @@ export function usePlanningNotifications() {
           if (canNotifyBrowser) sendBrowserNotification(title, message);
           useToastStore.getState().addToast(`${title} ${message}`, 'success');
         }
-      } catch (err) {
-        console.warn('[Notificações] Erro ao verificar pomodoros:', err);
+      } catch {
+        // Silencia — falha na verificação de pomodoros não deve quebrar o app
       }
     }
   }, [queryClient]);

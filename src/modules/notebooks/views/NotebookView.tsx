@@ -8,13 +8,13 @@ import { Button } from "../../../components/ui/Button.tsx";
 import { Modal } from "../../../components/ui/Modal.tsx";
 import { Input } from "../../../components/ui/Input.tsx";
 import { TextArea } from "../../../components/ui/TextArea.tsx";
-import { ColorPicker } from "../../../components/ui/ColorPicker.tsx";
 import { EmptyState } from "../../../components/ui/EmptyState.tsx";
 import { LeafCard } from "../components/LeafCard";
 import { NotebookHeader } from "../components/NotebookHeader";
 import { FlashcardsSection } from "../components/FlashcardsSection";
+import { CreateLeafModal } from "../components/CreateLeafModal";
+import { EditNotebookModal } from "../components/EditNotebookModal";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog.tsx";
-import { NOTEBOOK_COLORS } from "../constants";
 
 export const NotebookView: React.FC = () => {
   const { notebookId } = useParams<{ notebookId: string }>();
@@ -188,61 +188,16 @@ export const NotebookView: React.FC = () => {
       />
 
       {/* Modal: Criar Folha */}
-      <Modal
+      <CreateLeafModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        title={parentLeafId ? "Criar Sub-folha" : "Criar Nova Folha"}
-        footer={
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={handleCloseModal}>
-              Cancelar
-            </Button>
-            <Button type="submit" form="create-leaf-form">
-              Criar e Editar
-            </Button>
-          </div>
-        }
-      >
-        <form
-          id="create-leaf-form"
-          onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-col gap-4"
-        >
-          <Input
-            label="Título da Folha"
-            placeholder="Ex: Aula 01 - Introdução ao Protocolo HTTP"
-            error={errors.title?.message}
-            {...register("title")}
-          />
-          {!parentLeafId && leaves.length > 0 && (
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-700 dark:text-dark-200">
-                Folha Pai (opcional - cria sub-folha)
-              </label>
-              <select
-                value={parentLeafId || ""}
-                onChange={(e) =>
-                  setParentLeafId(e.target.value || undefined)
-                }
-                className="w-full px-3.5 py-2.5 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-700 rounded-xl text-slate-500 dark:text-dark-400 text-sm focus:outline-none focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900/20 focus:border-brand-500 transition-all duration-200 cursor-pointer"
-              >
-                <option value="">Sem pai (folha raiz)</option>
-                {leaves.map((leaf) => (
-                  <option key={leaf.id} value={leaf.id}>
-                    {leaf.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-          {parentLeafId && (
-            <p className="text-xs text-brand-500 font-semibold">
-              Esta será uma sub-folha de:{" "}
-              {leaves.find((l) => l.id === parentLeafId)?.title || "..."}
-            </p>
-          )}
-        </form>
-      </Modal>
+        onSubmit={handleSubmit(onSubmit)}
+        register={register}
+        errors={errors}
+        parentLeafId={parentLeafId}
+        setParentLeafId={setParentLeafId}
+        leaves={leaves}
+      />
 
       {/* Modal: Criar Flashcard */}
       <Modal
@@ -310,54 +265,16 @@ export const NotebookView: React.FC = () => {
       </Modal>
 
       {/* Modal: Editar Caderno */}
-      <Modal
+      <EditNotebookModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
-        title="Editar Caderno"
-        footer={
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={() => setIsEditModalOpen(false)}
-            >
-              Cancelar
-            </Button>
-            <Button type="submit" form="edit-notebook-form">
-              Salvar Alterações
-            </Button>
-          </div>
-        }
-      >
-        <form
-          id="edit-notebook-form"
-          onSubmit={handleSubmitEdit(onEditSubmit)}
-          className="flex flex-col gap-5"
-        >
-          <Input
-            label="Título do Caderno"
-            placeholder="Ex: Engenharia de Software II, Cálculo III"
-            error={editErrors.title?.message}
-            {...registerEdit("title")}
-          />
-          <TextArea
-            label="Descrição (Opcional)"
-            placeholder="Uma breve descrição sobre este caderno..."
-            rows={3}
-            {...registerEdit("description")}
-          />
-          <ColorPicker
-            colors={NOTEBOOK_COLORS}
-            selectedColor={selectedColor}
-            onChange={setSelectedColor}
-            label="Cor de Identificação"
-          />
-          {actionError && (
-            <div className="p-3 rounded-xl text-sm font-medium bg-rose-50 text-rose-600 border border-rose-100 dark:bg-rose-950/20 dark:text-rose-400">
-              {actionError}
-            </div>
-          )}
-        </form>
-      </Modal>
+        onSubmit={handleSubmitEdit(onEditSubmit)}
+        register={registerEdit}
+        errors={editErrors}
+        selectedColor={selectedColor}
+        setSelectedColor={setSelectedColor}
+        actionError={actionError}
+      />
 
       {/* Confirmar exclusão */}
       <ConfirmDialog
