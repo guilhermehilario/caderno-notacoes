@@ -78,4 +78,3 @@ export const EditNotebookModal: React.FC<EditNotebookModalProps> = ({
   );
 };
 
-export default EditNotebookModal;

@@ -18,7 +18,7 @@ import { SubLeavesSection } from "../components/SubLeavesSection";
 import { ManualFlashcardModal } from "../components/ManualFlashcardModal";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog.tsx";
 
-const EditorView: React.FC = () => {
+export const EditorView: React.FC = () => {
   const { notebookId, leafId } = useParams<{
     notebookId: string;
     leafId: string;
@@ -28,6 +28,7 @@ const EditorView: React.FC = () => {
   const {
     leaf,
     isLoading: isLoadingLeaf,
+    isFetching: isFetchingLeaf,
     updateLeaf,
     generateAISummary,
     isGeneratingSummary,
@@ -95,7 +96,7 @@ const EditorView: React.FC = () => {
   });
 
   // ── Renderização Condicional ──
-  if (!leaf && isLoadingLeaf) {
+  if (!leaf && isFetchingLeaf) {
     return <EditorSkeleton />;
   }
 
@@ -147,7 +148,7 @@ const EditorView: React.FC = () => {
               editorStatus.setSaveStatus("saving");
             }}
             placeholder="Título da folha..."
-            className="w-full text-2xl font-heading font-extrabold tracking-tight bg-transparent text-slate-900 dark:text-dark-50 placeholder-slate-350 focus:outline-none mb-6 border-b border-transparent focus:border-slate-100 dark:focus:border-dark-800 pb-2 transition-all"
+            className="editor-title-input"
           />
 
           <EditorToolbar
@@ -219,4 +220,4 @@ const EditorView: React.FC = () => {
   );
 };
 
-export default memo(EditorView);
+

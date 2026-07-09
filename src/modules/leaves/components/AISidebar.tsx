@@ -86,7 +86,7 @@ const AISidebarComponent: React.FC<AISidebarProps> = ({
           <div className="flex flex-col h-full gap-4">
             {summary ? (
               <div className="flex flex-col gap-4">
-                <div className="prose prose-slate dark:prose-invert max-w-none text-slate-700 dark:text-dark-200 text-sm leading-relaxed whitespace-pre-wrap bg-slate-50/50 dark:bg-dark-950/30 p-5 rounded-2xl border border-slate-100/50 dark:border-dark-850">
+                <div className="ai-summary-block">
                   {summary}
                 </div>
                 <Button
@@ -207,7 +207,7 @@ const AISidebarComponent: React.FC<AISidebarProps> = ({
             description="Arraste arquivos ou clique para fazer upload de imagens, PDFs e documentos para esta folha."
             action={
               <label htmlFor={uploadId} className="cursor-pointer">
-                <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-slate-300 dark:border-dark-700 text-sm font-semibold text-slate-500 dark:text-dark-300 hover:border-brand-400 hover:text-brand-500 transition-all">
+                <div className="ai-upload-button">
                   <Upload className="h-4 w-4" />
                   Selecionar Arquivos
                 </div>
@@ -222,4 +222,3 @@ const AISidebarComponent: React.FC<AISidebarProps> = ({
 };
 
 export const AISidebar = memo(AISidebarComponent);
-export default AISidebar;
