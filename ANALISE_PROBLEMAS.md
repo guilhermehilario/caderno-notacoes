@@ -190,7 +190,9 @@
 | **`server/_express_backup/`** (legado Express, 64KB) | 09/07/2026 |
 | **`src/modules/history/`** (historyService.ts órfão) | 09/07/2026 |
 | **`console.warn` em usePlanningNotifications** (4 ocorrências) | 09/07/2026 |
+| **`import { FieldErrors }` → `import type { FieldErrors }`** (Vite [MISSING_EXPORT]) | 09/07/2026 |
+| **EditHistoryService restaurado** no trash.module.ts (quebrou NotebooksService) | 09/07/2026 |
 
 ---
 
-*Documento atualizado em 09/07/2026 — Adicionados itens resolvidos na refatoração.*
+*Documento atualizado em 09/07/2026 — Adicionados itens resolvidos na refatoração e testes.*

@@ -98,13 +98,16 @@
 ## ✅ Concluído na Sessão 09/07/2026 (Refatoração)
 
 - [x] **Loop 429 no auto-save corrigido** — `editorStatus` removido das deps; uso de `getState()`
-- [x] **EditHistory órfão removido** do `trash.module.ts` (nunca registrado no `app.module.ts`)
+- [x] **EditHistoryController removido** do `trash.module.ts` (controller órfão; service mantido)
+- [x] **EditHistoryService restaurado** — quebrou `NotebooksService` ao ser removido
 - [x] **`server/_express_backup/` deletado** (legado Express, 9 arquivos, 64KB)
 - [x] **`studiesService` mesclado em `studyService`** — `getContent()` e `getDashboardStats()` unificados
 - [x] **`console.warn` removido** do `usePlanningNotifications.ts` (4 ocorrências)
 - [x] **`src/modules/history/` deletado** (historyService.ts órfão)
 - [x] **Modais do NotebookView extraídos** — `CreateLeafModal.tsx` + `EditNotebookModal.tsx`
-- [x] **TypeScript check** — sem erros após todas as alterações
+- [x] **`FieldErrors` import corrigido** — `import type` em vez de `import` (Vite [MISSING_EXPORT])
+- [x] **Bateria completa de testes** — 15 endpoints, typecheck frontend/backend, build Vite
+- [x] **Guia de padronização criado** — `PADROES.md`
 - [x] **Documentação atualizada** — AGENTS.md, README.md, ANALISE_PROBLEMAS.md, TASKS.md
 
 ---
