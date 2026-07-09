@@ -43,7 +43,7 @@ export const PlanningView: React.FC = () => {
   const ActiveComponent = TAB_COMPONENTS[activeTab];
 
   return (
-    <div className="max-w-6xl mx-auto flex flex-col gap-6">
+    <div className="max-w-4xl mx-auto flex flex-col gap-6">
       {/* Header */}
       <div>
         <p className="text-slate-500 dark:text-dark-350">

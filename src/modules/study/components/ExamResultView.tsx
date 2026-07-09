@@ -25,7 +25,7 @@ export const ExamResultView: React.FC<ExamResultViewProps> = ({
   const percentage = total > 0 ? ((correctCount / total) * 100).toFixed(0) : "0";
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col gap-6">
+    <div className="max-w-4xl mx-auto flex flex-col gap-6">
       <Card className="p-8 text-center">
         <div className="flex items-center justify-center mb-4">
           {Number(percentage) >= 70 ? (

@@ -13,7 +13,7 @@ export const PlanningSettingsView: React.FC = () => {
   const settings = usePlanningSettingsStore();
 
   return (
-    <div className="max-w-3xl mx-auto flex flex-col gap-8">
+    <div className="max-w-4xl mx-auto flex flex-col gap-8">
       {/* ── Cor de Destaque ── */}
       <section className="flex flex-col gap-4">
         <div className="flex items-center gap-2.5">

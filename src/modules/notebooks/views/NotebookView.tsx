@@ -106,7 +106,7 @@ export const NotebookView: React.FC = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto flex flex-col gap-6">
+    <div className="max-w-4xl mx-auto flex flex-col gap-6">
       {/* Cabeçalho */}
       <NotebookHeader
         notebook={notebook}

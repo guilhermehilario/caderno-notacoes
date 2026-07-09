@@ -88,7 +88,7 @@ const TodoListView: React.FC = () => {
   }
 
   return (
-    <div className="max-w-3xl mx-auto flex flex-col gap-6">
+    <div className="max-w-4xl mx-auto flex flex-col gap-6">
       {/* Header */}
       <p className="text-slate-500 dark:text-dark-350">
         Organize suas tarefas e acompanhe o que precisa ser feito

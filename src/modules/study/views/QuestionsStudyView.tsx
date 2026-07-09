@@ -85,7 +85,7 @@ export const QuestionsStudyView: React.FC = () => {
   // Tela inicial - antes de começar
   if (!sessionStarted) {
     return (
-      <div className="max-w-2xl mx-auto flex flex-col gap-6">
+      <div className="max-w-4xl mx-auto flex flex-col gap-6">
         <Link
           to="/studies"
           className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-dark-300 hover:text-brand-500 transition-colors w-fit"
@@ -130,7 +130,7 @@ export const QuestionsStudyView: React.FC = () => {
   // Tela de resultado final
   if (isLastQuestion && showResult && selectedOption !== null) {
     return (
-      <div className="max-w-2xl mx-auto flex flex-col gap-6">
+      <div className="max-w-4xl mx-auto flex flex-col gap-6">
         <Link
           to="/studies"
           className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-dark-300 hover:text-brand-500 transition-colors w-fit"
@@ -173,7 +173,7 @@ export const QuestionsStudyView: React.FC = () => {
   if (!currentQuestion) return null;
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col gap-6">
+    <div className="max-w-4xl mx-auto flex flex-col gap-6">
       {/* Top Navigation */}
       <div className="flex items-center justify-between">
         <Link

@@ -94,7 +94,7 @@ export const MockExamsView: React.FC = () => {
   }
 
   return (
-    <div className="max-w-3xl mx-auto flex flex-col gap-6">
+    <div className="max-w-4xl mx-auto flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <Link
           to="/studies"

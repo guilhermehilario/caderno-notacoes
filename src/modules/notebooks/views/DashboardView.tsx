@@ -58,7 +58,7 @@ export const DashboardView: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto flex flex-col gap-8">
+    <div className="max-w-4xl mx-auto flex flex-col gap-8">
       {/* Progresso dos Estudos Modal */}
       <StudyProgressSummaryModal
         isOpen={isProgressModalOpen}
