@@ -1,0 +1,289 @@
+import React, { useState, useMemo, useCallback } from "react";
+import { useSearchParams, useNavigate, Link } from "react-router-dom";
+import {
+  ArrowLeft,
+  RefreshCw,
+  CheckCircle,
+  XCircle,
+  HelpCircle,
+  ChevronRight,
+  ClipboardList,
+  Shuffle,
+} from "lucide-react";
+import { useRandomQuestions } from "../hooks/useQuestions";
+import { Card } from "../../../components/ui/Card.tsx";
+import { Button } from "../../../components/ui/Button.tsx";
+import { EmptyState } from "../../../components/ui/EmptyState.tsx";
+import type { Question } from "../types";
+
+export const QuestionsStudyView: React.FC = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const notebookId = searchParams.get("notebookId");
+
+  const { data: questions = [], isLoading } = useRandomQuestions(20, notebookId || undefined);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [showResult, setShowResult] = useState(false);
+  const [answers, setAnswers] = useState<Record<string, boolean>>({});
+  const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([]);
+  const [sessionStarted, setSessionStarted] = useState(false);
+
+  const questionsList = shuffledQuestions.length > 0 ? shuffledQuestions : questions;
+
+  const startSession = useCallback(() => {
+    setShuffledQuestions([...questions].sort(() => Math.random() - 0.5));
+    setSessionStarted(true);
+    setCurrentIndex(0);
+    setSelectedOption(null);
+    setShowResult(false);
+    setAnswers({});
+  }, [questions]);
+
+  const currentQuestion = questionsList[currentIndex];
+  const options = currentQuestion ? safeParseOptions(currentQuestion.options) : [];
+  const isLastQuestion = currentIndex >= questionsList.length - 1;
+  const correctCount = Object.values(answers).filter(Boolean).length;
+  const totalAnswered = Object.keys(answers).length;
+  const isCorrect = selectedOption === currentQuestion?.correctAnswer;
+
+  function safeParseOptions(optionsStr: string): string[] {
+    try {
+      const parsed = JSON.parse(optionsStr);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  const handleSelectOption = (option: string) => {
+    if (showResult) return;
+    setSelectedOption(option);
+    setShowResult(true);
+
+    const correct = option === currentQuestion?.correctAnswer;
+    setAnswers((prev) => ({ ...prev, [currentQuestion.id]: correct }));
+  };
+
+  const handleNext = () => {
+    if (isLastQuestion) {
+      // Session finished
+      return;
+    }
+    setCurrentIndex((prev) => prev + 1);
+    setSelectedOption(null);
+    setShowResult(false);
+  };
+
+  const handleRestart = () => {
+    setCurrentIndex(0);
+    setSelectedOption(null);
+    setShowResult(false);
+    setAnswers({});
+    setShuffledQuestions([...questions].sort(() => Math.random() - 0.5));
+  };
+
+  if (isLoading) {
+    return (
+      <div className="h-[60vh] flex items-center justify-center">
+        <RefreshCw className="h-10 w-10 animate-spin text-brand-500" />
+      </div>
+    );
+  }
+
+  // Tela inicial - antes de começar
+  if (!sessionStarted) {
+    return (
+      <div className="max-w-2xl mx-auto flex flex-col gap-6">
+        <Link
+          to="/studies"
+          className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-dark-300 hover:text-brand-500 transition-colors w-fit"
+        >
+          <ArrowLeft className="h-4 w-4" /> Voltar aos Estudos
+        </Link>
+
+        {questions.length === 0 ? (
+          <Card className="p-8 text-center">
+            <ClipboardList className="h-12 w-12 mx-auto text-slate-300 dark:text-dark-600 mb-3" />
+            <h3 className="text-lg font-heading font-bold text-slate-800 dark:text-dark-50 mb-1">
+              Nenhuma questão disponível
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-dark-400 mb-4">
+              Crie questões nos seus cadernos ou gere automaticamente a partir de flashcards.
+            </p>
+            <Button onClick={() => navigate("/studies")}>
+              Voltar
+            </Button>
+          </Card>
+        ) : (
+          <Card className="p-8 text-center">
+            <ClipboardList className="h-8 w-8 mx-auto text-emerald-500 mb-3" />
+            <h3 className="text-lg font-heading font-bold text-slate-800 dark:text-dark-50 mb-1">
+              Praticar Questões
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-dark-400 mb-2">
+              {questions.length} questões disponíveis
+            </p>
+            <p className="text-xs text-slate-400 dark:text-dark-500 mb-6">
+              Serão apresentadas em ordem aleatória. Escolha a resposta correta para cada uma.
+            </p>
+            <Button onClick={startSession} leftIcon={<Shuffle className="h-4 w-4" />}>
+              Começar
+            </Button>
+          </Card>
+        )}
+      </div>
+    );
+  }
+
+  // Tela de resultado final
+  if (isLastQuestion && showResult && selectedOption !== null) {
+    return (
+      <div className="max-w-2xl mx-auto flex flex-col gap-6">
+        <Link
+          to="/studies"
+          className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-dark-300 hover:text-brand-500 transition-colors w-fit"
+        >
+          <ArrowLeft className="h-4 w-4" /> Voltar aos Estudos
+        </Link>
+
+        <Card className="p-8 text-center">
+          <div className="flex items-center justify-center mb-4">
+            {correctCount === totalAnswered ? (
+              <CheckCircle className="h-16 w-16 text-emerald-500" />
+            ) : correctCount >= totalAnswered / 2 ? (
+              <HelpCircle className="h-16 w-16 text-amber-500" />
+            ) : (
+              <XCircle className="h-16 w-16 text-rose-500" />
+            )}
+          </div>
+          <h3 className="text-2xl font-heading font-bold text-slate-800 dark:text-dark-50 mb-2">
+            Resultado
+          </h3>
+          <p className="text-4xl font-bold text-brand-500 mb-1">
+            {correctCount}/{totalAnswered}
+          </p>
+          <p className="text-sm text-slate-500 dark:text-dark-400 mb-6">
+            {((correctCount / totalAnswered) * 100).toFixed(0)}% de acerto
+          </p>
+          <div className="flex items-center justify-center gap-3">
+            <Button onClick={handleRestart} variant="secondary">
+              Recomeçar
+            </Button>
+            <Button onClick={() => navigate("/studies")}>
+              Outro Estudo
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!currentQuestion) return null;
+
+  return (
+    <div className="max-w-2xl mx-auto flex flex-col gap-6">
+      {/* Top Navigation */}
+      <div className="flex items-center justify-between">
+        <Link
+          to="/studies"
+          className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-dark-300 hover:text-brand-500 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" /> Voltar
+        </Link>
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-medium text-slate-400 dark:text-dark-500">
+            {correctCount}/{totalAnswered} corretas
+          </span>
+          <span className="text-sm font-bold text-slate-450 dark:text-dark-400">
+            {currentIndex + 1} de {questionsList.length}
+          </span>
+        </div>
+      </div>
+
+      {/* Progress */}
+      <div className="w-full h-2 bg-slate-100 dark:bg-dark-900 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-emerald-500 transition-all duration-300"
+          style={{ width: `${((currentIndex + 1) / questionsList.length) * 100}%` }}
+        />
+      </div>
+
+      {/* Question Card */}
+      <Card className="p-6">
+        <div className="flex items-center gap-1.5 text-emerald-500 text-xs font-bold tracking-wider uppercase mb-4">
+          <HelpCircle className="h-4 w-4" /> Questão {currentIndex + 1}
+        </div>
+        <p className="text-lg font-heading font-semibold text-slate-800 dark:text-dark-50 leading-relaxed mb-6">
+          {currentQuestion.question}
+        </p>
+
+        {/* Options */}
+        <div className="flex flex-col gap-2">
+          {options.map((option, idx) => {
+            const isSelected = selectedOption === option;
+            let optionClass =
+              "flex items-center gap-3 p-3.5 rounded-xl border text-sm font-medium transition-all duration-200 cursor-pointer";
+
+            if (!showResult) {
+              optionClass += " border-slate-200 dark:border-dark-700 hover:border-brand-300 dark:hover:border-brand-700 hover:bg-brand-50/50 dark:hover:bg-brand-950/10";
+            } else if (isSelected && isCorrect) {
+              optionClass += " border-emerald-500 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300";
+            } else if (isSelected && !isCorrect) {
+              optionClass += " border-rose-500 bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-300";
+            } else if (option === currentQuestion.correctAnswer && showResult) {
+              optionClass += " border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/10 text-emerald-600 dark:text-emerald-400";
+            } else {
+              optionClass += " border-slate-200 dark:border-dark-700 opacity-50";
+            }
+
+            return (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => handleSelectOption(option)}
+                className={optionClass}
+                disabled={showResult}
+              >
+                <span className="w-6 h-6 rounded-full bg-slate-100 dark:bg-dark-800 flex items-center justify-center text-xs font-bold text-slate-500 dark:text-dark-400 flex-shrink-0">
+                  {String.fromCharCode(65 + idx)}
+                </span>
+                <span>{option}</span>
+                {showResult && option === currentQuestion.correctAnswer && (
+                  <CheckCircle className="h-4 w-4 text-emerald-500 ml-auto flex-shrink-0" />
+                )}
+                {showResult && isSelected && !isCorrect && (
+                  <XCircle className="h-4 w-4 text-rose-500 ml-auto flex-shrink-0" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Explanation */}
+        {showResult && currentQuestion.explanation && (
+          <div className="mt-4 p-3.5 rounded-xl bg-slate-50 dark:bg-dark-800/50 border border-slate-100 dark:border-dark-700">
+            <p className="text-xs font-bold text-slate-500 dark:text-dark-400 mb-1">Explicação</p>
+            <p className="text-sm text-slate-600 dark:text-dark-300">
+              {currentQuestion.explanation}
+            </p>
+          </div>
+        )}
+
+        {/* Next Button */}
+        {showResult && (
+          <div className="mt-6 flex justify-end">
+            <Button
+              onClick={isLastQuestion ? handleRestart : handleNext}
+              rightIcon={<ChevronRight className="h-4 w-4" />}
+            >
+              {isLastQuestion ? "Ver Resultado" : "Próxima"}
+            </Button>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+};
+
+export default QuestionsStudyView;

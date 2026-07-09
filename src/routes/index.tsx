@@ -16,6 +16,11 @@ import ArchivedLeavesView from '../modules/leaves/views/ArchivedLeavesView.tsx';
 import TodoListView from '../modules/todos/views/TodoListView.tsx';
 import PlanningView from '../modules/planning/views/PlanningView.tsx';
 import PlanningSettingsView from '../modules/planning/views/PlanningSettingsView.tsx';
+import EstudosView from '../modules/study/views/EstudosView.tsx';
+import FlashcardsStudyView from '../modules/study/views/FlashcardsStudyView.tsx';
+import QuestionsStudyView from '../modules/study/views/QuestionsStudyView.tsx';
+import MockExamsView from '../modules/study/views/MockExamsView.tsx';
+import ReviewsStudyView from '../modules/study/views/ReviewsStudyView.tsx';
 
 /* ─── Componentes nomeados e memoizados para cada rota ────────────── */
 
@@ -85,6 +90,26 @@ const PlanningPage = memo(function PlanningPage() {
 
 const PlanningSettingsPage = memo(function PlanningSettingsPage() {
   return <PlanningSettingsView />;
+});
+
+const EstudosPage = memo(function EstudosPage() {
+  return <EstudosView />;
+});
+
+const FlashcardsStudyPage = memo(function FlashcardsStudyPage() {
+  return <FlashcardsStudyView />;
+});
+
+const QuestionsStudyPage = memo(function QuestionsStudyPage() {
+  return <QuestionsStudyView />;
+});
+
+const MockExamsPage = memo(function MockExamsPage() {
+  return <MockExamsView />;
+});
+
+const ReviewsStudyPage = memo(function ReviewsStudyPage() {
+  return <ReviewsStudyView />;
 });
 
 const DefaultRedirect = memo(function DefaultRedirect() {
@@ -161,6 +186,26 @@ const router = createBrowserRouter([
       {
         path: 'planning/:tab',
         element: <PlanningPage />,
+      },
+      {
+        path: 'studies',
+        element: <EstudosPage />,
+      },
+      {
+        path: 'studies/flashcards',
+        element: <FlashcardsStudyPage />,
+      },
+      {
+        path: 'studies/questions',
+        element: <QuestionsStudyPage />,
+      },
+      {
+        path: 'studies/mock-exams',
+        element: <MockExamsPage />,
+      },
+      {
+        path: 'studies/reviews',
+        element: <ReviewsStudyPage />,
       },
     ],
   },

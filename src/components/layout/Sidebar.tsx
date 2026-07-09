@@ -18,15 +18,16 @@ import {
   Target,
   Timer,
   Settings,
+  GraduationCap,
 } from "lucide-react";
 
 const DASHBOARD_PATH = "/dashboard";
 
 const NAV_ITEMS = [
+  { path: "/todos", label: "Tarefas", icon: ListChecks },
   { path: "/tags", label: "Tags", icon: Tags },
   { path: "/bookmarks", label: "Marcadores", icon: BookmarkIcon },
   { path: "/archived", label: "Arquivados", icon: Archive },
-  { path: "/todos", label: "Tarefas", icon: ListChecks },
 ] as const;
 
 const PLANNING_SUB_ITEMS = [
@@ -155,6 +156,21 @@ export const Sidebar: React.FC = () => {
             <Calendar className="h-5 w-5 flex-shrink-0" />
           </Link>
         )}
+
+        {/* ── Estudos (ícone único) ── */}
+        <Link
+          to="/studies"
+          className={`flex items-center gap-3.5 px-3.5 py-3 rounded-xl font-medium transition-all duration-200 select-none ${
+            sidebarCollapsed ? "justify-center" : ""
+          } ${
+            location.pathname.startsWith("/studies")
+              ? "bg-brand-500 text-white shadow-md shadow-brand-500/10"
+              : "text-slate-650 hover:bg-slate-100 dark:text-dark-300 dark:hover:bg-dark-800/60"
+          }`}
+        >
+          <GraduationCap className="h-5 w-5 flex-shrink-0" />
+          {!sidebarCollapsed && <span className="truncate">Estudos</span>}
+        </Link>
 
         {/* Demais itens (Tags, Marcadores, Arquivados, Tarefas) */}
         {NAV_ITEMS.map((item) => {

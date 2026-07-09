@@ -36,6 +36,7 @@ const PAGE_CONFIG: Record<string, { title: string; icon: React.ComponentType<{ c
   '/archived': { title: 'Arquivados', icon: Archive, subtitle: 'Folhas arquivadas' },
   '/todos': { title: 'Tarefas', icon: ListChecks, subtitle: 'Gerencie suas tarefas pendentes' },
   '/planning': { title: 'Planejamento', icon: Calendar, subtitle: 'Organize seus estudos' },
+  '/studies': { title: 'Estudos', icon: GraduationCap, subtitle: 'Escolha como estudar hoje' },
 };
 
 const PLANNING_TAB_LABELS: Record<string, string> = {
@@ -134,6 +135,13 @@ export const AppHeader: React.FC = () => {
         : 'Planejamento';
       parts.push({ label: tabLabel, path });
     }
+    if (path.includes('/studies')) {
+      if (path === '/studies') parts.push({ label: 'Estudos', path: '/studies' });
+      else if (path.includes('flashcards')) parts.push({ label: 'Flashcards', path: '/studies/flashcards' });
+      else if (path.includes('questions')) parts.push({ label: 'Questões', path: '/studies/questions' });
+      else if (path.includes('mock-exams')) parts.push({ label: 'Simulados', path: '/studies/mock-exams' });
+      else if (path.includes('reviews')) parts.push({ label: 'Revisões', path: '/studies/reviews' });
+    }
 
     return parts;
   }, [location.pathname, pathIds, notebookName, leafName]);
@@ -150,6 +158,7 @@ export const AppHeader: React.FC = () => {
     if (path.includes('/archived')) return PAGE_CONFIG['/archived'];
     if (path.includes('/todos')) return PAGE_CONFIG['/todos'];
     if (path.includes('/planning')) return PAGE_CONFIG['/planning'];
+    if (path.includes('/studies')) return PAGE_CONFIG['/studies'];
     return DEFAULT_PAGE;
   }, [location.pathname]);
 

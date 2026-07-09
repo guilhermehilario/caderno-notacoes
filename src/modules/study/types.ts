@@ -39,6 +39,73 @@ export type UpdateFlashcardInput = z.infer<typeof UpdateFlashcardSchema>;
 export type StudyScore = 0 | 1 | 2 | 3 | 4 | 5; 
 // 0: "Esqueci totalmente" -> 5: "Lembrei perfeitamente e sem esforço"
 
+// ── Questões ──
+export interface Question {
+  id: string;
+  leafId: string | null;
+  notebookId: string;
+  userId: string;
+  question: string;
+  options: string; // JSON array
+  correctAnswer: string;
+  explanation: string | null;
+  questionType: 'multiple_choice' | 'true_false' | 'short_answer';
+  createdAt: string;
+  updatedAt: string;
+  notebook?: { title: string; color: string };
+  leaf?: { title: string };
+}
+
+export interface CreateQuestionInput {
+  leafId?: string;
+  notebookId: string;
+  question: string;
+  options?: string;
+  correctAnswer: string;
+  explanation?: string;
+  questionType?: string;
+}
+
+// ── Simulados ──
+export interface MockExam {
+  id: string;
+  userId: string;
+  notebookId: string | null;
+  title: string;
+  description: string | null;
+  timeLimit: number | null;
+  createdAt: string;
+  updatedAt: string;
+  notebook?: { title: string; color: string } | null;
+  _count?: { questions: number };
+  questions?: MockExamQuestion[];
+}
+
+export interface MockExamQuestion {
+  id: string;
+  examId: string;
+  questionId: string;
+  order: number;
+  question: Question;
+}
+
+export interface CreateMockExamInput {
+  title: string;
+  description?: string;
+  timeLimit?: number;
+  notebookId?: string;
+}
+
+// ── Conteúdo unificado de estudos ──
+export interface StudyContent {
+  flashcardsDue: Flashcard[];
+  totalFlashcards: number;
+  questions: Question[];
+  totalQuestions: number;
+  mockExams: MockExam[];
+  totalMockExams: number;
+}
+
 export interface StudySessionState {
   notebookId: string;
   cards: Flashcard[];
