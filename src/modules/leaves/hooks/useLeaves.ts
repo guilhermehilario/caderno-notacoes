@@ -37,6 +37,24 @@ export function useLeaves(notebookId: string) {
           return { ...old, leavesCount: old.leavesCount + 1 };
         },
       );
+
+      // ⚡ Se for sub-folha, adiciona ao cache ['leaves', parentId]
+      //    para que a folha pai mostre o novo filho sem recarregar.
+      if (newLeaf.parentId) {
+        queryClient.setQueryData<Leaf>(["leaves", newLeaf.parentId], (old) => {
+          if (!old) return old;
+          const children = old.children ?? [];
+          const alreadyExists = children.some((c) => c.id === newLeaf.id);
+          if (alreadyExists) return old;
+          return {
+            ...old,
+            children: [
+              ...children,
+              { ...newLeaf, children: [], tags: [] } as Leaf,
+            ],
+          };
+        });
+      }
     },
   });
 

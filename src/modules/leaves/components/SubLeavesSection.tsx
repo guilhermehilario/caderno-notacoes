@@ -210,6 +210,35 @@ export const SubLeavesSection: React.FC<SubLeavesSectionProps> = ({
         rawText: '',
         parentId: leafId,
       });
+
+      // ⚡ Adiciona a nova sub-folha ao cache da folha pai para
+      //    que apareça imediatamente sem precisar recarregar.
+      queryClient.setQueryData<Leaf>(["leaves", leafId], (old) => {
+        if (!old) return old;
+        const children = old.children ?? [];
+        const alreadyExists = children.some((c) => c.id === newLeaf.id);
+        if (alreadyExists) return old;
+        return {
+          ...old,
+          children: [
+            ...children,
+            { ...newLeaf, children: [], tags: [] } as Leaf,
+          ],
+        };
+      });
+
+      // ⚡ Também adiciona à lista da sidebar para que o contador
+      //    de folhas no NotebookView reflita a nova sub-folha.
+      queryClient.setQueryData<Leaf[]>(
+        ["notebooks", notebookId, "leaves"],
+        (old) => {
+          if (!old) return old;
+          const alreadyExists = old.some((l) => l.id === newLeaf.id);
+          if (alreadyExists) return old;
+          return [...old, { ...newLeaf, children: [], tags: [] } as Leaf];
+        },
+      );
+
       navigate(`/notebooks/${notebookId}/leaves/${newLeaf.id}`);
     } catch (err) {
       useToastStore.getState().addToast(
@@ -219,7 +248,7 @@ export const SubLeavesSection: React.FC<SubLeavesSectionProps> = ({
     } finally {
       setCreatingSubLeaf(false);
     }
-  }, [notebookId, leafId, navigate, creatingSubLeaf]);
+  }, [notebookId, leafId, navigate, queryClient, creatingSubLeaf]);
 
   return (
     <div className="flex-shrink-0 border-t border-slate-100 dark:border-dark-800/60 pt-3 mt-1">

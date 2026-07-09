@@ -159,6 +159,7 @@ export class TrashService {
     const fifteenDaysAgo = new Date();
     fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
 
+    // 1. Busca itens expirados (separado dos deletes para evitar race condition)
     const [oldNotebooks, oldLeaves] = await Promise.all([
       this.prisma.notebook.findMany({
         where: { userId, deletedAt: { lte: fifteenDaysAgo } },
@@ -169,23 +170,41 @@ export class TrashService {
           notebook: { userId },
           deletedAt: { lte: fifteenDaysAgo },
         },
-        select: { id: true },
+        select: { id: true, notebookId: true },
       }),
     ]);
 
-    await Promise.all([
-      ...oldNotebooks.map((nb) =>
-        this.prisma.notebook.delete({ where: { id: nb.id } }),
-      ),
-      ...oldLeaves.map((leaf) =>
-        this.prisma.leaf.delete({ where: { id: leaf.id } }),
-      ),
-    ]);
+    const nbIds = oldNotebooks.map((nb) => nb.id);
+
+    // 2. Exclui cadernos primeiro — o ON DELETE CASCADE do SQLite
+    //    remove automaticamente as folhas, flashcards e demais
+    //    registros relacionados. Usamos deleteMany que é seguro pois
+    //    a cascata é aplicada no nível do banco (SQLite FK).
+    if (nbIds.length > 0) {
+      await this.prisma.notebook.deleteMany({
+        where: { id: { in: nbIds } },
+      });
+    }
+
+    // 3. Exclui folhas que NÃO pertencem a nenhum caderno excluído
+    //    (folhas que foram movidas para lixeira individualmente,
+    //    enquanto seus cadernos ainda estão ativos). As folhas que
+    //    pertenciam a cadernos excluídos no passo 2 já foram
+    //    removidas pelo cascade do banco.
+    const standaloneLeafIds = oldLeaves
+      .filter((l) => !nbIds.includes(l.notebookId))
+      .map((l) => l.id);
+
+    if (standaloneLeafIds.length > 0) {
+      await this.prisma.leaf.deleteMany({
+        where: { id: { in: standaloneLeafIds } },
+      });
+    }
 
     return {
-      deletedNotebooks: oldNotebooks.length,
-      deletedLeaves: oldLeaves.length,
-      message: `Lixeira limpa: ${oldNotebooks.length} cadernos e ${oldLeaves.length} folhas excluídos permanentemente`,
+      deletedNotebooks: nbIds.length,
+      deletedLeaves: standaloneLeafIds.length,
+      message: `Lixeira limpa: ${nbIds.length} cadernos e ${standaloneLeafIds.length} folhas excluídos permanentemente`,
     };
   }
 }
