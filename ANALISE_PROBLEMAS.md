@@ -50,15 +50,15 @@
 
 ## 2. 🟡 Problemas de Qualidade e Manutenibilidade
 
-### 2.1. NotebookView ainda grande (~400 linhas)
+### 2.1. NotebookView ainda grande (~210 linhas)
 
 **Arquivo:** `src/modules/notebooks/views/NotebookView.tsx`
 
-**Problema:** EditorView foi refatorado (~221 linhas), mas NotebookView permanece com ~400 linhas gerenciando múltiplas responsabilidades: listagem de folhas, flashcards, modais de criação/edição, drag & drop.
+**Problema:** NotebookView foi parcialmente refatorado: modais de criação de folha e edição de caderno foram extraídos para componentes separados (`CreateLeafModal.tsx`, `EditNotebookModal.tsx`), reduzindo de ~385 para ~210 linhas.
 
-**Solução:** Extrair a lógica de modais e flashcards em hooks customizados (seguindo o mesmo padrão de `useEditorContent` / `useEditorActions`).
+**Pendente:** O modal de criação manual de flashcard ainda está inline e a lógica de CRUD de folhas/flashcards ainda está no componente. Pode ser extraído em hooks ou subcomponentes adicionais.
 
-**Esforço:** Médio
+**Esforço:** Baixo (restante)
 
 ---
 
@@ -169,7 +169,7 @@
 
 ---
 
-## Problemas resolvidos desde a última análise (08/07/2026)
+## Problemas resolvidos desde a última análise
 
 | Problema | Data |
 |----------|------|
@@ -185,7 +185,12 @@
 | db.json.backup não utilizado | Sessão anterior |
 | AnnotationSidebar DOMParser sem memo | Sessão anterior (hash comparison) |
 | Sem `.env.example` (raiz e server) | 08/07/2026 |
+| **Loop infinito 429 no auto-save** (editorStatus em deps) | 09/07/2026 |
+| **EditHistoryController órfão** removido (service mantido — usado por NotebooksService) | 09/07/2026 |
+| **`server/_express_backup/`** (legado Express, 64KB) | 09/07/2026 |
+| **`src/modules/history/`** (historyService.ts órfão) | 09/07/2026 |
+| **`console.warn` em usePlanningNotifications** (4 ocorrências) | 09/07/2026 |
 
 ---
 
-*Documento atualizado em 08/07/2026 — Removidos problemas já resolvidos.*
+*Documento atualizado em 09/07/2026 — Adicionados itens resolvidos na refatoração.*
