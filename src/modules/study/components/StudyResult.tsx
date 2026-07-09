@@ -20,7 +20,7 @@ export const StudyResult: React.FC<StudyResultProps> = ({
 
   if (flashcardsLength === 0) {
     return (
-      <div className="max-w-md mx-auto flex flex-col items-center justify-center text-center p-8 gap-5 mt-10">
+      <div className="max-w-4xl mx-auto flex flex-col items-center justify-center text-center p-8 gap-5 mt-10">
         <div className="w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 flex items-center justify-center text-emerald-500 shadow-md">
           <CheckCircle className="h-8 w-8" />
         </div>
@@ -47,7 +47,7 @@ export const StudyResult: React.FC<StudyResultProps> = ({
   }
 
   return (
-    <div className="max-w-md mx-auto flex flex-col items-center justify-center text-center p-8 gap-5 mt-10">
+    <div className="max-w-4xl mx-auto flex flex-col items-center justify-center text-center p-8 gap-5 mt-10">
       <div className="w-16 h-16 rounded-2xl bg-brand-50 dark:bg-brand-950/20 flex items-center justify-center text-brand-500 shadow-md">
         <Brain className="h-8 w-8" />
       </div>
