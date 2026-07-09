@@ -17,10 +17,7 @@ export function useAuth() {
 
   const registerMutation = useMutation({
     mutationFn: (data: RegisterInput) => authService.register(data),
-    onSuccess: (data) => {
-      login(data.user, data.accessToken);
-      queryClient.setQueryData(['profile'], data.user);
-    },
+    // Registro não faz mais auto-login — usuário precisa verificar e-mail
   });
 
   const logoutMutation = useMutation({

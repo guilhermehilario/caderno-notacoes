@@ -5,6 +5,7 @@ export const UserSchema = z.object({
   name: z.string().min(2, 'O nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('E-mail inválido'),
   avatarUrl: z.string().url().optional(),
+  emailVerified: z.boolean().optional(),
   createdAt: z.string().datetime().or(z.date()),
   updatedAt: z.string().datetime().or(z.date()),
 });
