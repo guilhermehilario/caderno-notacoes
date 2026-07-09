@@ -67,23 +67,23 @@ export const ResetPasswordView: React.FC = () => {
     switch (step) {
       case 'invalid':
         return (
-          <div className="flex flex-col items-center gap-4 py-8">
-            <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-              <AlertTriangle className="h-10 w-10 text-red-600 dark:text-red-400" />
+          <div className="flex flex-col items-center gap-5">
+            <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
+              <AlertTriangle className="h-8 w-8 text-red-600 dark:text-red-400" />
             </div>
-            <div className="text-center">
+            <div className="text-center space-y-1">
               <h3 className="text-lg font-bold text-slate-900 dark:text-dark-50">
                 Link Inválido
               </h3>
-              <p className="text-slate-600 dark:text-dark-300 text-sm mt-1">
+              <p className="text-slate-600 dark:text-dark-300 text-sm">
                 Nenhum token de recuperação foi encontrado na URL.
               </p>
             </div>
             <Link
               to="/forgot-password"
-              className="text-sm text-brand-500 hover:text-brand-600 font-medium flex items-center gap-1"
+              className="text-sm text-brand-500 hover:text-brand-600 font-medium inline-flex items-center gap-1.5"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-3.5 w-3.5" />
               Solicitar novo link
             </Link>
           </div>
@@ -91,23 +91,23 @@ export const ResetPasswordView: React.FC = () => {
 
       case 'expired':
         return (
-          <div className="flex flex-col items-center gap-4 py-8">
-            <div className="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-              <AlertTriangle className="h-10 w-10 text-amber-600 dark:text-amber-400" />
+          <div className="flex flex-col items-center gap-5">
+            <div className="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+              <AlertTriangle className="h-8 w-8 text-amber-600 dark:text-amber-400" />
             </div>
-            <div className="text-center">
+            <div className="text-center space-y-1">
               <h3 className="text-lg font-bold text-slate-900 dark:text-dark-50">
                 Link Expirado
               </h3>
-              <p className="text-slate-600 dark:text-dark-300 text-sm mt-1">
+              <p className="text-slate-600 dark:text-dark-300 text-sm">
                 Este link de recuperação expirou. Solicite um novo.
               </p>
             </div>
             <Link
               to="/forgot-password"
-              className="text-sm text-brand-500 hover:text-brand-600 font-medium flex items-center gap-1"
+              className="text-sm text-brand-500 hover:text-brand-600 font-medium inline-flex items-center gap-1.5"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-3.5 w-3.5" />
               Solicitar novo link
             </Link>
           </div>
@@ -115,19 +115,19 @@ export const ResetPasswordView: React.FC = () => {
 
       case 'success':
         return (
-          <div className="flex flex-col items-center gap-4 py-8">
-            <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-              <CheckCircle className="h-10 w-10 text-green-600 dark:text-green-400" />
+          <div className="flex flex-col items-center gap-5">
+            <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0">
+              <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
             </div>
-            <div className="text-center">
+            <div className="text-center space-y-1">
               <h3 className="text-lg font-bold text-slate-900 dark:text-dark-50">
                 Senha Redefinida!
               </h3>
-              <p className="text-slate-600 dark:text-dark-300 text-sm mt-1">
+              <p className="text-slate-600 dark:text-dark-300 text-sm">
                 Sua senha foi alterada com sucesso.
               </p>
             </div>
-            <Button onClick={() => navigate('/login')} className="mt-2">
+            <Button onClick={() => navigate('/login')}>
               Fazer Login
             </Button>
           </div>
@@ -137,7 +137,7 @@ export const ResetPasswordView: React.FC = () => {
       default:
         return (
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-            <p className="text-sm text-slate-600 dark:text-dark-300 mb-2">
+            <p className="text-sm text-slate-600 dark:text-dark-300">
               Escolha uma nova senha para sua conta.
             </p>
 
@@ -157,7 +157,7 @@ export const ResetPasswordView: React.FC = () => {
               {...register('confirmPassword')}
             />
 
-            <Button type="submit" className="w-full mt-2" isLoading={isLoading}>
+            <Button type="submit" className="w-full" isLoading={isLoading}>
               <Lock className="h-4 w-4 mr-2" />
               Redefinir Senha
             </Button>

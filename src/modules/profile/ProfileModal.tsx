@@ -34,6 +34,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     if (!isOpen) setShowDeleteFlow(false);
   }, [isOpen]);
 
+  // Sincroniza o campo de nome com o usuário do hook
+  useEffect(() => {
+    setName(user?.name || "");
+  }, [user?.name]);
+
   // Profile state
   const [name, setName] = useState(user?.name || "");
   const [selectedCategory, setSelectedCategory] = useState<string>(() => {

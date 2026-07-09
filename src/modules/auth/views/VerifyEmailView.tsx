@@ -76,9 +76,9 @@ export const VerifyEmailView: React.FC = () => {
     switch (step) {
       case 'verifying':
         return (
-          <div className="flex flex-col items-center gap-4 py-8">
-            <Loader2 className="h-12 w-12 text-brand-500 animate-spin" />
-            <p className="text-slate-600 dark:text-dark-300 text-center">
+          <div className="flex flex-col items-center gap-5">
+            <Loader2 className="h-10 w-10 text-brand-500 animate-spin" />
+            <p className="text-slate-600 dark:text-dark-300 text-center text-sm">
               Verificando seu e-mail...
             </p>
           </div>
@@ -86,22 +86,19 @@ export const VerifyEmailView: React.FC = () => {
 
       case 'success':
         return (
-          <div className="flex flex-col items-center gap-4 py-8">
-            <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-              <CheckCircle className="h-10 w-10 text-green-600 dark:text-green-400" />
+          <div className="flex flex-col items-center gap-5">
+            <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0">
+              <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
             </div>
-            <div className="text-center">
+            <div className="text-center space-y-1">
               <h3 className="text-lg font-bold text-slate-900 dark:text-dark-50">
                 E-mail Verificado!
               </h3>
-              <p className="text-slate-600 dark:text-dark-300 text-sm mt-1">
+              <p className="text-slate-600 dark:text-dark-300 text-sm">
                 Sua conta foi verificada com sucesso.
               </p>
             </div>
-            <Button
-              onClick={() => navigate('/login')}
-              className="mt-2"
-            >
+            <Button onClick={() => navigate('/login')}>
               Fazer Login
             </Button>
           </div>
@@ -109,23 +106,23 @@ export const VerifyEmailView: React.FC = () => {
 
       case 'expired':
         return (
-          <div className="flex flex-col items-center gap-4 py-8">
-            <div className="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-              <AlertTriangle className="h-10 w-10 text-amber-600 dark:text-amber-400" />
+          <div className="flex flex-col items-center gap-5">
+            <div className="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+              <AlertTriangle className="h-8 w-8 text-amber-600 dark:text-amber-400" />
             </div>
-            <div className="text-center">
+            <div className="text-center space-y-1">
               <h3 className="text-lg font-bold text-slate-900 dark:text-dark-50">
                 Link Expirado
               </h3>
-              <p className="text-slate-600 dark:text-dark-300 text-sm mt-1">
+              <p className="text-slate-600 dark:text-dark-300 text-sm">
                 {message || 'Este link de verificação expirou.'}
               </p>
-              <p className="text-slate-500 dark:text-dark-400 text-xs mt-2">
+              <p className="text-slate-500 dark:text-dark-400 text-xs">
                 Solicite um novo link informando seu e-mail abaixo.
               </p>
             </div>
 
-            <div className="w-full mt-4 space-y-3">
+            <div className="w-full space-y-3">
               <input
                 type="email"
                 value={resendEmail}
@@ -153,11 +150,11 @@ export const VerifyEmailView: React.FC = () => {
 
       case 'error':
         return (
-          <div className="flex flex-col items-center gap-4 py-8">
-            <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-              <AlertTriangle className="h-10 w-10 text-red-600 dark:text-red-400" />
+          <div className="flex flex-col items-center gap-5">
+            <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
+              <AlertTriangle className="h-8 w-8 text-red-600 dark:text-red-400" />
             </div>
-            <div className="text-center">
+            <div className="text-center space-y-1">
               <h3 className="text-lg font-bold text-slate-900 dark:text-dark-50">
                 Erro na Verificação
               </h3>
@@ -165,9 +162,9 @@ export const VerifyEmailView: React.FC = () => {
             </div>
             <Link
               to="/login"
-              className="text-sm text-brand-500 hover:text-brand-600 font-medium flex items-center gap-1"
+              className="text-sm text-brand-500 hover:text-brand-600 font-medium inline-flex items-center gap-1.5"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-3.5 w-3.5" />
               Voltar para o login
             </Link>
           </div>
@@ -176,28 +173,28 @@ export const VerifyEmailView: React.FC = () => {
       case 'check-email':
       default:
         return (
-          <div className="flex flex-col items-center gap-4 py-8">
-            <div className="w-16 h-16 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center">
-              <Mail className="h-10 w-10 text-brand-600 dark:text-brand-400" />
+          <div className="flex flex-col items-center gap-5">
+            <div className="w-16 h-16 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center shrink-0">
+              <Mail className="h-8 w-8 text-brand-600 dark:text-brand-400" />
             </div>
-            <div className="text-center">
+            <div className="text-center space-y-1">
               <h3 className="text-lg font-bold text-slate-900 dark:text-dark-50">
                 Verifique seu E-mail
               </h3>
-              <p className="text-slate-600 dark:text-dark-300 text-sm mt-1">
+              <p className="text-slate-600 dark:text-dark-300 text-sm">
                 Enviamos um link de confirmação para{' '}
                 <strong className="text-slate-900 dark:text-dark-50">
                   {emailFromRegister || 'seu e-mail'}
                 </strong>
                 .
               </p>
-              <p className="text-slate-500 dark:text-dark-400 text-xs mt-2">
+              <p className="text-slate-500 dark:text-dark-400 text-xs">
                 Clique no link recebido para ativar sua conta. Não esqueça de verificar a
                 caixa de spam se não encontrar o e-mail.
               </p>
             </div>
 
-            <div className="w-full mt-4 space-y-3">
+            <div className="w-full space-y-3">
               {resendMessage && (
                 <p className="text-green-600 dark:text-green-400 text-xs text-center">
                   {resendMessage}
@@ -215,7 +212,7 @@ export const VerifyEmailView: React.FC = () => {
 
               <Link
                 to="/login"
-                className="block text-center text-sm text-slate-500 dark:text-dark-400 hover:text-slate-700 dark:hover:text-dark-200 mt-2"
+                className="block text-center text-sm text-slate-500 dark:text-dark-400 hover:text-slate-700 dark:hover:text-dark-200"
               >
                 Voltar para o login
               </Link>
