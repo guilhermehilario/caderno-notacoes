@@ -85,4 +85,3 @@ export const CreateLeafModal: React.FC<CreateLeafModalProps> = ({
   );
 };
 
-export default CreateLeafModal;

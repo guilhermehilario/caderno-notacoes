@@ -248,6 +248,7 @@ export function useLeaf(leafId: string) {
   return {
     leaf,
     isLoading: leafQuery.isLoading,
+    isFetching: leafQuery.isFetching,
     error: leafQuery.error,
     updateLeaf: updateMutation.mutateAsync,
     isUpdating: updateMutation.isPending,
@@ -267,4 +268,4 @@ export function useLeaf(leafId: string) {
     isGeneratingFlashcards: flashcardsMutation.isPending,
   };
 }
-export default useLeaves;
+
