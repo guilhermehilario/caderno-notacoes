@@ -1,5 +1,5 @@
 import React from 'react';
-import { UseFormRegister, FieldErrors } from 'react-hook-form';
+import type { UseFormRegister, FieldErrors } from 'react-hook-form';
 import type { CreateLeafInput } from '../../leaves/types';
 import { Modal } from '../../../components/ui/Modal.tsx';
 import { Button } from '../../../components/ui/Button.tsx';

@@ -92,7 +92,11 @@ O usuário cria cadernos, folhas de anotação, gera resumos e flashcards por IA
 - ✅ Sessão de estudo persistente (backend via API)
 - ✅ Estatísticas de progresso (StudyProgressSummary)
 - ✅ Refatoração completa para NestJS 11 + Prisma ORM 7 + SQLite
-- ✅ Limpeza de arquivos legados do Express
+- ✅ Limpeza de arquivos legados do Express (incluindo `_express_backup/`)
+- ✅ Remoção de módulos órfãos: EditHistoryController (backend — controller órfão, service mantido) e HistoryService (frontend)
+- ✅ Mesclagem de `studiesService` em `studyService`
+- ✅ Extração de modais do NotebookView (CreateLeafModal, EditNotebookModal)
+- ✅ Correção de loop infinito 429 no auto-save do editor
 - ✅ Seção de sub-folhas colapsável no editor
 - ✅ Reordenação de sub-folhas por drag & drop (com @dnd-kit)
 - ✅ Scripts start.sh e stop.sh para gerenciar backend + frontend
@@ -104,6 +108,29 @@ O usuário cria cadernos, folhas de anotação, gera resumos e flashcards por IA
 - ✅ Resumo semanal no Dashboard
 
 ## Histórico de alterações
+
+### Sessão 09/07/2026 — Refatoração de código morto, extração de componentes e correção de loop infinito
+
+**O que foi feito:** Três frentes de refatoração: (1) correção de loop infinito 429 no auto-save, (2) remoção de código morto em alta/média/baixa prioridade, (3) extração de componentes do NotebookView.
+
+#### Mudanças realizadas
+
+| Área | Mudança | Detalhes |
+|------|---------|----------|
+| `useEditorContent.ts` | **Bugfix loop 429** | `editorStatus` (objeto instável da store) estava nas deps de `useCallback`/`useEffect`. Toda `setSaveStatus()` recriava callbacks → cleanup do effect chamava `flushSave()` → PUT → 429 → loop. Corrigido usando `getState()` e removendo `editorStatus` das deps. |
+| `server/src/trash/trash.module.ts` | **EditHistoryController removido** | `EditHistoryController` nunca foi importado pelo `app.module.ts` (rota órfã). **`EditHistoryService` mantido** — ainda é usado por `NotebooksService` para registrar histórico de alterações. |
+| `server/_express_backup/` | **Legado Express deletado** | 64KB, 9 arquivos do backend Express anterior (pré-NestJS). |
+| `src/modules/study/services/` | **studiesService mesclado** | `getContent()` e `getDashboardStats()` adicionados ao `studyService`. `EstudosView` e `ReviewsStudyView` atualizados. `studiesService.ts` preservado em disco (dead). |
+| `NotebookView.tsx` | **Modais extraídos** | `CreateLeafModal.tsx` e `EditNotebookModal.tsx` criados. NotebookView reduzido de ~385 para ~210 linhas. |
+| `usePlanningNotifications.ts` | **console.warn removido** | 4 ocorrências de `console.warn` substituídas por catch silencioso. |
+| `src/modules/history/` | **Módulo órfão deletado** | `historyService.ts` não era importado por nenhum arquivo e chamava APIs já removidas do backend. |
+
+#### Lições aprendidas
+
+- **Loop de auto-save (429):** `editorStatus` de uma Zustand store cria nova referência a cada `setSaveStatus()`. Para evitar loops, use `useXxxStore.getState()` em vez de se inscrever no store inteiro, e remova da array de deps.
+- **Código morto em módulos:** Módulos NestJS podem conter controllers/services registrados mas nunca importados pelo módulo raiz. Verificar `app.module.ts` antes de assumir que estão ativos.
+- **Extração de modais:** Quando um componente tem múltiplos modais inline, extrair cada modal para um arquivo separado reduz o componente principal em ~45% e simplifica a leitura.
+- **Temporal Dead Zone em refs:** Ao declarar `useRef(fn)` antes da definição de `const fn = useCallback(...)`, o valor inicial será `undefined`. Solução: inicializar com `useRef<FnType>(null)` e usar optional chaining `ref.current?.()`.
 
 ### Sessão 08/07/2026 (Parte 3) — Módulo de Planejamento completo
 
@@ -256,6 +283,9 @@ O usuário cria cadernos, folhas de anotação, gera resumos e flashcards por IA
 - **Notificações com settings:** Usar `getState()` da store para acessar configurações em callbacks assíncronos (fora do React).
 - **Cache-first, API-fallback:** No hook de notificações, tentar cache do React Query primeiro; se vazio, fazer chamada direta à API.
 - **Sub-menu sidebar:** Accordion com `useEffect` para auto-expandir. Rotas com params: rota específica (`/planning/settings`) deve vir antes da genérica (`/planning/:tab`).
+- **Zustand + loops:** Evitar colocar objetos de store (`editorStatus`) em deps de hooks. Usar `getState()` para operações pontuais e quebrar o subscription chain.
+- **Temporal Dead Zone (TDZ):** `useRef(fn)` antes de `const fn = useCallback(...)` causa valor inicial `undefined`. Inicializar com `useRef<FnType>(null)` + optional chaining `ref.current?.()`.
+- **Código morto em módulos:** Sempre verificar `app.module.ts` para confirmar se controllers/services estão de fato registrados antes de assumir que estão ativos.
 
 ## Para rodar o projeto
 

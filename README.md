@@ -57,7 +57,6 @@ revisa-aula/
 │   │   ├── bookmarks/             # Marcadores
 │   │   ├── tags/                  # Gerenciamento de tags
 │   │   ├── trash/                 # Lixeira (soft-delete)
-│   │   ├── history/               # Histórico de edições
 │   │   ├── profile/               # Perfil + configurações
 │   │   └── planning/              # Planejamento (agenda, calendário, cronograma, metas, pomodoro)
 │   ├── routes/                    # React Router + guards
@@ -108,14 +107,14 @@ revisa-aula/
 8. **Estatísticas** — Progresso, taxa de acerto, breakdown por caderno
 9. **Tags + Bookmarks** — Classificação e favoritos
 10. **Lixeira** — Soft-delete com expiração de 15 dias
-11. **Histórico de edições** — Rastreamento de alterações
-12. **Modo escuro** — Tema claro/escuro com Tailwind v4
+11. **Modo escuro** — Tema claro/escuro com Tailwind v4
 13. **Planejamento** — Agenda, Calendário, Cronograma, Metas e Pomodoro com CRUD completo via API
 14. **Notificações** — Notificações nativas (Browser API) e in-app para eventos do dia, metas com prazo e pomodoros concluídos
 15. **Mini timer Pomodoro** — Timer flutuante no canto inferior direito visível em todas as páginas
 16. **Configurações do Planejamento** — Cores, durações do pomodoro e toggles de notificação
 17. **Resumo Semanal** — Cards no Dashboard com eventos, metas e pomodoros da semana
 18. **Scripts** — `start.sh` / `stop.sh` para gerenciamento
+19. **Código limpo** — Refatoração contínua: código morto removido, componentes extraídos, services unificados
 
 ---
 

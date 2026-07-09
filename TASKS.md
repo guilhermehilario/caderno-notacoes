@@ -17,12 +17,7 @@
 - **Por quê:** Novas funcionalidades de planejamento aumentaram a superfície de possíveis bugs.
 - **Esforço:** Alto
 
-### 3. Remover `console.log` do token JWT
-- **Arquivo:** `src/core/api/client.ts`
-- **Descrição:** `console.log("access: ", accessToken)` vaza o token no console.
-- **Esforço:** Baixo
-
-### 4. Validar `FRONTEND_URL` em produção
+### 3. Validar `FRONTEND_URL` em produção
 - **Arquivo:** `server/src/main.ts`
 - **Descrição:** Sem `FRONTEND_URL` configurada em produção, o CORS bloqueia tudo.
 - **Esforço:** Baixo
@@ -31,25 +26,31 @@
 
 ## 🟡 Alta Prioridade
 
-### 5. Refatorar NotebookView (~450 linhas)
-- **Descrição:** Seguir o mesmo padrão usado no EditorView: extrair hooks customizados.
-- **Referência:** Extração de `useEditorContent` e `useEditorActions` do EditorView.
-- **Esforço:** Alto
+### 4. Refatorar NotebookView (restante)
+- **Descrição:** Modal de criação manual de flashcard ainda inline. Lógica de CRUD de folhas/flashcards ainda no componente.
+- **Status:** Parcial — modais de criação de folha e edição de caderno extraídos (~385 → ~210 linhas).
+- **Próximo passo:** Extrair o modal de flashcard e considerar hooks para lógica de listagem.
+- **Esforço:** Baixo (restante)
 
-### 6. Aplicar cor de destaque do Planning na UI
+### 5. Aplicar cor de destaque do Planning na UI
 - **Arquivo:** `src/store/planningSettingsStore.ts`, componentes do planning
 - **Descrição:** `accentColor` é salvo nas settings mas não é aplicado visualmente nos componentes.
-- **Solução:** Usar `accentColor` para classes dinâmicas (ex: `text-${accentColor}-500`) nos ícones e botões do planning.
+- **Solução:** Usar `accentColor` para classes dinâmicas nos ícones e botões do planning.
 - **Esforço:** Médio
 
-### 7. Corrigir ESLint configurado incorretamente
+### 6. Corrigir ESLint configurado incorretamente
 - **Arquivo:** `eslint.config.js`
 - **Descrição:** Regra `no-restricted-imports` ao contrário.
 - **Esforço:** Baixo
 
-### 8. Adicionar toasts de sucesso nas operações
+### 7. Adicionar toasts de sucesso nas operações
 - **Descrição:** Hoje só temos toasts de erro. Adicionar feedback positivo: "Caderno criado", "Meta atualizada", etc.
 - **Esforço:** Médio
+
+### 8. Remover `studiesService.ts` (frontend) — código morto
+- **Arquivo:** `src/modules/study/services/studiesService.ts`
+- **Descrição:** Após a mesclagem com `studyService`, nenhum arquivo frontend importa mais `studiesService`. O arquivo pode ser removido.
+- **Esforço:** Muito Baixo
 
 ---
 
@@ -94,16 +95,29 @@
 
 ---
 
-## ✅ Concluído na Sessão 08/07/2026
+## ✅ Concluído na Sessão 09/07/2026 (Refatoração)
+
+- [x] **Loop 429 no auto-save corrigido** — `editorStatus` removido das deps; uso de `getState()`
+- [x] **EditHistory órfão removido** do `trash.module.ts` (nunca registrado no `app.module.ts`)
+- [x] **`server/_express_backup/` deletado** (legado Express, 9 arquivos, 64KB)
+- [x] **`studiesService` mesclado em `studyService`** — `getContent()` e `getDashboardStats()` unificados
+- [x] **`console.warn` removido** do `usePlanningNotifications.ts` (4 ocorrências)
+- [x] **`src/modules/history/` deletado** (historyService.ts órfão)
+- [x] **Modais do NotebookView extraídos** — `CreateLeafModal.tsx` + `EditNotebookModal.tsx`
+- [x] **TypeScript check** — sem erros após todas as alterações
+- [x] **Documentação atualizada** — AGENTS.md, README.md, ANALISE_PROBLEMAS.md, TASKS.md
+
+---
+
+## ✅ Concluído na Sessão 08/07/2026 (Planejamento)
 
 - [x] Módulo de Planejamento (Agenda, Calendário, Cronograma, Metas, Pomodoro) com CRUD via API
 - [x] Sidebar com sub-menu expansível para Planejamento
 - [x] Mini timer flutuante do Pomodoro (canto inferior direito, visível em todas as páginas)
-- [x] Sistema de notificações (navegador + in-app + toast) para eventos, metas e pomodoro
+- [x] Sistema de notificações (navegador + in-app) para eventos, metas e pomodoro
 - [x] Configurações do Planejamento (cores, durações, toggles de notificação)
-- [x] Resumo semanal no Dashboard (eventos, metas pendentes, pomodoros da semana)
-- [x] Planejamento segue esquema de navegação (header, breadcrumbs) das outras telas
-- [x] Documentação atualizada (AGENTS.md, README.md, TESTES_POSSIVEIS.md, TASKS.md)
+- [x] Resumo semanal no Dashboard
+- [x] Documentação da sessão
 
 ---
 
@@ -111,11 +125,11 @@
 
 | Prioridade | Qtd | Principais |
 |------------|-----|------------|
-| 🔴 Crítico | 4 | IA real, testes, token JWT, CORS produção |
-| 🟡 Alta | 4 | NotebookView, cor destaque, ESLint, toasts sucesso |
+| 🔴 Crítico | 2 | IA real, testes automatizados |
+| 🟡 Alta | 5 | NotebookView (restante), cor destaque, ESLint, toasts sucesso, remover studiesService morto |
 | 🟡 Média | 4 | named exports, Tailwind CSS, skeleton, push notifications |
-| 🟢 Baixa | 4 | env.example, Husky, validação env, atalhos teclado, gráfico |
+| 🟢 Baixa | 5 | env.example, Husky, validação env, atalhos teclado, gráfico |
 
 ---
 
-*Gerado em 08/07/2026 — Sessão de implementação do módulo Planejamento.*
+*Gerado em 09/07/2026 — Sessão de refatoração de código morto e extração de componentes.*
