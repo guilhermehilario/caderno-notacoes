@@ -12,7 +12,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import studiesService from "../services/studiesService";
+import { studyService } from "../services/studyService";
 import { useSubmitCardScore } from "../hooks/useFlashcards";
 import { Card } from "../../../components/ui/Card.tsx";
 import { Button } from "../../../components/ui/Button.tsx";
@@ -35,7 +35,7 @@ export const ReviewsStudyView: React.FC = () => {
 
   const { data: studyContent, isLoading } = useQuery({
     queryKey: ["studies", "content", notebookId || "all"],
-    queryFn: () => studiesService.getContent(notebookId || undefined),
+    queryFn: () => studyService.getContent(notebookId || undefined),
     staleTime: 30_000,
   });
 
