@@ -30,7 +30,6 @@ export const TagsManagementView: React.FC = () => {
       setNewColor(DEFAULT_TAG_COLOR);
       setIsCreateOpen(false);
     } catch (err) {
-      console.error('Erro ao criar tag:', err);
       useToastStore.getState().addToast(extractApiError(err, 'Erro ao criar tag.'), 'error');
     }
   };
@@ -45,7 +44,6 @@ export const TagsManagementView: React.FC = () => {
       setIsEditOpen(false);
       setEditingTag(null);
     } catch (err) {
-      console.error('Erro ao atualizar tag:', err);
       useToastStore.getState().addToast(extractApiError(err, 'Erro ao atualizar tag.'), 'error');
     }
   };
@@ -58,7 +56,6 @@ export const TagsManagementView: React.FC = () => {
       await deleteTag.mutateAsync(confirmDeleteId);
       setConfirmDeleteId(null);
     } catch (err) {
-      console.error('Erro ao excluir tag:', err);
       useToastStore.getState().addToast(extractApiError(err, 'Erro ao excluir tag.'), 'error');
     }
   };

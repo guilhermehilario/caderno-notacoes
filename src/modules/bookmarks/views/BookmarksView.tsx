@@ -20,7 +20,6 @@ export const BookmarksView: React.FC = () => {
       await deleteBookmark.mutateAsync(confirmDeleteId);
       setConfirmDeleteId(null);
     } catch (err) {
-      console.error('Erro ao remover marcador:', err);
       useToastStore.getState().addToast(extractApiError(err, 'Erro ao remover marcador.'), 'error');
     }
   };

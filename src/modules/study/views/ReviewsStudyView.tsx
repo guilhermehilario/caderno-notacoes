@@ -91,7 +91,7 @@ export const ReviewsStudyView: React.FC = () => {
     }
 
     if (currentItem.type === "question" && selectedOption) {
-      const isCorrect = selectedOption === (currentItem.data as any).correctAnswer;
+      const isCorrect = selectedOption === (currentItem.data as { correctAnswer: string }).correctAnswer;
       if (isCorrect) setCorrectCount((prev) => prev + 1);
     }
 

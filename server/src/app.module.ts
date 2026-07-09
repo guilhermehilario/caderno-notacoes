@@ -1,6 +1,7 @@
 import { Module, ValidationPipe } from '@nestjs/common';
-import { APP_PIPE, APP_FILTER } from '@nestjs/core';
+import { APP_PIPE, APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { NotebooksModule } from './notebooks/notebooks.module';
@@ -24,6 +25,10 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    ThrottlerModule.forRoot([{
+      ttl: 60000,      // 1 minuto
+      limit: 60,        // 60 requisições por minuto (global)
+    }]),
     PrismaModule,
     AuthModule,
     NotebooksModule,
@@ -42,11 +47,15 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
   controllers: [AppController],
   providers: [
     {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    {
       provide: APP_PIPE,
       useFactory: () =>
         new ValidationPipe({
           whitelist: true,
-          forbidNonWhitelisted: false,
+          forbidNonWhitelisted: process.env.NODE_ENV === 'production',
           transform: true,
           transformOptions: {
             enableImplicitConversion: true,

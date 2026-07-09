@@ -37,7 +37,6 @@ export const TagSelector: React.FC<TagSelectorProps> = ({ leafId }) => {
       await addTagToLeaf.mutateAsync({ leafId, tagId: newTag.id });
       setNewTagName('');
     } catch (err) {
-      console.error('Erro ao criar tag:', err);
       useToastStore.getState().addToast(extractApiError(err, 'Erro ao criar tag.'), 'error');
     }
   };

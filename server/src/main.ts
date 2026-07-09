@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -7,6 +8,12 @@ async function bootstrap() {
 
   // ── Global API prefix ──
   app.setGlobalPrefix('api');
+
+  // ── Security Headers (Helmet) ──
+  app.use(helmet({
+    contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false,
+    crossOriginEmbedderPolicy: false,
+  }));
 
   // ── CORS ──
   const nodeEnv = process.env.NODE_ENV || 'development';
@@ -18,42 +25,43 @@ async function bootstrap() {
     );
   }
 
-  const origin = nodeEnv === 'production'
-    ? process.env.FRONTEND_URL!
-    : true;
+  const origin = process.env.FRONTEND_URL || 'http://localhost:5173';
 
   app.enableCors({
     origin,
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   // ── Cookie Parser ──
   app.use(cookieParser());
 
-  // ── Logger estruturado ──
-  app.use((req: any, res: any, next: () => void) => {
-    const start = Date.now();
-    res.on('finish', () => {
-      const duration = Date.now() - start;
-      console.log(
-        `[${new Date().toISOString()}] ${req.method} ${req.originalUrl} → ${res.statusCode} (${duration}ms)`,
-      );
+  // ── Request Logger (apenas em dev, sem dados sensíveis) ──
+  if (nodeEnv !== 'production') {
+    app.use((req: any, res: any, next: () => void) => {
+      const start = Date.now();
+      res.on('finish', () => {
+        const duration = Date.now() - start;
+        console.log(
+          `[${new Date().toISOString()}] ${req.method} ${req.path} → ${res.statusCode} (${duration}ms)`,
+        );
+      });
+      next();
     });
-    next();
-  });
+  }
 
   const PORT = process.env.PORT || 3000;
-  const frontendUrl = process.env.FRONTEND_URL || `http://localhost:5173`;
+  const frontendUrl = origin;
 
   await app.listen(PORT, () => {
-    console.log('=============================================');
-    console.log(`  🚀 Servidor NestJS rodando em: http://localhost:${PORT}`);
-    console.log(`  📡 Base da API: http://localhost:${PORT}/api`);
-    console.log(`  🔗 Frontend: ${frontendUrl}`);
-    console.log(`  🌐 Ambiente: ${nodeEnv}`);
-    console.log('=============================================');
+    const divider = '='.repeat(45);
+    console.log(divider);
+    console.log(`  Servidor NestJS rodando em: http://localhost:${PORT}`);
+    console.log(`  Base da API: http://localhost:${PORT}/api`);
+    console.log(`  Frontend: ${frontendUrl}`);
+    console.log(`  Ambiente: ${nodeEnv}`);
+    console.log(divider);
   });
 }
 

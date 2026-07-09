@@ -33,7 +33,6 @@ export const TrashView: React.FC = () => {
         await restoreLeaf.mutateAsync(item.id);
       }
     } catch (err) {
-      console.error('Erro ao restaurar:', err);
       useToastStore.getState().addToast(extractApiError(err, 'Erro ao restaurar item.'), 'error');
     }
   };
@@ -51,7 +50,6 @@ export const TrashView: React.FC = () => {
       }
       setConfirmDeleteItem(null);
     } catch (err) {
-      console.error('Erro ao excluir permanentemente:', err);
       useToastStore.getState().addToast(extractApiError(err, 'Erro ao excluir permanentemente.'), 'error');
     }
   };
@@ -61,7 +59,6 @@ export const TrashView: React.FC = () => {
       await cleanTrash.mutateAsync();
       setConfirmCleanOpen(false);
     } catch (err) {
-      console.error('Erro ao limpar lixeira:', err);
       useToastStore.getState().addToast(extractApiError(err, 'Erro ao limpar lixeira.'), 'error');
     }
   };

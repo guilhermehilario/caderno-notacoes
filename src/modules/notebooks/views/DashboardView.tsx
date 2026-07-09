@@ -49,7 +49,6 @@ export const DashboardView: React.FC = () => {
       reset();
       setSelectedColor(NOTEBOOK_COLORS[0]);
     } catch (error) {
-      console.error('Erro ao criar caderno:', error);
       useToastStore.getState().addToast(extractApiError(error, 'Erro ao criar caderno.'), 'error');
     }
   };

@@ -55,7 +55,6 @@ export const ManualFlashcardModal: React.FC<ManualFlashcardModalProps> = ({
         back: back.trim(),
       });
     } catch (err) {
-      console.error('Erro ao criar flashcard manual:', err);
       useToastStore.getState().addToast(extractApiError(err, 'Erro ao criar flashcard manual.'), 'error');
     }
   };

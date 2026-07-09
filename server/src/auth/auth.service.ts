@@ -4,6 +4,7 @@ import {
   ConflictException,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -12,6 +13,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../common/email/email.service';
 
 const SALT_ROUNDS = 12;
+const MIN_PASSWORD_LENGTH = 8;
 
 export interface UserPublic {
   id: string;
@@ -30,14 +32,19 @@ export interface AuthTokens {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+  private readonly refreshSecret: string;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
-  ) {}
-
-  private readonly refreshSecret =
-    process.env.REFRESH_SECRET || 'dev-refresh-secret-change-in-production';
+  ) {
+    this.refreshSecret = process.env.REFRESH_SECRET ||
+      (process.env.NODE_ENV === 'production'
+        ? (() => { throw new Error('REFRESH_SECRET é obrigatório em produção'); })()
+        : 'dev-refresh-secret');
+  }
 
   private stripPassword(user: {
     id: string;
@@ -67,6 +74,10 @@ export class AuthService {
     return emailRegex.test(email);
   }
 
+  private validatePassword(password: string): boolean {
+    return password.length >= MIN_PASSWORD_LENGTH;
+  }
+
   async register(
     name: string,
     email: string,
@@ -76,8 +87,8 @@ export class AuthService {
       throw new UnauthorizedException('Formato de e-mail inválido');
     }
 
-    if (password.length < 6) {
-      throw new UnauthorizedException('A senha deve ter no mínimo 6 caracteres');
+    if (!this.validatePassword(password)) {
+      throw new UnauthorizedException(`A senha deve ter no mínimo ${MIN_PASSWORD_LENGTH} caracteres`);
     }
 
     const existing = await this.prisma.user.findUnique({
@@ -90,7 +101,7 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     const avatarUrl = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name)}`;
     const verificationToken = uuidv4();
-    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
+    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     await this.prisma.user.create({
       data: {
@@ -104,7 +115,6 @@ export class AuthService {
       },
     });
 
-    // Envia e-mail de verificação (não falha o registro se o email falhar)
     try {
       await this.emailService.sendVerificationEmail(
         email.toLowerCase(),
@@ -112,7 +122,7 @@ export class AuthService {
         verificationToken,
       );
     } catch (error) {
-      console.error('Falha ao enviar e-mail de verificação', error);
+      this.logger.error('Falha ao enviar e-mail de verificação');
     }
 
     return {
@@ -140,7 +150,7 @@ export class AuthService {
 
     if (!user.emailVerified) {
       throw new UnauthorizedException(
-        'EMAIL_NOT_VERIFIED: Verifique seu e-mail antes de fazer login. Se não recebeu o e-mail, solicite um novo link de verificação.',
+        'EMAIL_NOT_VERIFIED: Verifique seu e-mail antes de fazer login.',
       );
     }
 
@@ -190,7 +200,6 @@ export class AuthService {
     });
 
     if (!user) {
-      // Não revela se o e-mail existe ou não por segurança
       return {
         message:
           'Se o e-mail estiver cadastrado, um novo link de verificação será enviado.',
@@ -219,7 +228,7 @@ export class AuthService {
         verificationToken,
       );
     } catch (error) {
-      console.error('Falha ao reenviar e-mail de verificação', error);
+      this.logger.error('Falha ao reenviar e-mail de verificação');
       throw new Error('Erro ao enviar e-mail. Tente novamente mais tarde.');
     }
 
@@ -250,7 +259,6 @@ export class AuthService {
         );
       }
 
-      // Gera NOVO par de tokens (rotação completa)
       const accessToken = this.jwtService.sign({ userId: user.id });
       const newRefreshToken = this.jwtService.sign(
         { userId: user.id },
@@ -314,8 +322,8 @@ export class AuthService {
     currentPassword: string,
     newPassword: string,
   ): Promise<{ message: string }> {
-    if (newPassword.length < 6) {
-      throw new UnauthorizedException('A nova senha deve ter no mínimo 6 caracteres');
+    if (!this.validatePassword(newPassword)) {
+      throw new UnauthorizedException(`A nova senha deve ter no mínimo ${MIN_PASSWORD_LENGTH} caracteres`);
     }
 
     const user = await this.prisma.user.findUnique({
@@ -342,7 +350,6 @@ export class AuthService {
       where: { email: email.toLowerCase() },
     });
 
-    // Não revela se o e-mail existe ou não por segurança
     if (!user) {
       return {
         message:
@@ -351,7 +358,7 @@ export class AuthService {
     }
 
     const resetToken = uuidv4();
-    const resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+    const resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000);
 
     await this.prisma.user.update({
       where: { id: user.id },
@@ -368,7 +375,7 @@ export class AuthService {
         resetToken,
       );
     } catch (error) {
-      console.error('Falha ao enviar e-mail de recuperação', error);
+      this.logger.error('Falha ao enviar e-mail de recuperação');
       throw new Error('Erro ao enviar e-mail de recuperação. Tente novamente mais tarde.');
     }
 
@@ -400,8 +407,8 @@ export class AuthService {
       );
     }
 
-    if (newPassword.length < 6) {
-      throw new BadRequestException('A nova senha deve ter no mínimo 6 caracteres');
+    if (!this.validatePassword(newPassword)) {
+      throw new BadRequestException(`A nova senha deve ter no mínimo ${MIN_PASSWORD_LENGTH} caracteres`);
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
@@ -424,24 +431,18 @@ export class AuthService {
     });
     if (!user) throw new NotFoundException('Usuário não encontrado');
 
-    // Gera código de 6 dígitos
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-
-    // Gera token JWT com userId + código, válido por 15 minutos
     const token = this.jwtService.sign(
       { userId, code, purpose: 'delete-account' },
       { expiresIn: '15m' },
     );
 
-    // Envia e-mail com o código
     await this.emailService.sendDeleteConfirmationEmail(
       user.email,
       user.name,
       code,
     );
 
-    // Retorna o token para ser usado na confirmação
-    // (NUNCA retornaríamos o código — apenas o token JWT)
     return {
       message: 'E-mail de confirmação enviado. Verifique sua caixa de entrada.',
       token,
@@ -478,8 +479,6 @@ export class AuthService {
     });
     if (!user) throw new NotFoundException('Usuário não encontrado');
 
-    // O CASCADE do Prisma + SQLite remove automaticamente todos os
-    // registros relacionados
     await this.prisma.user.delete({
       where: { id: payload.userId },
     });
