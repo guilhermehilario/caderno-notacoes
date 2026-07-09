@@ -116,18 +116,28 @@ export class AuthController {
     );
   }
 
-  @Delete('profile')
+  @Post('send-delete-confirmation')
   @UseGuards(JwtAuthGuard)
-  async deleteAccount(
+  async sendDeleteConfirmation(@CurrentUser('id') userId: string) {
+    return this.authService.sendDeleteConfirmation(userId);
+  }
+
+  @Post('confirm-deletion')
+  @UseGuards(JwtAuthGuard)
+  async confirmDeletion(
     @CurrentUser('id') userId: string,
+    @Body() body: { token: string; code: string },
     @Res({ passthrough: true }) res: Response,
   ) {
-    await this.authService.deleteAccount(userId);
+    const result = await this.authService.confirmDeleteAccount(
+      body.token,
+      body.code,
+    );
     res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: this.isSecure,
       sameSite: 'lax',
     });
-    return { message: 'Conta excluída permanentemente' };
+    return result;
   }
 }

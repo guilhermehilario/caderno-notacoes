@@ -21,8 +21,19 @@ export const authService = {
     return response.data;
   },
 
-  async deleteAccount(): Promise<void> {
-    await api.delete('/auth/profile');
+  async sendDeleteConfirmation(): Promise<{ message: string; token: string }> {
+    const response = await api.post<{ message: string; token: string }>(
+      '/auth/send-delete-confirmation',
+    );
+    return response.data;
+  },
+
+  async confirmDeletion(token: string, code: string): Promise<{ message: string }> {
+    const response = await api.post<{ message: string }>(
+      '/auth/confirm-deletion',
+      { token, code },
+    );
+    return response.data;
   },
 };
 export default authService;

@@ -1,7 +1,8 @@
-import { Injectable, UnauthorizedException, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../common/email/email.service';
 
 const SALT_ROUNDS = 12;
 
@@ -24,6 +25,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly emailService: EmailService,
   ) {}
 
   private readonly refreshSecret =
@@ -209,17 +211,72 @@ export class AuthService {
     return { message: 'Senha alterada com sucesso' };
   }
 
-  async deleteAccount(userId: string): Promise<void> {
+  async sendDeleteConfirmation(userId: string): Promise<{ message: string; token: string }> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
     if (!user) throw new NotFoundException('Usuário não encontrado');
 
-    // O CASCADE do Prisma + SQLite remove automaticamente todos os
-    // registros relacionados: notebooks, folhas, flashcards, sessões,
-    // tags, bookmarks, histórico, todos, eventos, metas, pomodoros.
-    await this.prisma.user.delete({
-      where: { id: userId },
+    // Gera código de 6 dígitos
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Gera token JWT com userId + código, válido por 15 minutos
+    const token = this.jwtService.sign(
+      { userId, code, purpose: 'delete-account' },
+      { expiresIn: '15m' },
+    );
+
+    // Envia e-mail com o código
+    await this.emailService.sendDeleteConfirmationEmail(
+      user.email,
+      user.name,
+      code,
+    );
+
+    // Retorna o token para ser usado na confirmação
+    // (NUNCA retornaríamos o código — apenas o token JWT)
+    return {
+      message: 'E-mail de confirmação enviado. Verifique sua caixa de entrada.',
+      token,
+    };
+  }
+
+  async confirmDeleteAccount(
+    token: string,
+    code: string,
+  ): Promise<{ message: string }> {
+    let payload: { userId: string; code: string; purpose: string };
+    try {
+      payload = this.jwtService.verify(token) as {
+        userId: string;
+        code: string;
+        purpose: string;
+      };
+    } catch {
+      throw new BadRequestException(
+        'Token inválido ou expirado. Solicite um novo código.',
+      );
+    }
+
+    if (payload.purpose !== 'delete-account') {
+      throw new BadRequestException('Token inválido para esta operação.');
+    }
+
+    if (payload.code !== code) {
+      throw new BadRequestException('Código de confirmação incorreto.');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.userId },
     });
+    if (!user) throw new NotFoundException('Usuário não encontrado');
+
+    // O CASCADE do Prisma + SQLite remove automaticamente todos os
+    // registros relacionados
+    await this.prisma.user.delete({
+      where: { id: payload.userId },
+    });
+
+    return { message: 'Conta excluída permanentemente' };
   }
 }
