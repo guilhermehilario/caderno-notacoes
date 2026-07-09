@@ -91,12 +91,22 @@ export function useLeaf(leafId: string) {
   const updateMutation = useMutation({
     mutationFn: (data: UpdateLeafInput) => leafService.updateLeaf(leafId, data),
     onSuccess: (updatedLeaf) => {
-      // ⚡ NÃO atualizamos o cache individual ['leaves', leafId] propositalmente.
-      // Fazer setQueryData com um novo objeto faria o useQuery disparar
-      // re-render em toda a árvore do EditorView, recriando o editor.
-      // O EditorView já gerencia estado local como fonte da verdade.
+      // ⚡ Atualiza o cache individual ['leaves', leafId] para que,
+      // ao navegar de volta para a folha, o conteúdo salvo apareça.
+      // Antes não atualizávamos por medo de recriar o editor, mas
+      // o useEditorContent já protege com initialSyncDoneRef.current.
+      queryClient.setQueryData<Leaf>(["leaves", leafId], (old) => {
+        if (!old) return updatedLeaf as unknown as Leaf;
+        return {
+          ...old,
+          title: updatedLeaf.title ?? old.title,
+          content: updatedLeaf.content ?? old.content,
+          rawText: updatedLeaf.rawText ?? old.rawText,
+          updatedAt: updatedLeaf.updatedAt ?? old.updatedAt,
+        };
+      });
 
-      // Apenas atualiza o título na lista de leaves para manter
+      // Atualiza o título na lista de leaves para manter
       // o menu lateral sincronizado — sem disparar requisição HTTP.
       queryClient.setQueryData<Leaf[]>(
         ["notebooks", updatedLeaf.notebookId, "leaves"],
