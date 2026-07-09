@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useUIStore } from "../../store/uiStore";
 import {
   Brain,
-  LayoutDashboard,
+  BookOpen,
   BookmarkIcon,
   Archive,
   ListChecks,
@@ -91,8 +91,8 @@ export const Sidebar: React.FC = () => {
               : "text-slate-650 hover:bg-slate-100 dark:text-dark-300 dark:hover:bg-dark-800/60"
           }`}
         >
-          <LayoutDashboard className="h-5 w-5 flex-shrink-0" />
-          {!sidebarCollapsed && <span className="truncate">Dashboard</span>}
+          <BookOpen className="h-5 w-5 flex-shrink-0" />
+          {!sidebarCollapsed && <span className="truncate">Cadernos</span>}
         </Link>
 
         {/* ── Planejamento (expansível) ── */}

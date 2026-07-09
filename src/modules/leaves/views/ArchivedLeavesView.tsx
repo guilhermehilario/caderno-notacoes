@@ -39,19 +39,9 @@ export const ArchivedLeavesView: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto flex flex-col gap-6">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-dark-800 flex items-center justify-center text-slate-500 dark:text-dark-300 flex-shrink-0">
-          <Archive className="h-5 w-5" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-heading font-extrabold tracking-tight text-slate-900 dark:text-dark-50">
-            Arquivados
-          </h1>
-          <p className="text-slate-500 dark:text-dark-350 mt-0.5">
-            Folhas arquivadas que foram ocultadas do caderno
-          </p>
-        </div>
-      </div>
+      <p className="text-slate-500 dark:text-dark-350">
+        Folhas arquivadas que foram ocultadas do caderno
+      </p>
 
       {!archivedLeaves || archivedLeaves.length === 0 ? (
         <Card className="flex flex-col items-center justify-center text-center p-12 min-h-[30vh] border border-dashed border-slate-200 dark:border-dark-800">

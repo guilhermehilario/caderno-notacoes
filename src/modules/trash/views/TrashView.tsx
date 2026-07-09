@@ -82,15 +82,9 @@ export const TrashView: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto flex flex-col gap-6">
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-heading font-extrabold tracking-tight text-slate-900 dark:text-dark-50 flex items-center gap-3">
-            <Trash2 className="h-8 w-8 text-slate-400" />
-            Lixeira
-          </h1>
-          <p className="text-slate-500 dark:text-dark-350 mt-1">
-            Itens excluídos são mantidos por 15 dias antes da exclusão permanente
-          </p>
-        </div>
+        <p className="text-slate-500 dark:text-dark-350">
+          Itens excluídos são mantidos por 15 dias antes da exclusão permanente
+        </p>
         {allItems.length > 0 && (
           <Button
             variant="outline"
