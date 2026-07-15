@@ -22,7 +22,6 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
   show,
   onClose,
 }) => {
-  const notificationCount = useNotificationStore((s) => s.count);
   const notifications = useNotificationStore((s) => s.notifications);
   const acknowledge = useNotificationStore((s) => s.acknowledge);
   const acknowledgeAll = useNotificationStore((s) => s.acknowledgeAll);

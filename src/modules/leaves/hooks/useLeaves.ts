@@ -24,9 +24,9 @@ export function useLeaves(notebookId: string) {
       // ⚡ Adiciona a nova folha ao cache + incrementa contagem — sem refetch
       queryClient.setQueryData<Leaf[]>(
         ["notebooks", notebookId, "leaves"],
-        (old) => {
+        (old: Leaf[] | undefined) => {
           if (!old) return [newLeaf];
-          const alreadyExists = old.some((leaf) => leaf.id === newLeaf.id);
+          const alreadyExists = old.some((leaf: Leaf) => leaf.id === newLeaf.id);
           return alreadyExists ? old : [...old, newLeaf];
         },
       );
@@ -41,10 +41,10 @@ export function useLeaves(notebookId: string) {
       // ⚡ Se for sub-folha, adiciona ao cache ['leaves', parentId]
       //    para que a folha pai mostre o novo filho sem recarregar.
       if (newLeaf.parentId) {
-        queryClient.setQueryData<Leaf>(["leaves", newLeaf.parentId], (old) => {
+        queryClient.setQueryData<Leaf>(["leaves", newLeaf.parentId], (old: Leaf | undefined) => {
           if (!old) return old;
           const children = old.children ?? [];
-          const alreadyExists = children.some((c) => c.id === newLeaf.id);
+          const alreadyExists = children.some((c: Leaf) => c.id === newLeaf.id);
           if (alreadyExists) return old;
           return {
             ...old,
@@ -113,7 +113,7 @@ export function useLeaf(leafId: string) {
       // ao navegar de volta para a folha, o conteúdo salvo apareça.
       // Antes não atualizávamos por medo de recriar o editor, mas
       // o useEditorContent já protege com initialSyncDoneRef.current.
-      queryClient.setQueryData<Leaf>(["leaves", leafId], (old) => {
+      queryClient.setQueryData<Leaf>(["leaves", leafId], (old: Leaf | undefined) => {
         if (!old) return updatedLeaf as unknown as Leaf;
         return {
           ...old,
@@ -128,8 +128,8 @@ export function useLeaf(leafId: string) {
       // o menu lateral sincronizado — sem disparar requisição HTTP.
       queryClient.setQueryData<Leaf[]>(
         ["notebooks", updatedLeaf.notebookId, "leaves"],
-        (old) =>
-          old?.map((leaf) => {
+        (old: Leaf[] | undefined) =>
+          old?.map((leaf: Leaf) => {
             if (leaf.id !== leafId) return leaf;
             if (leaf.title === updatedLeaf.title) return leaf;
             return {
@@ -153,7 +153,7 @@ export function useLeaf(leafId: string) {
         // ⚡ Remove a folha do cache + decrementa contagem — sem refetch
         queryClient.setQueryData<Leaf[]>(
           ["notebooks", notebookId, "leaves"],
-          (old) => old?.filter((l) => l.id !== leafId) ?? old,
+          (old: Leaf[] | undefined) => old?.filter((l: Leaf) => l.id !== leafId) ?? old,
         );
         queryClient.setQueryData(
           ["notebooks", notebookId],
@@ -165,11 +165,11 @@ export function useLeaf(leafId: string) {
 
         // ⚡ Remove do array children da folha pai
         if (parentId) {
-          queryClient.setQueryData<Leaf>(["leaves", parentId], (old) => {
+          queryClient.setQueryData<Leaf>(["leaves", parentId], (old: Leaf | undefined) => {
             if (!old) return old;
             return {
               ...old,
-              children: (old.children ?? []).filter((c) => c.id !== leafId),
+              children: (old.children ?? []).filter((c: { id: string }) => c.id !== leafId),
             };
           });
         }
@@ -185,7 +185,7 @@ export function useLeaf(leafId: string) {
     onSuccess: (data) => {
       queryClient.setQueryData<{ summary?: string }>(
         ["leaves", leafId, "summary"],
-        (old) => {
+        (old: { summary?: string } | undefined) => {
           if (old?.summary === data.summary) return old;
           return { ...(old ?? {}), summary: data.summary };
         },
@@ -216,11 +216,11 @@ export function useLeaf(leafId: string) {
       // ⚡ Define os flashcards diretamente no cache — sem refetch
       queryClient.setQueryData<Flashcard[]>(
         ["leaves", leafId, "flashcards"],
-        (old) => {
+        (old: Flashcard[] | undefined) => {
           if (!old) return flashcards;
           const isSame =
             old.length === flashcards.length &&
-            old.every((card, index) => {
+            old.every((card: Flashcard, index: number) => {
               const nextCard = flashcards[index];
               return (
                 card.id === nextCard?.id &&

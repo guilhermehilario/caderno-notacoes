@@ -25,8 +25,6 @@ export const MetasTab: React.FC = () => {
   const [newDescription, setNewDescription] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [progressEditId, setProgressEditId] = useState<string | null>(null);
-  const [progressValue, setProgressValue] = useState(0);
 
   const handleAdd = useCallback(async () => {
     const title = newTitle.trim();
@@ -197,7 +195,7 @@ export const MetasTab: React.FC = () => {
                     {goal.progress}%
                   </span>
                 </div>
-                <ProgressBar progress={goal.progress} />
+                <ProgressBar value={goal.progress} max={100} />
               </div>
 
               {goal.targetDate && (
@@ -268,7 +266,7 @@ export const MetasTab: React.FC = () => {
         title="Excluir meta"
         message="Tem certeza que deseja excluir esta meta?"
         confirmLabel="Excluir"
-        confirmVariant="danger"
+        variant="danger"
       />
     </div>
   );

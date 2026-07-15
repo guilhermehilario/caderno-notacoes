@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -14,7 +14,6 @@ import { useRandomQuestions } from "../hooks/useQuestions";
 import { PageContainer } from "../../../components/ui/PageContainer.tsx";
 import { Card } from "../../../components/ui/Card.tsx";
 import { Button } from "../../../components/ui/Button.tsx";
-import { EmptyState } from "../../../components/ui/EmptyState.tsx";
 import { QuestionOption } from "../../../components/ui/QuestionOption.tsx";
 import type { Question } from "../types";
 
@@ -46,7 +45,6 @@ export const QuestionsStudyView: React.FC = () => {
   const isLastQuestion = currentIndex >= questionsList.length - 1;
   const correctCount = Object.values(answers).filter(Boolean).length;
   const totalAnswered = Object.keys(answers).length;
-  const isCorrect = selectedOption === currentQuestion?.correctAnswer;
 
   const handleSelectOption = (option: string) => {
     if (showResult) return;

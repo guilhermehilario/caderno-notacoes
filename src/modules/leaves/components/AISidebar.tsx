@@ -7,7 +7,6 @@ import {
   Play,
   Plus,
   Upload,
-  MessageSquareText,
 } from "lucide-react";
 import { AnnotationSidebar } from "./AnnotationSidebar";
 import { Card } from "../../../components/ui/Card.tsx";
@@ -20,7 +19,6 @@ interface AISidebarProps {
   summary: string | null | undefined;
   flashcards: Flashcard[];
   notebookId: string;
-  localRawText: string;
   isGeneratingSummary: boolean;
   isGeneratingFlashcards: boolean;
   onCreateManualFlashcard: () => void;
@@ -42,7 +40,6 @@ const AISidebarComponent: React.FC<AISidebarProps> = ({
   summary,
   flashcards,
   notebookId,
-  localRawText,
   isGeneratingSummary,
   isGeneratingFlashcards,
   onCreateManualFlashcard,

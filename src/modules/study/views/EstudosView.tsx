@@ -2,12 +2,10 @@ import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Brain,
-  GraduationCap,
   ClipboardList,
   Timer,
   BookOpen,
   RefreshCw,
-  Sparkles,
   ArrowRight,
   Loader2,
 } from "lucide-react";
@@ -16,8 +14,6 @@ import notebookService from "../../notebooks/services/notebookService";
 import { studyService } from "../services/studyService";
 import { PageContainer } from "../../../components/ui/PageContainer.tsx";
 import { Card } from "../../../components/ui/Card.tsx";
-import { Button } from "../../../components/ui/Button.tsx";
-import { EmptyState } from "../../../components/ui/EmptyState.tsx";
 import { StatCard } from "../../../components/ui/StatCard.tsx";
 
 type StudyMode = "flashcards" | "questoes" | "simulados" | "revisoes";
@@ -98,7 +94,7 @@ export const EstudosView: React.FC = () => {
       if (mode.id === "questoes") count = studyContent?.totalQuestions;
       if (mode.id === "simulados") count = studyContent?.totalMockExams;
       if (mode.id === "revisoes") {
-        count = (studyContent?.flashcardsDue ?? 0) + (studyContent?.totalFlashcards ?? 0);
+        count = (studyContent?.flashcardsDue?.length ?? 0) + (studyContent?.totalFlashcards ?? 0);
       }
       return { ...mode, count };
     });
@@ -152,24 +148,30 @@ export const EstudosView: React.FC = () => {
             label="Flashcards"
             value={stats.totalFlashcards}
             icon={<Brain className="h-4 w-4" />}
-            trend={stats.flashcardsDue > 0 ? `${stats.flashcardsDue} pendentes` : undefined}
-            trendUp={stats.flashcardsDue === 0}
+            colorClass="text-brand-500"
+            iconBgClass="bg-brand-50 dark:bg-brand-950/20"
+            tooltip={stats.flashcardsDue > 0 ? `${stats.flashcardsDue} pendentes` : undefined}
           />
           <StatCard
             label="Questões"
             value={stats.totalQuestions}
             icon={<ClipboardList className="h-4 w-4" />}
+            colorClass="text-emerald-500"
+            iconBgClass="bg-emerald-50 dark:bg-emerald-950/20"
           />
           <StatCard
             label="Simulados"
             value={stats.totalMockExams}
             icon={<Timer className="h-4 w-4" />}
+            colorClass="text-amber-500"
+            iconBgClass="bg-amber-50 dark:bg-amber-950/20"
           />
           <StatCard
             label="Para Revisar"
             value={stats.flashcardsDue}
             icon={<BookOpen className="h-4 w-4" />}
-            trendUp={false}
+            colorClass="text-rose-500"
+            iconBgClass="bg-rose-50 dark:bg-rose-950/20"
           />
         </div>
       )}

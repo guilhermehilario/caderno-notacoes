@@ -235,7 +235,7 @@ export const PlanningWeeklySummary: React.FC = () => {
                         </span>
                       </div>
                     </div>
-                    <ProgressBar progress={goal.progress} />
+                    <ProgressBar value={goal.progress} max={100} />
                   </div>
                 );
               })}

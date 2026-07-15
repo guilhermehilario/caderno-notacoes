@@ -6,11 +6,8 @@ import {
 } from 'lucide-react';
 import { useEvents } from '../hooks/useEvents.ts';
 import { useUpdateEvent, useDeleteEvent } from '../hooks/useEvents.ts';
-import { EmptyState } from '../../../components/ui/EmptyState.tsx';
 import { LoadingScreen } from '../../../components/ui/LoadingScreen.tsx';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog.tsx';
-import { useToastStore } from '../../../store/toastStore.ts';
-import { extractApiError } from '../../../utils/api-errors.ts';
 
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const MONTHS = [
@@ -253,7 +250,7 @@ export const CalendarTab: React.FC = () => {
         title="Excluir evento"
         message="Tem certeza que deseja excluir este evento?"
         confirmLabel="Excluir"
-        confirmVariant="danger"
+        variant="danger"
       />
     </div>
   );

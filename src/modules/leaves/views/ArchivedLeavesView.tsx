@@ -1,10 +1,9 @@
 import React from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useArchivedLeaves } from '../hooks/useLeaves';
 import { Archive, FileText, Loader2, RotateCcw, BookOpen, Calendar } from 'lucide-react';
 import { PageContainer } from '../../../components/ui/PageContainer.tsx';
 import { Card } from '../../../components/ui/Card.tsx';
-import { Button } from '../../../components/ui/Button.tsx';
 import { useToastStore } from '../../../store/toastStore';
 import { extractApiError } from '../../../utils/api-errors';
 import { useMutation, useQueryClient } from '@tanstack/react-query';

@@ -3,7 +3,6 @@ import {
   Plus,
   Trash2,
   Loader2,
-  Circle,
   CheckCircle2,
   Calendar as CalendarIcon,
   Timeline,
@@ -167,8 +166,7 @@ export const CronogramaTab: React.FC = () => {
           <div className="absolute left-[19px] top-0 bottom-0 w-0.5 bg-violet-200 dark:bg-violet-900/40" />
 
           <div className="flex flex-col gap-4">
-            {pendingEvents.map((event, idx) => {
-              const isLast = idx === pendingEvents.length - 1;
+            {pendingEvents.map((event) => {
               return (
                 <div key={event.id} className="relative flex gap-4">
                   {/* Timeline dot */}
@@ -257,7 +255,7 @@ export const CronogramaTab: React.FC = () => {
         title="Excluir marco"
         message="Tem certeza que deseja excluir este marco do cronograma?"
         confirmLabel="Excluir"
-        confirmVariant="danger"
+        variant="danger"
       />
     </div>
   );

@@ -32,7 +32,7 @@ export function useSoftDeleteLeaf() {
         // Remove da lista da sidebar
         queryClient.setQueryData<Leaf[]>(
           ["notebooks", leafData.notebookId, "leaves"],
-          (old) => old?.filter((l) => l.id !== leafId) ?? old,
+          (old: Leaf[] | undefined) => old?.filter((l: Leaf) => l.id !== leafId) ?? old,
         );
         // Decrementa contagem de folhas
         queryClient.setQueryData(
@@ -46,11 +46,11 @@ export function useSoftDeleteLeaf() {
         if (leafData.parentId) {
           queryClient.setQueryData<Leaf>(
             ["leaves", leafData.parentId],
-            (old) => {
+            (old: Leaf | undefined) => {
               if (!old) return old;
               return {
                 ...old,
-                children: (old.children ?? []).filter((c) => c.id !== leafId),
+                children: (old.children ?? []).filter((c: Leaf) => c.id !== leafId),
               };
             },
           );
@@ -105,16 +105,16 @@ export function usePermanentDeleteLeaf() {
       if (leafData) {
         queryClient.setQueryData<Leaf[]>(
           ["notebooks", leafData.notebookId, "leaves"],
-          (old) => old?.filter((l) => l.id !== leafId) ?? old,
+          (old: Leaf[] | undefined) => old?.filter((l: Leaf) => l.id !== leafId) ?? old,
         );
         if (leafData.parentId) {
           queryClient.setQueryData<Leaf>(
             ["leaves", leafData.parentId],
-            (old) => {
+            (old: Leaf | undefined) => {
               if (!old) return old;
               return {
                 ...old,
-                children: (old.children ?? []).filter((c) => c.id !== leafId),
+                children: (old.children ?? []).filter((c: Leaf) => c.id !== leafId),
               };
             },
           );

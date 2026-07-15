@@ -23,7 +23,7 @@ import { PlanningWeeklySummary } from '../../../modules/planning/components/Plan
 export const DashboardView: React.FC = () => {
   const { notebooks, isLoading, createNotebook } = useNotebooks();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedColor, setSelectedColor] = useState(NOTEBOOK_COLORS[0]);
+  const [selectedColor, setSelectedColor] = useState<string>(NOTEBOOK_COLORS[0]);
   const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
 
   const {

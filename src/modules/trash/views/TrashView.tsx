@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTrash, useRestoreNotebook, useRestoreLeaf, usePermanentDeleteNotebook, usePermanentDeleteLeaf, useCleanTrash } from '../hooks/useTrash';
-import { Trash2, RotateCcw, Loader2, BookOpen, FileText, AlertTriangle, Clock, XCircle } from 'lucide-react';
+import { Trash2, RotateCcw, Loader2, BookOpen, FileText, Clock, XCircle } from 'lucide-react';
 import { PageContainer } from '../../../components/ui/PageContainer.tsx';
 import { Card } from '../../../components/ui/Card.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
@@ -17,7 +16,6 @@ export const TrashView: React.FC = () => {
   const permanentDeleteNotebook = usePermanentDeleteNotebook();
   const permanentDeleteLeaf = usePermanentDeleteLeaf();
   const cleanTrash = useCleanTrash();
-  const navigate = useNavigate();
 
   const allItems = [
     ...(trash?.notebooks || []),

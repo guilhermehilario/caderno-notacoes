@@ -21,11 +21,6 @@ export const AvatarSelector: React.FC<AvatarSelectorProps> = ({
   const currentVariant =
     currentCategory.variants.find((v) => v.id === selectedVariant) ||
     currentCategory.variants[0];
-  const currentAvatarUrl = getAvatarUrl(
-    currentCategory.style,
-    currentVariant.seed,
-  );
-
   return (
     <div className="flex flex-col gap-4">
       {/* Preview do avatar atual */}

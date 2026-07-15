@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useUIStore } from '../../store/uiStore';
 import { useEditorStatusStore } from '../../store/editorStatusStore';
 import { useQueryClient } from '@tanstack/react-query';

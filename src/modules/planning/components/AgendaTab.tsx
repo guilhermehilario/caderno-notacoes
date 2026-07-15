@@ -239,7 +239,7 @@ export const AgendaTab: React.FC = () => {
         title="Excluir evento"
         message="Tem certeza que deseja excluir este evento?"
         confirmLabel="Excluir"
-        confirmVariant="danger"
+        variant="danger"
       />
     </div>
   );

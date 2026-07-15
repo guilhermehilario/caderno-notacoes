@@ -20,7 +20,6 @@ interface UseNotebookActionsParams {
     color: string;
   }) => Promise<unknown>;
   softDeleteNotebook: { mutateAsync: (id: string) => Promise<unknown> };
-  leaves: Array<{ id: string; title: string }>;
 }
 
 interface UseNotebookActionsReturn {
@@ -55,12 +54,11 @@ export function useNotebookActions({
   navigate,
   updateNotebook,
   softDeleteNotebook,
-  leaves,
 }: UseNotebookActionsParams): UseNotebookActionsReturn {
   const queryClient = useQueryClient();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isFlashcardModalOpen, setIsFlashcardModalOpen] = useState(false);
-  const [selectedColor, setSelectedColor] = useState(NOTEBOOK_COLORS[0]);
+  const [selectedColor, setSelectedColor] = useState<string>(NOTEBOOK_COLORS[0]);
   const [selectedLeafId, setSelectedLeafId] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -70,7 +68,6 @@ export function useNotebookActions({
     register: registerEdit,
     handleSubmit: handleSubmitEdit,
     reset: resetEdit,
-    setValue: setEditValue,
     formState: { errors: editErrors },
   } = useForm<CreateNotebookInput>({
     resolver: zodResolver(CreateNotebookSchema),

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, startTransition, useCallback } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import {
   ArrowLeft,
   RefreshCw,
@@ -25,7 +25,6 @@ import type { StudyScore } from "../types";
 
 export const StudyView: React.FC = () => {
   const { notebookId } = useParams<{ notebookId: string }>();
-  const navigate = useNavigate();
   const nbId = notebookId ?? "";
 
   // ⚡ Persistência automática da sessão de estudo no backend

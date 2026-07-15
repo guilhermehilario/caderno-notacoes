@@ -15,7 +15,6 @@ interface UseNotebookLeafCreationParams {
     rawText?: string;
     parentId?: string;
   }) => Promise<{ id: string }>;
-  leaves: Array<{ id: string; title: string }>;
 }
 
 interface UseNotebookLeafCreationReturn {
@@ -34,7 +33,6 @@ interface UseNotebookLeafCreationReturn {
 export function useNotebookLeafCreation({
   notebookId,
   createLeaf,
-  leaves,
 }: UseNotebookLeafCreationParams): UseNotebookLeafCreationReturn {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);

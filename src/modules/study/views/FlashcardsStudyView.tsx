@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, startTransition, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -7,13 +7,11 @@ import {
   HelpCircle,
   Brain,
   CheckCircle,
-  Shuffle,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import notebookService from "../../notebooks/services/notebookService";
 import studyService from "../services/studyService";
 import { useSubmitCardScore } from "../hooks/useFlashcards";
-import { useStudyStore } from "../studyStore";
 import { PageContainer } from "../../../components/ui/PageContainer.tsx";
 import { Card } from "../../../components/ui/Card.tsx";
 import { Button } from "../../../components/ui/Button.tsx";
@@ -35,7 +33,6 @@ export const FlashcardsStudyView: React.FC = () => {
   const selectedNotebook = notebooks.find((nb) => nb.id === notebookId);
   const nbId = notebookId || "";
 
-  const [sessionKey] = useState(() => `flashcards-${notebookId || "all"}`);
   const { mutateAsync: submitScore } = useSubmitCardScore(undefined, nbId || undefined);
 
   // Busca todos os flashcards de todos os cadernos ou de um específico

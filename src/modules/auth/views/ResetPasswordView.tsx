@@ -48,7 +48,7 @@ export const ResetPasswordView: React.FC = () => {
     setApiError(null);
     setIsLoading(true);
     try {
-      const result = await authService.resetPassword(token, data.password);
+      await authService.resetPassword(token, data.password);
       setStep('success');
     } catch (error) {
       const errorMsg = extractApiError(error, '');

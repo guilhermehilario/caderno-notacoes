@@ -6,12 +6,10 @@ import {
   Trash2,
   Timer,
   RotateCcw,
-  Loader2,
 } from 'lucide-react';
 import { usePomodoros, useCreatePomodoro, useUpdatePomodoro, useDeletePomodoro } from '../hooks/usePomodoro.ts';
 import { usePomodoroStore, formatPomodoroTime } from '../../../store/pomodoroStore.ts';
 import { usePlanningSettingsStore } from '../../../store/planningSettingsStore.ts';
-import { EmptyState } from '../../../components/ui/EmptyState.tsx';
 import { LoadingScreen } from '../../../components/ui/LoadingScreen.tsx';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog.tsx';
 import { useToastStore } from '../../../store/toastStore.ts';
@@ -318,7 +316,7 @@ export const PomodoroTab: React.FC = () => {
         title="Excluir sessão"
         message="Tem certeza que deseja excluir esta sessão?"
         confirmLabel="Excluir"
-        confirmVariant="danger"
+        variant="danger"
       />
     </div>
   );

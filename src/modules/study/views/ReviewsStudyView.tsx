@@ -1,11 +1,9 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import {
   ArrowLeft,
   RefreshCw,
   BookOpen,
-  Brain,
-  ClipboardList,
   CheckCircle,
   Eye,
   HelpCircle,
@@ -18,7 +16,6 @@ import { PageContainer } from "../../../components/ui/PageContainer.tsx";
 import { Card } from "../../../components/ui/Card.tsx";
 import { Button } from "../../../components/ui/Button.tsx";
 import { ScoreButtons } from "../components/ScoreButtons";
-import { safeParseOptions } from "../../../utils/parse-options";
 import { QuestionOption } from "../../../components/ui/QuestionOption.tsx";
 import type { Flashcard, StudyScore } from "../types";
 
@@ -305,8 +302,6 @@ export const ReviewsStudyView: React.FC = () => {
 
   // Render question
   const question = currentItem.data as any;
-
-  const isAnswerCorrect = selectedOption && selectedOption === question.correctAnswer;
 
   return (
     <PageContainer>

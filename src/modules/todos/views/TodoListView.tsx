@@ -190,7 +190,7 @@ const TodoListView: React.FC = () => {
         title="Excluir tarefa"
         message="Tem certeza que deseja excluir esta tarefa? Esta ação não pode ser desfeita."
         confirmLabel="Excluir"
-        confirmVariant="danger"
+        variant="danger"
       />
     </PageContainer>
   );

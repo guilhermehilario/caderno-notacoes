@@ -1,4 +1,4 @@
-import { memo, useCallback } from "react";
+import { memo } from "react";
 import { useParams, useNavigate, Link as RouterLink } from "react-router-dom";
 import { EditorContent } from "@tiptap/react";
 import { useLeaf } from "../hooks/useLeaves";
@@ -27,7 +27,6 @@ export const EditorView: React.FC = () => {
 
   const {
     leaf,
-    isLoading: isLoadingLeaf,
     isFetching: isFetchingLeaf,
     updateLeaf,
     generateAISummary,
@@ -56,9 +55,7 @@ export const EditorView: React.FC = () => {
     editor,
     localTitle,
     setLocalTitle,
-    localRawText,
     contentReady,
-    flushSave,
   } = useEditorContent({
     leaf,
     leafId: leafId || "",
@@ -179,7 +176,6 @@ export const EditorView: React.FC = () => {
             summary={leaf?.summary}
             flashcards={flashcards}
             notebookId={notebookId || ""}
-            localRawText={localRawText}
             isGeneratingSummary={isGeneratingSummary}
             isGeneratingFlashcards={isGeneratingFlashcards}
             onCreateManualFlashcard={() => setIsFlashcardModalOpen(true)}

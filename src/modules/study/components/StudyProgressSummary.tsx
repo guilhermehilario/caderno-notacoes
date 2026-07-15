@@ -14,18 +14,8 @@ import { ProgressBar } from "../../../components/ui/ProgressBar.tsx";
 import { Tooltip } from "../../../components/ui/Tooltip.tsx";
 import { StatsSkeleton } from "./StatsSkeleton.tsx";
 
-interface StudyProgressSummaryProps {
-  /** Dispara o refetch das estatísticas quando chamado pelo header do Dashboard */
-  isFetching?: boolean;
-}
-
-export const StudyProgressSummary: React.FC<StudyProgressSummaryProps> = ({
-  isFetching: externalFetching,
-}) => {
-  const { data: stats, isLoading, isFetching: hookFetching } = useStudyStats();
-
-  // Usa o isFetching externo (do DashboardView) se fornecido
-  const isFetching = externalFetching ?? hookFetching;
+export const StudyProgressSummary: React.FC = () => {
+  const { data: stats, isLoading } = useStudyStats();
 
   if (isLoading) {
     return <StatsSkeleton />;
@@ -119,10 +109,6 @@ export const StudyProgressSummary: React.FC<StudyProgressSummaryProps> = ({
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {stats.perNotebook.map((nb) => {
-              const progress =
-                nb.totalCards > 0
-                  ? Math.round((nb.reviewedToday / nb.totalCards) * 100)
-                  : 0;
               return (
                 <div
                   key={nb.notebookId}

@@ -142,8 +142,8 @@ export const SubLeavesSection: React.FC<SubLeavesSectionProps> = ({
         const fallbackLeaf = { ...leaf, children: prevChildrenRef.current };
         queryClient.setQueryData<Leaf[]>(
           ['notebooks', notebookId, 'leaves'],
-          (old) =>
-            old?.map((l) =>
+          (old: Leaf[] | undefined) =>
+            old?.map((l: Leaf) =>
               l.id === leafId
                 ? { ...l, children: prevChildrenRef.current! }
                 : l,
@@ -186,8 +186,8 @@ export const SubLeavesSection: React.FC<SubLeavesSectionProps> = ({
 
       queryClient.setQueryData<Leaf[]>(
         ['notebooks', notebookId, 'leaves'],
-        (old) =>
-          old?.map((l) =>
+        (old: Leaf[] | undefined) =>
+          old?.map((l: Leaf) =>
             l.id === leafId ? { ...l, children: reordered } : l,
           ) ?? old,
       );
@@ -213,10 +213,10 @@ export const SubLeavesSection: React.FC<SubLeavesSectionProps> = ({
 
       // ⚡ Adiciona a nova sub-folha ao cache da folha pai para
       //    que apareça imediatamente sem precisar recarregar.
-      queryClient.setQueryData<Leaf>(["leaves", leafId], (old) => {
+      queryClient.setQueryData<Leaf>(["leaves", leafId], (old: Leaf | undefined) => {
         if (!old) return old;
         const children = old.children ?? [];
-        const alreadyExists = children.some((c) => c.id === newLeaf.id);
+        const alreadyExists = children.some((c: Leaf) => c.id === newLeaf.id);
         if (alreadyExists) return old;
         return {
           ...old,
@@ -231,9 +231,9 @@ export const SubLeavesSection: React.FC<SubLeavesSectionProps> = ({
       //    de folhas no NotebookView reflita a nova sub-folha.
       queryClient.setQueryData<Leaf[]>(
         ["notebooks", notebookId, "leaves"],
-        (old) => {
+        (old: Leaf[] | undefined) => {
           if (!old) return old;
-          const alreadyExists = old.some((l) => l.id === newLeaf.id);
+          const alreadyExists = old.some((l: Leaf) => l.id === newLeaf.id);
           if (alreadyExists) return old;
           return [...old, { ...newLeaf, children: [], tags: [] } as Leaf];
         },

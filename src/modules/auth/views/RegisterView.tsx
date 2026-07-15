@@ -28,7 +28,7 @@ export const RegisterView: React.FC = () => {
   const onSubmit = async (data: RegisterInput) => {
     setApiError(null);
     try {
-      const result = await registerUser(data);
+      await registerUser(data);
       // Redireciona para tela de verificação de e-mail
       navigate(`/verify-email?email=${encodeURIComponent(data.email)}`);
     } catch (error) {

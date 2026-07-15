@@ -13,7 +13,6 @@ import { useMockExams, useDeleteMockExam } from "../hooks/useMockExams";
 import { PageContainer } from "../../../components/ui/PageContainer.tsx";
 import { Card } from "../../../components/ui/Card.tsx";
 import { Button } from "../../../components/ui/Button.tsx";
-import { EmptyState } from "../../../components/ui/EmptyState.tsx";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog.tsx";
 import { ExamTakingView } from "../components/ExamTakingView";
 import { ExamResultView } from "../components/ExamResultView";

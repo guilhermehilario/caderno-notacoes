@@ -1,6 +1,5 @@
 import React from "react";
 import { Brain } from "lucide-react";
-import { Link } from "react-router-dom";
 import { Card } from "../../components/ui/Card.tsx";
 
 interface AuthLayoutProps {

@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import questionService from '../services/questionService';
 import { useToastStore } from '../../../store/toastStore';
 import { extractApiError } from '../../../utils/api-errors';
-import type { CreateQuestionInput, Question } from '../types';
+import type { CreateQuestionInput } from '../types';
 
 export function useQuestions(notebookId?: string) {
   return useQuery({

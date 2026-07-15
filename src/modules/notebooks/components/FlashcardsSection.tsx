@@ -1,5 +1,4 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Sparkles, Lightbulb, Loader2 } from 'lucide-react';
 import { Card } from '../../../components/ui/Card.tsx';
 import { Button } from '../../../components/ui/Button.tsx';
@@ -9,17 +8,14 @@ import type { Flashcard } from '../../study/types';
 interface FlashcardsSectionProps {
   flashcards: Flashcard[];
   isLoading: boolean;
-  notebookId: string;
   onOpenCreateModal: () => void;
 }
 
 export const FlashcardsSection: React.FC<FlashcardsSectionProps> = ({
   flashcards,
   isLoading,
-  notebookId,
   onOpenCreateModal,
 }) => {
-  const navigate = useNavigate();
 
   return (
     <div className="flex flex-col gap-4 mt-6 pt-6 border-t border-slate-100 dark:border-dark-800">

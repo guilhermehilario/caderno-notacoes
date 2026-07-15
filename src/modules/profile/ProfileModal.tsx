@@ -106,7 +106,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         onClose={onClose}
         title=""
         size="lg"
-        className="max-h-[90vh]"
       >
         {/* Tabs */}
         <div className="flex border-b border-slate-100 dark:border-dark-800/60 -mx-6 px-6 mb-6 sticky top-0 bg-white dark:bg-dark-900 z-10 rounded-t-2xl">
