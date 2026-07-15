@@ -49,7 +49,7 @@ export const LoginView: React.FC = () => {
   return (
     <AuthLayout
       title="Entrar na sua conta"
-      subtitle=""
+
       footer={
         <>
           Ainda não tem conta?{' '}

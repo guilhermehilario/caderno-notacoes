@@ -280,7 +280,7 @@ export const EstudosView: React.FC = () => {
         <div className="flex items-center justify-center py-8">
           <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
         </div>
-      ) : selectedNotebook && studyContent && (
+      ) : (selectedNotebook && studyContent) ? (
         <Card className="p-5">
           <h3 className="text-sm font-heading font-bold text-slate-800 dark:text-dark-50 mb-3">
             Conteúdo disponível nesta matéria
@@ -304,7 +304,7 @@ export const EstudosView: React.FC = () => {
             </div>
           </div>
         </Card>
-      )}
+      ) : null}
     </PageContainer>
   );
 };

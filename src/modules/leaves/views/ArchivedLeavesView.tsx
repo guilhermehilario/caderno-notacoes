@@ -76,15 +76,14 @@ export const ArchivedLeavesView: React.FC = () => {
                   Arquivado em {new Date(leaf.archivedAt || '').toLocaleDateString('pt-BR')}
                   {' · '}
                   <BookOpen className="h-3 w-3" />
-                  {leaf.notebook?.title || 'Caderno'}
+                  {leaf.notebookId}
                 </p>
               </div>
               <div className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={() => {
-                    const nbId = leaf.notebook?.id;
-                    if (nbId) navigate(`/notebooks/${nbId}/leaves/${leaf.id}`);
+                    navigate(`/notebooks/${leaf.notebookId}/leaves/${leaf.id}`);
                   }}
                   className="p-2 rounded-lg text-slate-400 hover:text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-950/20 transition-colors cursor-pointer"
                   title="Abrir folha"

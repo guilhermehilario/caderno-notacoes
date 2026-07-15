@@ -47,7 +47,6 @@ export const MetasTab: React.FC = () => {
   const handleProgressChange = useCallback(
     (id: string, progress: number) => {
       updateGoal.mutate({ id, input: { progress } });
-      setProgressEditId(null);
     },
     [updateGoal],
   );

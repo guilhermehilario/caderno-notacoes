@@ -63,7 +63,6 @@ export const NotebookView: React.FC = () => {
     navigate,
     updateNotebook,
     softDeleteNotebook,
-    leaves,
   });
 
   // ── Hook: Criação de folhas ──
@@ -80,7 +79,6 @@ export const NotebookView: React.FC = () => {
   } = useNotebookLeafCreation({
     notebookId: notebookId || "",
     createLeaf,
-    leaves,
   });
 
   // ── Loading state ──
@@ -178,7 +176,6 @@ export const NotebookView: React.FC = () => {
       <FlashcardsSection
         flashcards={flashcards}
         isLoading={isLoadingFlashcards}
-        notebookId={notebookId || ""}
         onOpenCreateModal={() => {
           if (leaves.length > 0) setSelectedLeafId(leaves[0].id);
           setIsFlashcardModalOpen(true);

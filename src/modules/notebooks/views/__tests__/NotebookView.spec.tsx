@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import { waitFor } from '@testing-library/dom';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -141,20 +142,22 @@ function setupMocks({
   vi.mocked(useLeaves).mockReturnValue({
     leaves,
     isLoading: false,
+    error: null,
     createLeaf: vi.fn(),
-  });
+    isCreating: false,
+  } as any);
 
   vi.mocked(useNotebookFlashcards).mockReturnValue({
-    data: flashcards,
+    data: flashcards as any,
     isLoading: false,
-  });
+  } as any);
 
   vi.mocked(useToggleBookmark).mockReturnValue({
     isBookmarked,
     toggleBookmark,
-  });
+  } as any);
 
-  vi.mocked(useSoftDeleteNotebook).mockReturnValue(softDeleteMutation);
+  vi.mocked(useSoftDeleteNotebook).mockReturnValue(softDeleteMutation as any);
 
   vi.mocked(useEditorStatusStore).mockReturnValue({
     show: vi.fn(),

@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import type { Tag } from '../../tags/types';
 
 export const LeafTagSchema = z.object({
   leafId: z.string().uuid(),
@@ -46,7 +45,7 @@ export const LeafSchema: z.ZodType<Leaf> = z.object({
   updatedAt: z.string().datetime().or(z.date()),
   children: z.array(z.lazy(() => LeafSchema)).optional().default([]),
   tags: z.array(LeafTagSchema).optional().default([]),
-  parent: z.lazy(() => LeafSchema.omit({ children: true, tags: true, parent: true })).nullable().optional(),
+  parent: z.lazy(() => LeafSchema).nullable().optional(),
   archivedAt: z.string().datetime().nullable().optional(),
   deletedAt: z.string().datetime().nullable().optional(),
   position: z.number().optional(),

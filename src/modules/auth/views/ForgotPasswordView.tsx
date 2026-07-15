@@ -48,8 +48,7 @@ export const ForgotPasswordView: React.FC = () => {
     return (
       <AuthLayout
         title="E-mail Enviado"
-        subtitle=""
-        footer={
+      footer={
           <Link
             to="/login"
             className="text-sm text-slate-500 dark:text-dark-400 hover:text-slate-700 dark:hover:text-dark-200"
@@ -89,7 +88,7 @@ export const ForgotPasswordView: React.FC = () => {
   return (
     <AuthLayout
       title="Recuperar Senha"
-      subtitle=""
+
       footer={
         <>
           Lembrou sua senha?{' '}

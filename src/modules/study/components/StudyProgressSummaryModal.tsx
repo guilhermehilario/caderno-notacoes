@@ -42,7 +42,7 @@ export const StudyProgressSummaryModal: React.FC<StudyProgressSummaryModalProps>
         </button>
       </div>
 
-      <StudyProgressSummary isFetching={isFetching} />
+      <StudyProgressSummary />
     </Modal>
   );
 };

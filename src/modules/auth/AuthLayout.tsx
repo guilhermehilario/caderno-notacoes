@@ -4,7 +4,6 @@ import { Card } from "../../components/ui/Card.tsx";
 
 interface AuthLayoutProps {
   title: string;
-  subtitle: string;
   children: React.ReactNode;
   footer: React.ReactNode;
 }
@@ -15,7 +14,6 @@ interface AuthLayoutProps {
  */
 export const AuthLayout: React.FC<AuthLayoutProps> = ({
   title,
-  subtitle,
   children,
   footer,
 }) => {

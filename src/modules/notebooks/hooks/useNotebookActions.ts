@@ -16,7 +16,7 @@ interface UseNotebookActionsParams {
   navigate: (path: string) => void;
   updateNotebook: (data: {
     title: string;
-    description?: string;
+    description?: string | null;
     color: string;
   }) => Promise<unknown>;
   softDeleteNotebook: { mutateAsync: (id: string) => Promise<unknown> };

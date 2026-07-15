@@ -76,15 +76,6 @@ export const AgendaTab: React.FC = () => {
 
   if (isLoading) return <LoadingScreen />;
 
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('pt-BR', {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-    });
-  };
-
   const today = new Date().toISOString().split('T')[0];
   const todayEvents = events.filter((e) => e.date.startsWith(today));
   const upcomingEvents = events.filter((e) => e.date > today);

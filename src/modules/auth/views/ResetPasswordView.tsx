@@ -169,7 +169,7 @@ export const ResetPasswordView: React.FC = () => {
   return (
     <AuthLayout
       title={step === 'success' ? 'Senha Redefinida' : 'Redefinir Senha'}
-      subtitle=""
+
       footer={
         <Link
           to="/login"

@@ -39,7 +39,7 @@ export const RegisterView: React.FC = () => {
   return (
     <AuthLayout
       title="Crie sua conta"
-      subtitle=""
+
       footer={
         <>
           Já possui uma conta?{' '}

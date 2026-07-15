@@ -33,13 +33,11 @@ import type { Leaf } from '../types';
 
 interface SubLeafCardProps {
   subLeaf: Leaf;
-  notebookId: string;
   onNavigate: (id: string) => void;
 }
 
 const SortableSubLeafCard: React.FC<SubLeafCardProps> = ({
   subLeaf,
-  notebookId,
   onNavigate,
 }) => {
   const {
@@ -309,7 +307,6 @@ export const SubLeavesSection: React.FC<SubLeavesSectionProps> = ({
                     <SortableSubLeafCard
                       key={subLeaf.id}
                       subLeaf={subLeaf}
-                      notebookId={notebookId}
                       onNavigate={(id) =>
                         navigate(`/notebooks/${notebookId}/leaves/${id}`)
                       }
