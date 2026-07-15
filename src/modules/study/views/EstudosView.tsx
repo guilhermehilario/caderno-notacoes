@@ -299,7 +299,7 @@ export const EstudosView: React.FC = () => {
               <span className="text-xs text-slate-500 dark:text-dark-400">Simulados</span>
             </div>
             <div className="flex flex-col gap-0.5 p-3 rounded-lg bg-rose-50 dark:bg-rose-950/20">
-              <span className="text-lg font-bold text-rose-500">{studyContent.flashcardsDue}</span>
+              <span className="text-lg font-bold text-rose-500">{studyContent.flashcardsDue.length}</span>
               <span className="text-xs text-slate-500 dark:text-dark-400">Pendentes</span>
             </div>
           </div>
