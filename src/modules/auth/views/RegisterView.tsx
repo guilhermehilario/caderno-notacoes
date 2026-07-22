@@ -28,9 +28,15 @@ export const RegisterView: React.FC = () => {
   const onSubmit = async (data: RegisterInput) => {
     setApiError(null);
     try {
-      await registerUser(data);
-      // Redireciona para tela de verificação de e-mail
-      navigate(`/verify-email?email=${encodeURIComponent(data.email)}`);
+      const result = await registerUser(data);
+      // Se o email já foi verificado (ex: modo dev sem SMTP), vai direto pro login
+      if (result.message?.toLowerCase().includes('auto-verificado') ||
+          result.message?.toLowerCase().includes('já pode fazer login')) {
+        navigate(`/login?email=${encodeURIComponent(data.email)}&verified=true`);
+      } else {
+        // Precisa verificar o email — redireciona pra tela de verificação
+        navigate(`/verify-email?email=${encodeURIComponent(data.email)}`);
+      }
     } catch (error) {
       setApiError(extractApiError(error, 'Erro ao criar conta. Tente novamente mais tarde.'));
     }

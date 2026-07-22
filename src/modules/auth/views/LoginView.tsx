@@ -1,7 +1,7 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { LoginSchema } from '../types';
 import type { LoginInput } from '../types';
@@ -14,8 +14,11 @@ import { AuthLayout } from '../AuthLayout.tsx';
 export const LoginView: React.FC = () => {
   const { login, isLoggingIn } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [apiError, setApiError] = React.useState<string | null>(null);
   const [isEmailNotVerified, setIsEmailNotVerified] = React.useState(false);
+  const verifiedParam = searchParams.get('verified');
+  const showWelcomeBanner = verifiedParam === 'true';
 
   const {
     register,
@@ -63,6 +66,19 @@ export const LoginView: React.FC = () => {
       }
     >
       <ApiErrorAlert message={apiError} />
+
+      {showWelcomeBanner && (
+        <div className="mb-4 p-3 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+          <div className="flex items-center gap-2">
+            <svg className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            <p className="text-sm text-green-800 dark:text-green-300">
+              Conta criada com sucesso! Faça login para continuar.
+            </p>
+          </div>
+        </div>
+      )}
 
       {isEmailNotVerified && (
         <div className="mb-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
